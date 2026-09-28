@@ -1,5 +1,5 @@
-// STUB for Agent A (manifest item 26)
-// Barrel export for all database models
+// Manifest item 26: Barrel export for all database models
 export * from "./item";
 export * from "./chat";
 export * from "./ai-run";
+

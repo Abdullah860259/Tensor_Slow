@@ -1,10 +1,24 @@
-# Python-generated files
+# Python
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
 *.egg-info
-
-# Virtual environments
 .venv
+.python-version
+
+# Node & Next.js
+node_modules/
+.next/
+out/
+.turbo/
+.env
+.env.*
+!.env.example
+.vercel
+coverage/
+playwright-report/
+test-results/
+.DS_Store
+*.tsbuildinfo

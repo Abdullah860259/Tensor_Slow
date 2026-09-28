@@ -1,0 +1,18 @@
+[
+  {
+    "id": "case-01",
+    "input": "Quarterly financial review: Q3 revenue was $4.2M, up 15% YoY. Net margin expanded to 22%. Key risks: supply chain delay in APAC.",
+    "expected": {
+      "summaryContains": ["revenue", "Q3"],
+      "tags": ["finance", "quarterly", "revenue"]
+    }
+  },
+  {
+    "id": "case-02",
+    "input": "Engineering standup notes: Database migration to MongoDB Atlas completed. Vector search indexing active. Next sprint: auth integration.",
+    "expected": {
+      "summaryContains": ["migration", "MongoDB"],
+      "tags": ["engineering", "database", "mongodb"]
+    }
+  }
+]

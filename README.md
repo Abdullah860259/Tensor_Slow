@@ -1,73 +1,110 @@
-# aicon-hackathon
+# AICON Hackathon — AI Application Starter
 
-Foundation repo for the AICON hackathon build. **The product domain is
-deliberately undecided** — this repo currently holds a domain-agnostic starter
-plan plus an optional Python sidecar.
+An app-agnostic, production-ready AI application foundation built for fast hackathon iteration.
 
-## Read these first, in this order
+**Stack**: Next.js 16 (App Router) · React 19 · TypeScript 7 · Vercel AI SDK v7 · MongoDB Atlas Local / Cloud · Better Auth · Tailwind CSS v4
 
-| Doc | What it is |
-|---|---|
-| [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) | The architecture plan: decisions, verified stack versions, data model, AI layer, deploy runbook, timeline, risks |
-| [`docs/SYSTEM_PROMPT.md`](docs/SYSTEM_PROMPT.md) | A copy-pasteable prompt that generates the Phase 0 / Phase 1 code with a strong coding model |
-| [`docs/STUDENT_PACK_CHECKLIST.md`](docs/STUDENT_PACK_CHECKLIST.md) | What to claim from the GitHub Student Developer Pack, with a team capture sheet |
-| [`docs/AGENT_ORCHESTRATION.md`](docs/AGENT_ORCHESTRATION.md) | **Multi-agent layer.** Ownership map, wave plan, orchestrator / agent / verifier prompts, and the rules that stop parallel agents corrupting each other's work |
-
-## How this repo gets built
-
-This repo is **not** the final app skeleton yet. There are two ways to generate it.
-
-**Path 1 — one agent, serial.** Run `docs/SYSTEM_PROMPT.md` through a strong coding
-model. It generates Phase 0 and Phase 1 into a scratch directory; the team reviews the
-diff and merges it into `apps/web`.
-
-**Path 2 — several agents, parallel.** Follow `docs/AGENT_ORCHESTRATION.md`. It defines
-four waves, a strict file-ownership map, and orchestrator / agent / verifier prompts.
-Use this only when you have at least three genuinely parallel workers — below that
-threshold, serial is faster.
-
-### Before either path
-
-**Commit the docs first.** This repo has **zero commits** — every file shows as
-untracked in `git status`. Worktrees and branch-based review need that first commit,
-and committing the docs now means all generated code arrives as one reviewable,
-revertable diff.
-
-```bash
-git add -A
-git commit -m "docs: blueprint, system prompt, student pack checklist, orchestration"
-```
-
-Either path ends the same way: the team picks the product domain and builds features
-on the spine. See `docs/BLUEPRINT.md` §17 for the ordered next-steps checklist.
-
-## Current state
-
-| Path | State |
-|---|---|
-| `src/aicon_hackathon/` | FastAPI scaffold (optional sidecar — see BLUEPRINT §2) |
-| `pyproject.toml` | Python project, `uv` + `uv_build` |
-| `docs/` | The planning documents |
-| `apps/web/` | **Not created yet** — Phase 0 creates it |
-
-### Known defects in the existing scaffold
-
-Documented in full in `docs/BLUEPRINT.md` §1. In short:
-
-1. `[project.scripts] aicon-hackathon = "aicon_hackathon.main:app"` is invalid —
-   a console-script target must be a callable, not a `FastAPI` instance.
-2. `allow_origins=["*"]` with `allow_credentials=True` is rejected by browsers
-   (invalid per the CORS spec).
-3. `requires-python = ">=3.14"` is too tight for many AI/ML wheels; relax to
-   `>=3.12,<3.15`.
-
-These are fixed as part of Phase 0 (sidecar items 47–48 in
-`docs/SYSTEM_PROMPT.md`).
+---
 
 ## Prerequisites
 
-- Node ≥ 22 (**not** 20.9 — the `ai` package requires 22)
-- npm (pnpm is not installed on the dev machine)
-- Docker Desktop
-- Python 3.12+ and `uv` (optional, sidecar only)
+- **Node.js**: `>= 22.0.0` (required by AI SDK v7 Core)
+- **npm**: `12.x` (monorepo uses npm workspaces; pnpm/yarn/bun are not supported)
+- **Docker & Docker Desktop**: For running MongoDB Atlas Local (with local Vector Search support)
+- **Python**: `>= 3.12, < 3.15` and `uv` (optional sidecar only)
 
+---
+
+## Zero to Running in 10 Minutes
+
+Run the following commands in order from the repository root:
+
+```bash
+# 1. Start local MongoDB Atlas container (supports Vector Search)
+docker compose up -d
+
+# 2. Configure environment variables
+cp .env.example .env.local
+
+# 3. Install dependencies across monorepo workspaces
+npm install
+
+# 4. Create compound & vector search indexes in MongoDB
+npm run db:indexes
+
+# 5. Populate initial demo seed data (items, threads, runs)
+npm run db:seed
+
+# 6. Launch the development server
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to view the application.
+
+---
+
+## Environment Setup
+
+Copy `.env.example` to `.env.local` in `apps/web` or root:
+
+```bash
+cp .env.example apps/web/.env.local
+```
+
+Key environment variables:
+- `MONGODB_URI`: Defaults to `mongodb://localhost/?directConnection=true` for local Atlas Local container.
+- `BETTER_AUTH_SECRET`: Random 32+ character string.
+- `BETTER_AUTH_URL`: Canonical URL for auth callbacks (`http://localhost:3000`).
+- `AI_GATEWAY_API_KEY`: Key for Vercel AI Gateway.
+- `GOOGLE_GENERATIVE_AI_API_KEY`: Primary Gemini API key.
+- `GOOGLE_GENERATIVE_AI_API_KEY_B`: Fallback Gemini API key for quota failover.
+- `BLOB_READ_WRITE_TOKEN`: Token from Vercel Blob for cloud uploads.
+- `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN`: For distributed rate limiting.
+
+All environment variables are validated at import time via Zod in `src/lib/env.ts`.
+
+---
+
+## Architecture Overview
+
+```
+aicon-hackathon/
+├── apps/
+│   ├── web/                          # Next.js 16 full-stack product (UI, API routes, Auth, AI, DB)
+│   │   ├── src/app/                  # App Router pages and API route handlers
+│   │   ├── src/components/{ui,ai}/   # shadcn/ui components and AI chat/extraction widgets
+│   │   ├── src/lib/                  # Server-side singletons, DB, auth, AI models, prompts
+│   │   ├── src/scripts/              # Indexing, seeding, and evals scripts
+│   │   └── proxy.ts                  # Next 16 request routing (replaces middleware.ts)
+│   └── api/                          # Optional FastAPI sidecar (for Python-only ML/OCR needs)
+├── packages/
+│   └── shared/                       # Shared schemas and cross-boundary contracts
+├── docker-compose.yml                # MongoDB Atlas Local (mongod + mongot for vector search)
+├── .github/workflows/ci.yml          # GitHub Actions CI matrix
+└── README.md
+```
+
+### The `apps/api` Sidecar
+
+`apps/web` is the complete product. `apps/api` is an **optional** Python/FastAPI sidecar provided as an escape hatch for tasks Python excels at (e.g. PyTorch, heavy OCR, docling). The web application must **never** hard-depend on `apps/api`.
+
+### TypeScript 7 Fallback
+
+This project uses TypeScript 7 (`typescript@7.0.2`, the native Go-based compiler port). If any tooling, ESLint plugin, or `next build` encounter compiler incompatibility, you can safely fall back by installing `typescript@^5.9`:
+```bash
+npm i -D typescript@^5.9 --workspace=apps/web
+```
+Nothing in the Starter depends on TS 7-exclusive features.
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Solution |
+|---|---|---|
+| `Cannot connect to MongoDB` | Atlas Local container is starting or not running | Run `docker compose ps` and wait until container status is `healthy`. |
+| Vector search returns 0 results silently | Dimension mismatch between embedding model and index | Verify `EMBEDDING_DIMENSIONS` in `src/lib/contracts.ts` matches index definition in `src/scripts/create-indexes.ts`. |
+| `proxy.ts` not executing | Misnamed as `middleware.ts` | Next.js 16 uses `src/proxy.ts` exporting `proxy`. |
+| AI SDK functions not found | Using v6 names (`convertToCoreMessages`, `system:`) | AI SDK v7 requires `convertToModelMessages` (awaited) and `instructions:`. |
+| Out of memory or connection limit on Atlas | MongoClient constructed per request | Ensure all queries use the cached `MongoClient` from `src/lib/db.ts`. |
+| File uploads fail on Vercel | Local disk write attempted | Serverless filesystem is ephemeral; upload to `@vercel/blob`. |

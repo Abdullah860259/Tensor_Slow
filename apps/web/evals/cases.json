@@ -1,18 +1,152 @@
 [
   {
     "id": "case-01",
+    "name": "Quarterly Financial Review",
     "input": "Quarterly financial review: Q3 revenue was $4.2M, up 15% YoY. Net margin expanded to 22%. Key risks: supply chain delay in APAC.",
     "expected": {
       "summaryContains": ["revenue", "Q3"],
-      "tags": ["finance", "quarterly", "revenue"]
+      "tags": ["finance", "quarterly", "revenue"],
+      "mockResponse": {
+        "summary": "Q3 revenue reached $4.2M, reflecting a 15% year-over-year increase with net margin expanding to 22%.",
+        "tags": ["finance", "quarterly", "revenue"],
+        "confidenceScore": 0.95,
+        "actionItems": ["Address supply chain delay in APAC region"]
+      }
     }
   },
   {
     "id": "case-02",
+    "name": "Database Migration Notes",
     "input": "Engineering standup notes: Database migration to MongoDB Atlas completed. Vector search indexing active. Next sprint: auth integration.",
     "expected": {
       "summaryContains": ["migration", "MongoDB"],
-      "tags": ["engineering", "database", "mongodb"]
+      "tags": ["engineering", "database", "mongodb"],
+      "mockResponse": {
+        "summary": "Engineering completed database migration to MongoDB Atlas with vector search indexing operational.",
+        "tags": ["engineering", "database", "mongodb"],
+        "confidenceScore": 0.98,
+        "actionItems": ["Begin authentication integration next sprint"]
+      }
+    }
+  },
+  {
+    "id": "case-03",
+    "name": "Security Audit Report",
+    "input": "Quarterly security audit complete. All API endpoints now enforce rate limiting via Upstash Redis. Zero critical vulnerabilities found in third-party dependencies.",
+    "expected": {
+      "summaryContains": ["security", "rate limiting"],
+      "tags": ["security", "audit", "infrastructure"],
+      "mockResponse": {
+        "summary": "Quarterly security audit finished with zero critical vulnerabilities and rate limiting enforced on all API endpoints.",
+        "tags": ["security", "audit", "infrastructure"],
+        "confidenceScore": 0.94,
+        "actionItems": ["Maintain regular Upstash Redis monitoring"]
+      }
+    }
+  },
+  {
+    "id": "case-04",
+    "name": "Customer Incident Postmortem",
+    "input": "Incident report: High latency observed on search service between 14:00 and 14:25 UTC due to unindexed query spike. Fixed by deploying compound index.",
+    "expected": {
+      "summaryContains": ["latency", "index"],
+      "tags": ["incident", "search", "performance"],
+      "mockResponse": {
+        "summary": "Search service experienced latency due to unindexed queries, resolved by deploying a compound index.",
+        "tags": ["incident", "search", "performance"],
+        "confidenceScore": 0.92,
+        "actionItems": ["Review remaining queries for missing indexes"]
+      }
+    }
+  },
+  {
+    "id": "case-05",
+    "name": "Product Launch Roadmap",
+    "input": "Product roadmap update: AI chat assistant v2 scheduled for public beta next month. Key deliverables include multimodal attachments and persistent conversation memory.",
+    "expected": {
+      "summaryContains": ["roadmap", "beta"],
+      "tags": ["product", "roadmap", "ai"],
+      "mockResponse": {
+        "summary": "Product roadmap targets public beta for AI chat assistant v2 next month featuring multimodal support and persistent memory.",
+        "tags": ["product", "roadmap", "ai"],
+        "confidenceScore": 0.96,
+        "actionItems": ["Finalize multimodal attachment pipeline", "Complete memory persistence tests"]
+      }
+    }
+  },
+  {
+    "id": "case-06",
+    "name": "API Webhook Integration",
+    "input": "Webhook documentation: External payment events send JSON payloads with HMAC-SHA256 signatures in the X-Signature header. Responses must return HTTP 200 within 3 seconds.",
+    "expected": {
+      "summaryContains": ["webhook", "signature"],
+      "tags": ["api", "webhooks", "payments"],
+      "mockResponse": {
+        "summary": "Payment webhook specification requires verifying HMAC-SHA256 signatures and responding within 3 seconds.",
+        "tags": ["api", "webhooks", "payments"],
+        "confidenceScore": 0.97,
+        "actionItems": ["Implement HMAC verification middleware", "Set up timeout alarm"]
+      }
+    }
+  },
+  {
+    "id": "case-07",
+    "name": "HR Remote Work Guidelines",
+    "input": "Updated policy: Core collaboration hours are 10:00 to 15:00 UTC. Team members must log async updates daily before 10:00 UTC in Slack.",
+    "expected": {
+      "summaryContains": ["collaboration", "hours"],
+      "tags": ["policy", "remote", "operations"],
+      "mockResponse": {
+        "summary": "Remote work policy establishes core collaboration hours from 10:00 to 15:00 UTC with mandatory daily async updates.",
+        "tags": ["policy", "remote", "operations"],
+        "confidenceScore": 0.91,
+        "actionItems": ["Post daily async updates prior to 10:00 UTC"]
+      }
+    }
+  },
+  {
+    "id": "case-08",
+    "name": "Frontend Performance Optimization",
+    "input": "Frontend optimization summary: Bundle size decreased by 34% after switching to dynamic imports for chart components. First Contentful Paint improved to 0.8s.",
+    "expected": {
+      "summaryContains": ["bundle size", "dynamic imports"],
+      "tags": ["frontend", "performance", "optimization"],
+      "mockResponse": {
+        "summary": "Frontend bundle size was reduced by 34% using dynamic imports, improving First Contentful Paint to 0.8s.",
+        "tags": ["frontend", "performance", "optimization"],
+        "confidenceScore": 0.95,
+        "actionItems": ["Audit remaining heavy vendor libraries"]
+      }
+    }
+  },
+  {
+    "id": "case-09",
+    "name": "Legal SLA Terms",
+    "input": "Service level agreement amendment: Enterprise tier guarantees 99.95% monthly uptime. Service credits of 10% apply if uptime drops below 99.9%.",
+    "expected": {
+      "summaryContains": ["uptime", "service credits"],
+      "tags": ["legal", "sla", "enterprise"],
+      "mockResponse": {
+        "summary": "Enterprise SLA amendment guarantees 99.95% uptime with 10% service credits applicable below 99.9%.",
+        "tags": ["legal", "sla", "enterprise"],
+        "confidenceScore": 0.93,
+        "actionItems": ["Update billing system credit automation rules"]
+      }
+    }
+  },
+  {
+    "id": "case-10",
+    "name": "RAG Embedding Pipeline",
+    "input": "Atlas Vector Search benchmark: Embedding text with 768 dimensions using cosine similarity achieved 94% recall@5 with sub-50ms query latency.",
+    "expected": {
+      "summaryContains": ["vector search", "embedding"],
+      "tags": ["rag", "vector-search", "embeddings"],
+      "mockResponse": {
+        "summary": "Atlas Vector Search benchmarking demonstrated 94% recall@5 and under 50ms latency using 768-dimensional embeddings.",
+        "tags": ["rag", "vector-search", "embeddings"],
+        "confidenceScore": 0.99,
+        "actionItems": ["Configure production index parameters"]
+      }
     }
   }
 ]

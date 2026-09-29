@@ -1,0 +1,49 @@
+name: ✨ Feature Request
+description: Suggest an idea or enhancement for the AI Starter foundation
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make the AI foundation even more powerful? Let us know what you'd like to build!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement / Context
+      description: Is your feature request related to a problem or architectural limitation?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see and how it integrates with the existing stack.
+      placeholder: A clear description of what you want to happen...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or features you've considered.
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Affected Component Area
+      options:
+        - User Interface (UI / shadcn / Tailwind v4)
+        - AI Spine (RAG / Embeddings / Extraction / Tools)
+        - Database (MongoDB / Mongoose / Indexing)
+        - Authentication & Security (Better Auth)
+        - Sidecar / FastAPI Service
+        - CI/CD & Developer Experience
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to submit a pull request implementing this feature.

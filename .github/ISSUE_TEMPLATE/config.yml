@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Community Discussions
+    url: https://github.com/aicon-hackathon/starter/discussions
+    about: Ask questions, share ideas, and discuss architecture with fellow builders.
+  - name: 🔒 Security Advisory & Vulnerability Reporting
+    url: https://github.com/aicon-hackathon/starter/security/advisories/new
+    about: Report sensitive security vulnerabilities privately.

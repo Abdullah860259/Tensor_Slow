@@ -1,40 +1,44 @@
 name: CI
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Verify & Test
+  verify-and-build:
+    name: Typecheck, Lint, Test & Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: Typecheck
+      - name: TypeScript Compiler Verification
         run: npm run typecheck
 
-      - name: Lint
+      - name: ESLint Code Quality Verification
         run: npm run lint
 
-      - name: Test
+      - name: Run Unit Test Suite (Offline)
         run: npm run test
+
+      - name: Run AI Extraction Evaluation Suite (Offline)
+        run: npm run evals
+
+      - name: Production Next.js 16 Build (Offline)
+        run: npm run build

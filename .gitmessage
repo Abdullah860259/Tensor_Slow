@@ -1,0 +1,28 @@
+# —————————————————————————————————————————————————————————————————————————————
+# <type>(<scope>): <short imperative summary> (50 chars max)
+# Example: fix(auth): remove top-level await to enable offline Next.js builds
+#
+# Types: feat | fix | docs | style | refactor | perf | test | chore | ci
+# Scopes: web | api | shared | auth | db | ai | rag | ui | config
+# —————————————————————————————————————————————————————————————————————————————
+
+# ------------------ Problem / Motivation ------------------
+# Why is this change needed? What problem does it solve?
+# (Reference issue or ticket numbers if applicable)
+
+
+# ------------------ Solution & Implementation Details -----
+# How does this change resolve the problem? What approach was chosen?
+
+
+# ------------------ Breaking Changes & Side Effects -------
+# Are there breaking changes to contracts, APIs, or database models?
+
+
+# ------------------ Pre-Commit Quality Verification -------
+# [ ] npm run typecheck  -> 0 errors
+# [ ] npm run lint       -> 0 errors
+# [ ] npm run test       -> All unit tests pass offline
+# [ ] npm run evals      -> All AI benchmarks pass
+# [ ] Single MongoClient -> Exactly 1 instance in src/lib/db.ts
+# [ ] Zero Secrets       -> No API keys, credentials, or tokens committed

@@ -1,28 +1,31 @@
-# —————————————————————————————————————————————————————————————————————————————
-# <type>(<scope>): <short imperative summary> (50 chars max)
-# Example: fix(auth): remove top-level await to enable offline Next.js builds
+# <type>(<scope>): <subject>
 #
-# Types: feat | fix | docs | style | refactor | perf | test | chore | ci
-# Scopes: web | api | shared | auth | db | ai | rag | ui | config
-# —————————————————————————————————————————————————————————————————————————————
+# Allowed types:
+#   feat     - A new feature or capability
+#   fix      - A bug fix
+#   refactor - Code restructuring without behavioral changes
+#   perf     - Performance improvements
+#   test     - Adding or correcting tests
+#   docs     - Documentation updates
+#   build    - Build system, toolchain, or external dependencies
+#   ci       - CI configuration, workflows, or scripts
+#   chore    - Maintenance tasks or general housekeeping
+#
+# Common scopes:
+#   web, api, shared, auth, db, ai, rag, ui, config
+#
+# Guidelines:
+#   - Subject: Imperative mood ("add", not "added"), lowercase, 72 characters max.
+#   - Body: Explain the motivation and context. What problem is being solved?
+#     Why was this approach chosen over alternatives?
+#   - Footer: Reference tracking IDs (e.g., Closes #123) or breaking changes.
+# ------------------------------------------------------------------------------
 
-# ------------------ Problem / Motivation ------------------
-# Why is this change needed? What problem does it solve?
-# (Reference issue or ticket numbers if applicable)
+# Context and motivation:
 
 
-# ------------------ Solution & Implementation Details -----
-# How does this change resolve the problem? What approach was chosen?
+# Key changes and technical decisions:
 
 
-# ------------------ Breaking Changes & Side Effects -------
-# Are there breaking changes to contracts, APIs, or database models?
+# Issue references / Breaking changes (if any):
 
-
-# ------------------ Pre-Commit Quality Verification -------
-# [ ] npm run typecheck  -> 0 errors
-# [ ] npm run lint       -> 0 errors
-# [ ] npm run test       -> All unit tests pass offline
-# [ ] npm run evals      -> All AI benchmarks pass
-# [ ] Single MongoClient -> Exactly 1 instance in src/lib/db.ts
-# [ ] Zero Secrets       -> No API keys, credentials, or tokens committed

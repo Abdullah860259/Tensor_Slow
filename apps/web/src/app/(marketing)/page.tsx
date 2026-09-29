@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowRight, Sparkles, Shield, Database, Cpu, Loader2, AlertCircle } from "lucide-react";
+import { ArrowRight, Sparkles, Shield, Database, Cpu, Loader2, AlertCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 
 export default function MarketingPage(): React.JSX.Element {
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleStartAnonymous = async () => {
@@ -25,6 +26,24 @@ export default function MarketingPage(): React.JSX.Element {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to start anonymous session.");
       setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    try {
+      setDemoLoading(true);
+      setError(null);
+      const res = await fetch("/api/auth/demo", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to sign in as demo user.");
+        setDemoLoading(false);
+        return;
+      }
+      window.location.href = "/dashboard";
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign in as demo user.");
+      setDemoLoading(false);
     }
   };
 
@@ -80,6 +99,26 @@ export default function MarketingPage(): React.JSX.Element {
               <>
                 <span>Launch Demo Anonymously</span>
                 <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleDemoLogin}
+            disabled={demoLoading || loading}
+            className="h-11 px-6 text-sm font-medium gap-2 cursor-pointer border-primary/30 hover:bg-primary/5"
+          >
+            {demoLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Signing in…</span>
+              </>
+            ) : (
+              <>
+                <User className="h-4 w-4" />
+                <span>Login as Demo User</span>
               </>
             )}
           </Button>

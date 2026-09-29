@@ -84,14 +84,36 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  const { messages, threadId, itemId } = parsed.data;
+  const { messages: rawMessages, threadId, itemId } = parsed.data;
 
-  if (!messages || messages.length === 0) {
+  if (!rawMessages || rawMessages.length === 0) {
     return new Response(JSON.stringify({ error: "Messages array cannot be empty" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  interface NormalizedMessage {
+    role: string;
+    parts: Array<{ type: "text"; text: string }>;
+    content?: string;
+    [key: string]: unknown;
+  }
+
+  // Normalize legacy { role, content } messages to AI SDK v7 { role, parts: [...] } format.
+  // convertToModelMessages crashes with "Cannot read properties of undefined (reading 'some')"
+  // if messages lack the `parts` array.
+  const messages: NormalizedMessage[] = (rawMessages as Array<Record<string, unknown>>).map((msg) => {
+    if (Array.isArray(msg.parts) && msg.parts.length > 0) {
+      return msg as NormalizedMessage;
+    }
+    const content = typeof msg.content === "string" ? msg.content : "";
+    return {
+      role: typeof msg.role === "string" ? msg.role : "user",
+      parts: [{ type: "text" as const, text: content }],
+      content,
+    };
+  });
 
   const startTime = Date.now();
 
@@ -99,10 +121,10 @@ export async function POST(req: Request): Promise<Response> {
   const result = streamText({
     model: chatModel,
     instructions: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages as unknown as Parameters<typeof convertToModelMessages>[0]),
     tools,
     stopWhen: isStepCount(5),
-    onFinish: async ({ text, usage, steps }) => {
+    onFinish: async ({ text, usage }) => {
       const latencyMs = Date.now() - startTime;
       try {
         await connectMongoose();

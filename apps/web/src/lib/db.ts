@@ -10,6 +10,8 @@ import { env } from "@/lib/env";
  */
 declare global {
   // eslint-disable-next-line no-var
+  var _mongoClient: MongoClient | undefined;
+  // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined;
   // eslint-disable-next-line no-var
   var _mongoosePromise: Promise<typeof mongoose> | undefined;
@@ -18,18 +20,26 @@ declare global {
 const uri = env.MONGODB_URI;
 const dbName = env.MONGODB_DB;
 
-let clientPromise: Promise<MongoClient>;
-
-if (env.NODE_ENV === "development") {
-  if (!global._mongoClientPromise) {
-    const client = new MongoClient(uri);
-    global._mongoClientPromise = client.connect();
+/**
+ * Returns the cached MongoClient instance.
+ * Instantiates new MongoClient exactly once across all environments and reloads.
+ */
+export function getMongoClient(): MongoClient {
+  if (!global._mongoClient) {
+    global._mongoClient = new MongoClient(uri);
   }
-  clientPromise = global._mongoClientPromise;
-} else {
-  const client = new MongoClient(uri);
-  clientPromise = client.connect();
+  return global._mongoClient;
 }
+
+const clientPromise: Promise<MongoClient> = (function getClientPromise() {
+  if (env.NODE_ENV === "development") {
+    if (!global._mongoClientPromise) {
+      global._mongoClientPromise = getMongoClient().connect();
+    }
+    return global._mongoClientPromise;
+  }
+  return getMongoClient().connect();
+})();
 
 /**
  * Connects to MongoDB via native driver and returns the client and default database.
@@ -42,10 +52,10 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
 /**
  * Returns the raw native Db instance required by Better Auth MongoDB adapter.
+ * Evaluates synchronously without awaiting connection so module evaluation does not block offline builds.
  */
-export async function getRawDb(): Promise<Db> {
-  const { db } = await connectToDatabase();
-  return db;
+export function getRawDb(): Db {
+  return getMongoClient().db(dbName);
 }
 
 /**

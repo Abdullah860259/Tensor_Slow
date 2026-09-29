@@ -14,7 +14,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, connectMongoose } from "@/lib/db";
 import { ItemModel } from "@/lib/models";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,7 @@ async function createItemAction(formData: FormData) {
   }
 
   await connectToDatabase();
+  await connectMongoose();
   const newItem = await ItemModel.create({
     ownerId: session.user.id,
     title,
@@ -56,6 +57,7 @@ export default async function DashboardPage(): Promise<React.JSX.Element> {
   }
 
   await connectToDatabase();
+  await connectMongoose();
   const rawItems = await ItemModel.find({ ownerId: session.user.id })
     .sort({ createdAt: -1 })
     .lean();

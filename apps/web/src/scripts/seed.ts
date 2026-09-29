@@ -34,7 +34,7 @@ export async function seed(): Promise<void> {
   logger.info("Starting idempotent seed for demo user...", { email: demoEmail });
 
   // 1. Ensure demo user exists in Better Auth user collection
-  let user = await db.collection("user").findOne({ email: demoEmail });
+  const user = await db.collection("user").findOne({ email: demoEmail });
   let userId: string;
 
   if (!user) {
@@ -154,7 +154,7 @@ export async function seed(): Promise<void> {
     const doc = await ItemModel.findOneAndUpdate(
       { ownerId: userId, title: item.title },
       { $set: updateData },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     );
     if (doc) {
       seededItemIds.push(doc._id.toString());
@@ -258,7 +258,7 @@ export async function seed(): Promise<void> {
     const threadDoc = await ChatThreadModel.findOneAndUpdate(
       { ownerId: userId, title: threadData.title },
       { $set: threadUpdate },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     );
     const threadId = threadDoc._id.toString();
 

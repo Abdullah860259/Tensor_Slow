@@ -11,7 +11,7 @@ import {
   FileText,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase, connectMongoose } from "@/lib/db";
 import { ItemModel } from "@/lib/models";
 import { extractStructuredData } from "@/lib/ai/extract";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -33,6 +33,7 @@ export default async function ItemDetailPage({
   }
 
   await connectToDatabase();
+  await connectMongoose();
   const rawItem = await ItemModel.findOne({ _id: id, ownerId: session.user.id }).lean();
 
   if (!rawItem) {
@@ -57,6 +58,7 @@ export default async function ItemDetailPage({
     }
 
     await connectToDatabase();
+    await connectMongoose();
     const targetItem = await ItemModel.findOne({
       _id: id,
       ownerId: currentSession.user.id,

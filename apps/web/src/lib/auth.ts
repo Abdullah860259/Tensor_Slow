@@ -5,13 +5,10 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { nextCookies } from "better-auth/next-js";
 import { getRawDb } from "@/lib/db";
 
-// Better Auth requires the native MongoDB Db instance, not the Mongoose connection
-const rawDb = await getRawDb();
-
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || "temporary-stub-secret-32-characters-minimum",
-  database: mongodbAdapter(rawDb),
+  database: mongodbAdapter(getRawDb()),
   emailAndPassword: {
     // Disabled in favor of passwordless magic links and anonymous sessions
     enabled: false,

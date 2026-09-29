@@ -284,3 +284,13 @@ This starter comes equipped with automated GitHub Actions workflows:
 | Mongoose queries buffer indefinitely (10s timeout) | Missing `await connectMongoose()` in server component | Ensure `connectMongoose()` is called before executing any Mongoose model operations. |
 | Chat crashes on legacy messages | Missing message `parts` array in payload | Chat route automatically normalizes string `content` to `{ type: 'text', text: content }`. |
 | `next lint` command not found | Next.js 16 removed the `next lint` CLI wrapper | Use `npm run lint` which executes `eslint src/` with native flat config. |
+
+---
+
+## 📄 License & Community
+
+* **License:** Distributed under the open-source **[MIT License](LICENSE)**. Free for commercial, personal, and hackathon use.
+* **Security:** Review our responsible disclosure policy in **[SECURITY.md](SECURITY.md)**.
+* **Code of Conduct:** We adhere to the **[Contributor Covenant](CODE_OF_CONDUCT.md)**.
+* **Contributing:** Review **[CONTRIBUTING.md](CONTRIBUTING.md)** before submitting pull requests.
+

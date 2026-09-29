@@ -30,3 +30,10 @@ All branches must follow one of these prefixes:
    - Filesystem writes are prohibited on Vercel deployment (serverless filesystem is ephemeral). Always upload media and user files to Vercel Blob.
 5. **Session-Derived Ownership**:
    - Never trust client-supplied `ownerId` in request bodies. Always derive `ownerId` from the verified server session via `auth.api.getSession()`.
+
+## Community & Security
+
+* **Code of Conduct**: All participants must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+* **Security Issues**: Please report security vulnerabilities privately according to [SECURITY.md](SECURITY.md).
+* **License**: Contributions are licensed under the [MIT License](LICENSE).
+

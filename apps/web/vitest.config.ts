@@ -3,9 +3,10 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 
 // Vitest configuration for unit and integration testing
-// Configured with node environment so AI SDK and server-side utilities run offline without browser mocks
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default defineConfig({
-  plugins: [react()],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  plugins: [react() as any],
   test: {
     environment: "node",
     globals: true,

@@ -4,6 +4,8 @@ An app-agnostic, production-grade AI application starter foundation built for hi
 
 **Core Stack**: Next.js 16 (App Router & Turbopack) · React 19 · TypeScript 7 · Vercel AI SDK v7 · MongoDB Atlas Local & Cloud Vector Search · Better Auth · Tailwind CSS v4 · Optional FastAPI Sidecar
 
+> 📖 **Looking for a beginner-friendly overview?** Check out [EXPLAIN.md](EXPLAIN.md) for a simple explanation of how everything works, what MongoDB and Vector Search are, and how the entire workflow connects together!
+
 ---
 
 ## 📋 Table of Contents
@@ -63,7 +65,7 @@ npm install
 # 4. Generate compound indexes and Atlas Vector Search index definition
 npm run db:indexes
 
-# 5. Seed the database with the demo user and initial artifacts
+# 5. Populate initial demo seed data (items, threads, runs)
 npm run db:seed
 
 # 6. Launch Next.js development server
@@ -78,7 +80,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser:
 
 ## 🔑 Configuration & API Keys
 
-Environment variables are validated on server startup using strict Zod schemas in [`apps/web/src/lib/env.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/env.ts).
+Environment variables are validated on server startup using strict Zod schemas in [`apps/web/src/lib/env.ts`](apps/web/src/lib/env.ts).
 
 Create `.env.local` in the project root or in `apps/web/.env.local`:
 
@@ -122,7 +124,7 @@ BLOB_READ_WRITE_TOKEN=""
 UPSTASH_REDIS_REST_URL=""
 UPSTASH_REDIS_REST_TOKEN=""
 
-# Sentry DSN for crash reporting and telemetry
+# Sentry DSN for error monitoring
 SENTRY_DSN=""
 
 # Seeded Demo User Identity
@@ -172,37 +174,37 @@ aicon-hackathon/
 ```
 
 ### 1. User Interface (UI)
-* **Landing Page** ([`apps/web/src/app/(marketing)/page.tsx`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/(marketing)/page.tsx)): Features hero marketing copy, direct anonymous onboarding, and the **"Login as Demo User"** bypass button for judges.
-* **Workspace Dashboard** ([`apps/web/src/app/(app)/dashboard/page.tsx`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/(app)/dashboard/page.tsx)): Displays workspace stats, artifact card gallery with AI tags, and instant item creation form.
-* **Artifact & RAG View** ([`apps/web/src/app/(app)/items/[id]/page.tsx`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/(app)/items/[id]/page.tsx)): Side-by-side view featuring artifact raw text, structured extraction badges, re-extraction trigger, and contextual multi-turn conversational chat.
-* **Design Primitives** ([`apps/web/src/components/ui/`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/components/ui/)): Clean shadcn/ui components configured with Tailwind CSS v4 design tokens.
+* **Landing Page** ([`apps/web/src/app/(marketing)/page.tsx`](apps/web/src/app/(marketing)/page.tsx)): Features hero marketing copy, direct anonymous onboarding, and the **"Login as Demo User"** bypass button for judges.
+* **Workspace Dashboard** ([`apps/web/src/app/(app)/dashboard/page.tsx`](apps/web/src/app/(app)/dashboard/page.tsx)): Displays workspace stats, artifact card gallery with AI tags, and instant item creation form.
+* **Artifact & RAG View** ([`apps/web/src/app/(app)/items/[id]/page.tsx`](apps/web/src/app/(app)/items/[id]/page.tsx)): Side-by-side view featuring artifact raw text, structured extraction badges, re-extraction trigger, and contextual multi-turn conversational chat.
+* **Design Primitives** ([`apps/web/src/components/ui/`](apps/web/src/components/ui/)): Clean shadcn/ui components configured with Tailwind CSS v4 design tokens.
 
 ### 2. Database & Data Models
-* **Dual Connection Architecture** ([`apps/web/src/lib/db.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/db.ts)):
-  * **Native MongoClient** via [`getMongoClient()`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/db.ts#L24): Cached on `globalThis` to preserve connection pool limits across Next.js Turbopack reloads. Instantiated **exactly once**.
-  * **Mongoose Connection Pool** via [`connectMongoose()`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/db.ts#L50): Required by Server Components and API routes querying Mongoose models.
-* **Mongoose Schemas** ([`apps/web/src/lib/models/`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/models/)):
-  * [`ItemModel`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/models/item.ts): User-owned artifacts with 768d vector embeddings.
-  * [`ChatThreadModel`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/models/chat-thread.ts) & [`ChatMessageModel`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/models/chat-message.ts): Multi-turn conversation history.
-  * [`AiRunModel`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/models/ai-run.ts): Observability log tracking input/output tokens, reasoning tokens, cache-read tokens, latency, and estimated cost.
-* **Indexing Script** ([`apps/web/src/scripts/create-indexes.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/scripts/create-indexes.ts)): Automatically builds compound B-tree indexes and registers the 768-dimensional Atlas Vector Search index.
-* **Seed Script** ([`apps/web/src/scripts/seed.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/scripts/seed.ts)): Completely idempotent seeding script with deterministic embedding vectors.
+* **Dual Connection Architecture** ([`apps/web/src/lib/db.ts`](apps/web/src/lib/db.ts)):
+  * **Native MongoClient** via `getMongoClient()`: Cached on `globalThis` to preserve connection pool limits across Next.js Turbopack reloads. Instantiated **exactly once**.
+  * **Mongoose Connection Pool** via `connectMongoose()`: Required by Server Components and API routes querying Mongoose models.
+* **Mongoose Schemas** ([`apps/web/src/lib/models/`](apps/web/src/lib/models/)):
+  * [`ItemModel`](apps/web/src/lib/models/item.ts): User-owned artifacts with 768d vector embeddings.
+  * [`ChatThreadModel`](apps/web/src/lib/models/chat-thread.ts) & [`ChatMessageModel`](apps/web/src/lib/models/chat-message.ts): Multi-turn conversation history.
+  * [`AiRunModel`](apps/web/src/lib/models/ai-run.ts): Observability log tracking input/output tokens, reasoning tokens, cache-read tokens, latency, and estimated cost.
+* **Indexing Script** ([`apps/web/src/scripts/create-indexes.ts`](apps/web/src/scripts/create-indexes.ts)): Automatically builds compound B-tree indexes and registers the 768-dimensional Atlas Vector Search index.
+* **Seed Script** ([`apps/web/src/scripts/seed.ts`](apps/web/src/scripts/seed.ts)): Completely idempotent seeding script with deterministic embedding vectors.
 
 ### 3. API Endpoints & Authentication
-* **Better Auth Handler** ([`apps/web/src/app/api/auth/[...all]/route.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/api/auth/[...all]/route.ts)): Handles session management, anonymous session provisioning, and magic link authentication.
-* **Demo Sign-In** ([`apps/web/src/app/api/auth/demo/route.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/api/auth/demo/route.ts)): Creates an authenticated session for `demo@example.com` with cryptographic HMAC cookie signing.
-* **Streaming Chat** ([`apps/web/src/app/api/chat/route.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/api/chat/route.ts)): Real-time UI message stream powered by AI SDK v7, with automatic message normalization, multi-step tool execution, and session-derived ownership enforcement.
-* **Artifacts REST API** ([`apps/web/src/app/api/items/route.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/app/api/items/route.ts)): Scoped CRUD operations for user artifacts.
-* **Next.js 16 Request Proxy** ([`apps/web/src/proxy.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/proxy.ts)): Modern request routing and session-cookie propagation (replaces legacy `middleware.ts`).
+* **Better Auth Handler** ([`apps/web/src/app/api/auth/[...all]/route.ts`](apps/web/src/app/api/auth/[...all]/route.ts)): Handles session management, anonymous session provisioning, and magic link authentication.
+* **Demo Sign-In** ([`apps/web/src/app/api/auth/demo/route.ts`](apps/web/src/app/api/auth/demo/route.ts)): Creates an authenticated session for `demo@example.com` with cryptographic HMAC cookie signing.
+* **Streaming Chat** ([`apps/web/src/app/api/chat/route.ts`](apps/web/src/app/api/chat/route.ts)): Real-time UI message stream powered by AI SDK v7, with automatic message normalization, multi-step tool execution, and session-derived ownership enforcement.
+* **Artifacts REST API** ([`apps/web/src/app/api/items/route.ts`](apps/web/src/app/api/items/route.ts)): Scoped CRUD operations for user artifacts.
+* **Next.js 16 Request Proxy** ([`apps/web/src/proxy.ts`](apps/web/src/proxy.ts)): Modern request routing and session-cookie propagation (replaces legacy `middleware.ts`).
 
 ### 4. AI Spine & Automation
-* **Models & Failover** ([`apps/web/src/lib/ai/models.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/ai/models.ts)): Configures `gemini-2.5-flash` for chat and extraction, with quota failover to secondary keys and mock fallbacks during tests.
-* **Vector Embeddings & RAG** ([`apps/web/src/lib/ai/rag.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/ai/rag.ts)): 768-dimensional embeddings via `text-embedding-004`. Performs `$vectorSearch` with automatic regex keyword fallback if the vector index is offline.
-* **Structured Extraction** ([`apps/web/src/lib/ai/extract.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/ai/extract.ts)): Uses `generateObject` with Zod validation to reliably extract summaries, tags, and action items.
-* **Tool Calling** ([`apps/web/src/lib/ai/tools/`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/ai/tools/)): Registered tools enabling the assistant to search the knowledge base, inspect artifacts, and create new workspace items.
+* **Models & Failover** ([`apps/web/src/lib/ai/models.ts`](apps/web/src/lib/ai/models.ts)): Configures `gemini-2.5-flash` for chat and extraction, with quota failover to secondary keys and mock fallbacks during tests.
+* **Vector Embeddings & RAG** ([`apps/web/src/lib/ai/rag.ts`](apps/web/src/lib/ai/rag.ts)): 768-dimensional embeddings via `text-embedding-004`. Performs `$vectorSearch` with automatic regex keyword fallback if the vector index is offline.
+* **Structured Extraction** ([`apps/web/src/lib/ai/extract.ts`](apps/web/src/lib/ai/extract.ts)): Uses `generateObject` with Zod validation to reliably extract summaries, tags, and action items.
+* **Tool Calling** ([`apps/web/src/lib/ai/tools/`](apps/web/src/lib/ai/tools/)): Registered tools enabling the assistant to search the knowledge base, inspect artifacts, and create new workspace items.
 
 ### 5. Python FastAPI Sidecar
-* **Path**: [`apps/api/`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/api/)
+* **Path**: [`apps/api/`](apps/api/)
 * **Purpose**: Optional sidecar for heavy Python ML workloads (OCR, Docling, HuggingFace embeddings). `apps/web` remains 100% functional standalone without requiring the sidecar.
 
 ---
@@ -239,7 +241,7 @@ npm run build
 ## 🛡️ Best Practices & Architectural Invariants
 
 1. **Exact-Single `MongoClient` Instance:**
-   Constructing `new MongoClient` per request quickly exhausts connection pools on serverless architectures. All database connections must go through `getMongoClient()` or `connectToDatabase()` in [`src/lib/db.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/db.ts).
+   Constructing `new MongoClient` per request quickly exhausts connection pools on serverless architectures. All database connections must go through `getMongoClient()` or `connectToDatabase()` in [`apps/web/src/lib/db.ts`](apps/web/src/lib/db.ts).
 2. **Server-Derived `ownerId`:**
    Client requests must never supply `ownerId` in request bodies. Route handlers derive `ownerId` directly from the validated session via `auth.api.getSession()`.
 3. **No Filesystem Storage in Serverless:**
@@ -253,7 +255,7 @@ npm run build
 6. **Next.js 16 Request Routing:**
    Next.js 16 uses `src/proxy.ts` exporting a `proxy` function. The legacy `middleware.ts` convention is deprecated.
 7. **Vector Index Dimension Alignment:**
-   `EMBEDDING_DIMENSIONS = 768` is exported as a single source of truth in [`src/lib/contracts.ts`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/apps/web/src/lib/contracts.ts). Both the embedding generator and the vector index script consume this constant to prevent dimension mismatches.
+   `EMBEDDING_DIMENSIONS = 768` is exported as a single source of truth in [`apps/web/src/lib/contracts.ts`](apps/web/src/lib/contracts.ts). Both the embedding generator and the vector index script consume this constant to prevent dimension mismatches.
 
 ---
 
@@ -261,14 +263,14 @@ npm run build
 
 This starter comes equipped with automated GitHub Actions workflows:
 
-* **Continuous Integration ([`.github/workflows/ci.yml`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/.github/workflows/ci.yml)):**
+* **Continuous Integration ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):**
   Triggers on every `push` and `pull_request` to `main`. Executes Typecheck, Lint, Vitest unit tests, AI evals, and production build in a clean container.
-* **Security Scanning ([`.github/workflows/codeql.yml`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/.github/workflows/codeql.yml)):**
+* **Security Scanning ([`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)):**
   Runs weekly and on pull requests to detect vulnerabilities using GitHub CodeQL.
-* **Dependency Maintenance ([`.github/dependabot.yml`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/.github/dependabot.yml)):**
+* **Dependency Maintenance ([`.github/dependabot.yml`](.github/dependabot.yml)):**
   Monthly grouped dependency updates for npm packages and GitHub Actions.
 * **Issue & PR Templates:**
-  Structured GitHub issue forms for Bug Reports, Feature Proposals, and standardized Pull Request checklists located in [`.github/`](file:///c:/Users/ANC/Documents/Me/Projects/Aicon/aicon-hackathon/.github/).
+  Structured GitHub issue forms for Bug Reports, Feature Proposals, and standardized Pull Request checklists located in [`.github/`](.github/).
 
 ---
 
@@ -278,7 +280,7 @@ This starter comes equipped with automated GitHub Actions workflows:
 | :--- | :--- | :--- |
 | `Cannot connect to MongoDB` | Atlas Local Docker container is starting or stopped | Run `docker compose up -d` and verify health with `docker compose ps`. |
 | `TopologyDescription: ReplicaSetNoPrimary` | Missing `directConnection=true` parameter in URI | Ensure connection URI includes `?directConnection=true` when running Atlas Local container. |
-| Vector search returns 0 results | Dimension mismatch between embedding model and index | Verify `EMBEDDING_DIMENSIONS` in `src/lib/contracts.ts` (768) matches the vector search index in `src/scripts/create-indexes.ts`. |
+| Vector search returns 0 results | Dimension mismatch between embedding model and index | Verify `EMBEDDING_DIMENSIONS` in `apps/web/src/lib/contracts.ts` (768) matches the vector search index in `apps/web/src/scripts/create-indexes.ts`. |
 | Mongoose queries buffer indefinitely (10s timeout) | Missing `await connectMongoose()` in server component | Ensure `connectMongoose()` is called before executing any Mongoose model operations. |
 | Chat crashes on legacy messages | Missing message `parts` array in payload | Chat route automatically normalizes string `content` to `{ type: 'text', text: content }`. |
 | `next lint` command not found | Next.js 16 removed the `next lint` CLI wrapper | Use `npm run lint` which executes `eslint src/` with native flat config. |

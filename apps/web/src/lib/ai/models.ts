@@ -53,7 +53,7 @@ export function isQuotaError(error: unknown): boolean {
  * quota and rate-limit errors from the primary key (GOOGLE_GENERATIVE_AI_API_KEY) and seamlessly
  * retries the call using the backup key so the demo never dies on stage.
  */
-export function getModelWithQuotaFallback(modelId: string = "gemini-2.5-flash"): LanguageModel {
+export function getModelWithQuotaFallback(modelId: string = "gemini-3.8-flash"): LanguageModel {
   const keyA = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   const keyB = process.env.GOOGLE_GENERATIVE_AI_API_KEY_B;
 
@@ -152,12 +152,12 @@ export function getEmbeddingModelWithQuotaFallback(modelId: string = "gemini-emb
 }
 
 export const chatModel: LanguageModel = USE_GATEWAY
-  ? gateway("google/gemini-2.5-flash")
-  : getModelWithQuotaFallback("gemini-2.5-flash");
+  ? gateway("google/gemini-3.8-flash")
+  : getModelWithQuotaFallback("gemini-3.8-flash");
 
 export const fastModel: LanguageModel = USE_GATEWAY
-  ? gateway("google/gemini-2.5-flash-lite")
-  : getModelWithQuotaFallback("gemini-2.5-flash-lite");
+  ? gateway("google/gemini-3.5-flash-lite")
+  : getModelWithQuotaFallback("gemini-3.5-flash-lite");
 
 export const embeddingModel: EmbeddingModel = USE_GATEWAY
   ? gateway.embeddingModel("google/gemini-embedding-001")

@@ -238,7 +238,7 @@ export async function POST(req: Request): Promise<Response> {
         const modelId =
           typeof chatModel === "object" && chatModel !== null && "modelId" in chatModel
             ? String(chatModel.modelId)
-            : "gemini-2.5-flash";
+            : "gemini-3.8-flash";
 
         await AiRunModel.create({
           ownerId,

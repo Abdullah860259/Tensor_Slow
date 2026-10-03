@@ -111,7 +111,7 @@ export function getModelWithQuotaFallback(modelId: string = "gemini-2.5-flash"):
 /**
  * Two-key Gemini quota-fallback logic for Embedding Models.
  */
-export function getEmbeddingModelWithQuotaFallback(modelId: string = "text-embedding-004"): EmbeddingModel {
+export function getEmbeddingModelWithQuotaFallback(modelId: string = "gemini-embedding-001"): EmbeddingModel {
   const keyA = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   const keyB = process.env.GOOGLE_GENERATIVE_AI_API_KEY_B;
 
@@ -160,5 +160,5 @@ export const fastModel: LanguageModel = USE_GATEWAY
   : getModelWithQuotaFallback("gemini-2.5-flash-lite");
 
 export const embeddingModel: EmbeddingModel = USE_GATEWAY
-  ? gateway.embeddingModel("google/text-embedding-004")
-  : getEmbeddingModelWithQuotaFallback("text-embedding-004");
+  ? gateway.embeddingModel("google/gemini-embedding-001")
+  : getEmbeddingModelWithQuotaFallback("gemini-embedding-001");

@@ -1,7 +1,9 @@
-import { connectMongoose } from "@/lib/db";
-import { ItemModel } from "@/lib/models";
-import { embedManyTexts } from "@/lib/ai/embed";
-import { logger } from "@/lib/logger";
+import path from "node:path";
+import { loadEnvConfig } from "@next/env";
+
+// Load .env and .env.local matching Next.js resolution rules
+loadEnvConfig(process.cwd());
+loadEnvConfig(path.resolve(process.cwd(), "apps/web"));
 
 /**
  * Replaces every item's embedding with a real model embedding.
@@ -9,6 +11,11 @@ import { logger } from "@/lib/logger";
  * rank seeded items arbitrarily. Run this once with a live key before demoing: npm run db:reembed
  */
 async function main(): Promise<void> {
+  const { connectMongoose } = await import("@/lib/db");
+  const { ItemModel } = await import("@/lib/models");
+  const { embedManyTexts } = await import("@/lib/ai/embed");
+  const { logger } = await import("@/lib/logger");
+
   await connectMongoose();
   const items = await ItemModel.find({}).select("_id title content");
   if (items.length === 0) {

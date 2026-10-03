@@ -6,10 +6,10 @@ import type { LanguageModel, EmbeddingModel } from "ai";
  * Model Registry — single source of truth for all AI model references.
  * Sole owner: Agent C (Manifest item 29)
  *
- * The default route is Vercel AI Gateway (zero markup, unified observability, BYOK supported).
- * Set USE_GATEWAY = false below to route directly to @ai-sdk/google instead.
+ * The default route is Vercel AI Gateway when AI_GATEWAY_API_KEY is present,
+ * or direct to @ai-sdk/google when using GOOGLE_GENERATIVE_AI_API_KEY.
  */
-export const USE_GATEWAY = true;
+export const USE_GATEWAY = Boolean(process.env.AI_GATEWAY_API_KEY);
 
 /**
  * Helper to detect quota exhaustion or rate limits from Gemini / Google APIs.

@@ -277,7 +277,7 @@ export async function seed(): Promise<void> {
   const seedAiRuns = [
     {
       feature: "chat" as const,
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       inputTokens: 120,
       outputTokens: 85,
       reasoningTokens: 32,
@@ -289,7 +289,7 @@ export async function seed(): Promise<void> {
     },
     {
       feature: "extract" as const,
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       inputTokens: 350,
       outputTokens: 110,
       reasoningTokens: 0,
@@ -301,7 +301,7 @@ export async function seed(): Promise<void> {
     },
     {
       feature: "embed" as const,
-      model: "text-embedding-004",
+      model: "gemini-embedding-001",
       inputTokens: 240,
       outputTokens: 0,
       reasoningTokens: 0,
@@ -313,7 +313,7 @@ export async function seed(): Promise<void> {
     },
     {
       feature: "rag" as const,
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       inputTokens: 850,
       outputTokens: 220,
       reasoningTokens: 64,
@@ -325,7 +325,7 @@ export async function seed(): Promise<void> {
     },
     {
       feature: "chat" as const,
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       inputTokens: 150,
       outputTokens: 0,
       reasoningTokens: 0,

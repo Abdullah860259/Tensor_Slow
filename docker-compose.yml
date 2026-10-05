@@ -2,6 +2,7 @@ services:
   atlas-local:
     image: mongodb/mongodb-atlas-local:8.0
     container_name: aicon-atlas-local
+    hostname: aicon-atlas-local
     environment:
       - DO_NOT_TRACK=1
       - MONGODB_INITDB_DATABASE=aicon

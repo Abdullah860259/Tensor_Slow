@@ -134,6 +134,9 @@ GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-api-key"
 # Secondary Gemini API Key (automatic fallback if primary encounters 429 quota exhaustion)
 GOOGLE_GENERATIVE_AI_API_KEY_B=""
 
+# OpenRouter fallback for free model endpoints
+OPENROUTER_API_KEY=""
+
 # Vercel AI Gateway Key (optional BYOK routing)
 AI_GATEWAY_API_KEY=""
 

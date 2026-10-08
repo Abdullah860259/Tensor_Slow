@@ -5,8 +5,7 @@ import { auth } from "@/lib/auth";
 import { ItemCreateInputSchema } from "@/lib/contracts";
 import { connectMongoose } from "@/lib/db";
 import { ItemModel } from "@/lib/models";
-import { extractStructuredData } from "@/lib/ai/extract";
-import { embedText } from "@/lib/ai/embed";
+import { processItem } from "@/lib/items/process";
 import { logger } from "@/lib/logger";
 
 /**
@@ -119,59 +118,40 @@ export async function POST(req: Request): Promise<Response> {
   const contentToProcess = content && content.trim().length > 0 ? content : title;
 
   try {
-    const [extractionRes, embeddingRes] = await Promise.allSettled([
-      extractStructuredData(contentToProcess),
-      embedText(contentToProcess),
-    ]);
-
-    if (extractionRes.status === "fulfilled") {
-      aiSummary = extractionRes.value.summary;
-      aiTags = extractionRes.value.tags;
-    } else {
-      logger.warn("[items] AI structured extraction failed", {
-        error: String(extractionRes.reason),
-      });
-    }
-
-    if (embeddingRes.status === "fulfilled") {
-      embedding = embeddingRes.value;
-    } else {
-      logger.warn("[items] Text embedding failed", {
-        error: String(embeddingRes.reason),
-      });
-    }
-
-    status = extractionRes.status === "fulfilled" ? "processed" : "pending";
-  } catch (aiErr) {
-    logger.warn("[items] AI processing error", { error: String(aiErr) });
-    status = "pending";
-  }
-
-  try {
     await connectMongoose();
 
     const item = await ItemModel.create({
       ownerId, // Enforce session ownerId
       title,
-      content,
+      content: contentToProcess,
       sourceUrl,
       mime,
-      status,
-      aiSummary,
-      aiTags,
-      embedding,
+      status: "pending",
+      aiTags: [],
     });
+    
+    const id = item._id.toString();
+    
+    // Call the shared process pipeline so domain fields (category, severity, score, fields) are properly populated
+    await processItem(id, ownerId);
+    
+    // Re-fetch the item to get the fully processed fields
+    const processedItem = await ItemModel.findById(id).lean();
 
     const responseItem = {
-      id: item._id.toString(),
-      title: item.title,
-      content: item.content,
-      sourceUrl: item.sourceUrl,
-      mime: item.mime,
-      status: item.status,
-      aiSummary: item.aiSummary,
-      aiTags: item.aiTags ?? [],
-      createdAt: item.createdAt,
+      id: processedItem?._id.toString() || id,
+      title: processedItem?.title || title,
+      content: processedItem?.content || contentToProcess,
+      sourceUrl: processedItem?.sourceUrl || sourceUrl,
+      mime: processedItem?.mime || mime,
+      status: processedItem?.status || "pending",
+      aiSummary: processedItem?.aiSummary,
+      aiTags: processedItem?.aiTags ?? [],
+      category: processedItem?.category,
+      severity: processedItem?.severity,
+      score: processedItem?.score,
+      fields: processedItem?.fields,
+      createdAt: processedItem?.createdAt,
     };
 
     return Response.json(

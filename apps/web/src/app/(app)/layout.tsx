@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   LogOut,
@@ -40,11 +41,12 @@ export default function AppLayout({
     session?.user && ("isAnonymous" in session.user ? session.user.isAnonymous : false)
   );
 
+  const router = useRouter();
   const handleSignOut = async () => {
     try {
       setSigningOut(true);
       await authClient.signOut();
-      window.location.href = "/";
+      router.push("/");
     } catch {
       toast.error("Failed to sign out");
       setSigningOut(false);

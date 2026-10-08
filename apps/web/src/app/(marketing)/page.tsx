@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ArrowRight, Sparkles, Shield, Database, Cpu, Loader2, AlertCircle, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { PreviewCard } from "@/components/marketing/preview-card";
 import { domain } from "@/lib/domain";
 
 export default function MarketingPage(): React.JSX.Element {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function MarketingPage(): React.JSX.Element {
         setLoading(false);
         return;
       }
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to start anonymous session.");
       setLoading(false);
@@ -42,7 +44,7 @@ export default function MarketingPage(): React.JSX.Element {
         setDemoLoading(false);
         return;
       }
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign in as demo user.");
       setDemoLoading(false);

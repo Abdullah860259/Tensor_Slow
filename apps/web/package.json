@@ -21,6 +21,7 @@
   "dependencies": {
     "@ai-sdk/gateway": "4.0.96",
     "@ai-sdk/google": "4.0.82",
+    "@ai-sdk/openai": "^4.0.89",
     "@ai-sdk/react": "4.0.121",
     "@sentry/nextjs": "^11.0.0",
     "@upstash/ratelimit": "^2.0.5",

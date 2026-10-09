@@ -48,6 +48,27 @@ function getCandidateFields(value: unknown): CandidateFields {
   };
 }
 
+function extractCandidateSummary(item: {
+  aiSummary?: string | null;
+  content?: string | null;
+  fields?: unknown;
+}): string | undefined {
+  if (item.aiSummary && typeof item.aiSummary === "string" && item.aiSummary.trim().length > 0) {
+    return item.aiSummary.trim();
+  }
+  const fields = getCandidateFields(item.fields);
+  if (fields.verdict && typeof fields.verdict === "string" && fields.verdict.trim().length > 0) {
+    return fields.verdict.trim();
+  }
+  if (item.content && typeof item.content === "string") {
+    const summaryMatch = item.content.match(/^\s*Summary:\s*(.+)$/im)?.[1]?.trim();
+    if (summaryMatch) return summaryMatch;
+    const headlineMatch = item.content.match(/^\s*Headline:\s*(.+)$/im)?.[1]?.trim();
+    if (headlineMatch) return headlineMatch;
+  }
+  return undefined;
+}
+
 function timestamp(value: unknown): number {
   if (value instanceof Date) return value.getTime();
   if (typeof value === "string" || typeof value === "number") {
@@ -329,16 +350,20 @@ export default async function DashboardPage({
               </div>
             ) : (
               <CandidateLeaderboard
-                candidates={rows.map((item) => ({
-                  id: String(item._id),
-                  title: candidateDisplayName(item.title),
-                  headline: extractHeadline(item.content),
-                  score: typeof item.score === "number" ? item.score : undefined,
-                  status: item.status,
-                  category: item.category,
-                  aiTags: item.aiTags,
-                  yearsOfExperience: getCandidateFields(item.fields).yearsOfExperience,
-                }))}
+                candidates={rows.map((item) => {
+                  const fields = getCandidateFields(item.fields);
+                  return {
+                    id: String(item._id),
+                    title: candidateDisplayName(item.title),
+                    headline: extractHeadline(item.content),
+                    summary: extractCandidateSummary(item),
+                    score: typeof item.score === "number" ? item.score : undefined,
+                    status: item.status,
+                    category: item.category,
+                    aiTags: item.aiTags,
+                    yearsOfExperience: fields.yearsOfExperience,
+                  };
+                })}
               />
             )}
 

@@ -1,8 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { formatYears, getScoreStyle, getStatusStyle, pad2 } from "@/lib/candidate-ui";
-import { FitBadge, ScoreBar } from "@/components/ui/foundry";
+import { clampScore, formatYears, getScoreStyle, getStatusStyle } from "@/lib/candidate-ui";
+import { FitBadge } from "@/components/ui/foundry";
 
 /**
  * Presentational only: no data fetching, no hooks, so it stays a React Server
@@ -13,6 +13,7 @@ export type LeaderboardCandidate = {
   id: string;
   title: string;
   headline?: string;
+  summary?: string;
   score?: number;
   status: string;
   category?: string;
@@ -22,9 +23,42 @@ export type LeaderboardCandidate = {
 
 const FIT_LABELS = new Set(["Strong Fit", "Potential", "Unqualified"]);
 
-function rankTone(index: number, scored: boolean): string {
-  if (!scored) return "text-zinc-700";
-  return index < 3 ? "text-zinc-200" : "text-zinc-500";
+function RankBadge({ rank }: { rank: number }): React.JSX.Element {
+  if (rank === 1) {
+    return (
+      <span
+        title="Rank 1 · Top Match"
+        className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-amber-500/35 bg-gradient-to-b from-amber-500/20 to-amber-500/5 px-2 font-mono text-xs font-semibold text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+      >
+        1
+      </span>
+    );
+  }
+  if (rank === 2) {
+    return (
+      <span
+        title="Rank 2"
+        className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-slate-300/35 bg-gradient-to-b from-slate-300/20 to-slate-400/5 px-2 font-mono text-xs font-semibold text-slate-200"
+      >
+        2
+      </span>
+    );
+  }
+  if (rank === 3) {
+    return (
+      <span
+        title="Rank 3"
+        className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-amber-700/35 bg-gradient-to-b from-amber-700/20 to-amber-800/5 px-2 font-mono text-xs font-semibold text-amber-500"
+      >
+        3
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex h-6 min-w-6 items-center justify-center px-1.5 font-mono text-xs text-zinc-500 tabular-nums">
+      {rank}
+    </span>
+  );
 }
 
 export function CandidateLeaderboard({
@@ -80,7 +114,8 @@ export function CandidateLeaderboard({
               const scoreStyle = getScoreStyle(candidate.score);
               const status = getStatusStyle(candidate.status);
               const tags = candidate.aiTags ?? [];
-              const subline =
+              const displaySummary =
+                candidate.summary ||
                 candidate.headline ||
                 (candidate.category && !FIT_LABELS.has(candidate.category)
                   ? candidate.category
@@ -93,41 +128,58 @@ export function CandidateLeaderboard({
                   className="tr-fade border-b border-border/70 transition-colors last:border-b-0 hover:bg-white/[0.025]"
                 >
                   <td className="px-4 py-3.5 align-middle">
-                    <span className="flex items-center gap-2.5">
-                      <span
-                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.dot}`}
-                        aria-hidden="true"
-                      />
-                      <span className="sr-only">{status.label}, rank</span>
-                      <span
-                        className={`font-mono text-sm tabular-nums ${rankTone(index, hasScore)}`}
-                      >
-                        #{pad2(index + 1)}
-                      </span>
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <RankBadge rank={index + 1} />
+                      {candidate.status !== "processed" && (
+                        <span
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.dot}`}
+                          title={status.label}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
                   </td>
 
-                  <td className="max-w-[320px] px-2 py-3.5 align-middle">
-                    <Link
-                      href={`/items/${candidate.id}`}
-                      className="block truncate text-sm font-medium text-white transition-colors hover:text-zinc-300 hover:underline hover:underline-offset-4 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                      {candidate.title}
-                    </Link>
-                    {subline && (
-                      <span className="mt-0.5 block truncate text-xs text-zinc-400">{subline}</span>
-                    )}
+                  <td className="max-w-[360px] px-2 py-3.5 align-middle">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/items/${candidate.id}`}
+                          className="truncate text-sm font-semibold text-white transition-colors hover:text-blue-400 hover:underline hover:underline-offset-4 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                        >
+                          {candidate.title}
+                        </Link>
+                        {candidate.status !== "processed" && (
+                          <span
+                            className={`inline-flex items-center gap-1 font-mono text-[10px] font-medium ${status.text}`}
+                          >
+                            <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden="true" />
+                            {status.label}
+                          </span>
+                        )}
+                      </div>
+                      {displaySummary && (
+                        <p className="line-clamp-2 text-xs leading-relaxed text-zinc-400 font-normal">
+                          {displaySummary}
+                        </p>
+                      )}
+                    </div>
                   </td>
 
                   <td className="px-2 py-3.5 align-middle">
-                    <span className="flex items-center gap-3">
-                      <ScoreBar score={candidate.score} segments={10} className="w-24" />
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-1.5 w-24 overflow-hidden rounded-full bg-zinc-800">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${hasScore ? scoreStyle.bar : "bg-transparent"}`}
+                          style={{ width: `${Math.max(hasScore ? 4 : 0, clampScore(candidate.score))}%` }}
+                        />
+                      </div>
                       <span
-                        className={`w-10 font-mono text-sm font-semibold tabular-nums ${scoreStyle.text}`}
+                        className={`w-10 font-mono text-xs font-semibold tabular-nums ${scoreStyle.text}`}
                       >
                         {hasScore ? `${Math.round(candidate.score as number)}%` : "--"}
                       </span>
-                    </span>
+                    </div>
                   </td>
 
                   <td className="px-2 py-3.5 align-middle font-mono text-sm text-zinc-200 tabular-nums">

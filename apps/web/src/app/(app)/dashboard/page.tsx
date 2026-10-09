@@ -2,40 +2,30 @@ import React from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import {
-  ArrowRight,
   BadgeCheck,
   BriefcaseBusiness,
   FileText,
   Gauge,
-  Plus,
   Search,
   Sparkles,
   Users,
-  Trophy,
-  Medal,
-  Award
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectMongoose } from "@/lib/db";
-import { ItemModel } from "@/lib/models";
-import { processItem } from "@/lib/items/process";
+import { ItemModel, JobCriteriaModel } from "@/lib/models";
 import { domain } from "@/lib/domain";
-import { logger } from "@/lib/logger";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { candidateDisplayName, extractHeadline } from "@/lib/candidate-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ImportCandidateButton } from "./import-candidate-button";
-import { JobCriteriaModal } from "./job-criteria-modal";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { JobCriteriaModal, type ActiveCriteria } from "./job-criteria-modal";
 import { CandidateLeaderboard } from "./candidate-leaderboard";
 
 const L = domain.labels;
+
 const SELECT_CLASS =
-  "h-10 rounded-lg border border-input bg-background/50 backdrop-blur-md px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+  "h-9 rounded-md border border-input bg-well px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none";
 
 type CandidateFields = {
   strengths: string[];
@@ -52,14 +42,10 @@ function getCandidateFields(value: unknown): CandidateFields {
   const fields = value as Record<string, unknown>;
   return {
     strengths: Array.isArray(fields.strengths)
-      ? fields.strengths.filter(
-          (entry): entry is string => typeof entry === "string",
-        )
+      ? fields.strengths.filter((entry): entry is string => typeof entry === "string")
       : [],
     weaknesses: Array.isArray(fields.weaknesses)
-      ? fields.weaknesses.filter(
-          (entry): entry is string => typeof entry === "string",
-        )
+      ? fields.weaknesses.filter((entry): entry is string => typeof entry === "string")
       : [],
     verdict: typeof fields.verdict === "string" ? fields.verdict : undefined,
     yearsOfExperience:
@@ -79,110 +65,6 @@ function timestamp(value: unknown): number {
   return 0;
 }
 
-function initials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0] ?? "")
-    .join("")
-    .toUpperCase();
-}
-
-async function createItemAction(formData: FormData) {
-  "use server";
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect("/");
-
-  const title = formData.get("title")?.toString().trim();
-  const content = formData.get("content")?.toString().trim() || "";
-  if (!title) return;
-
-  await connectMongoose();
-  const created = await ItemModel.create({
-    ownerId: session.user.id,
-    title,
-    content,
-    status: "pending",
-    aiTags: [],
-  });
-  const id = created._id.toString();
-
-  try {
-    await processItem(id, session.user.id);
-  } catch (err) {
-    logger.warn("[dashboard] processItem threw", { error: String(err) });
-  }
-
-  revalidatePath("/dashboard");
-  redirect(`/items/${id}`);
-}
-
-function CreateForm({ idPrefix }: { idPrefix: string }): React.JSX.Element {
-  return (
-    <form action={createItemAction} className="space-y-4">
-      <div className="space-y-1.5">
-        <label
-          htmlFor={`${idPrefix}-title`}
-          className="text-muted-foreground text-xs font-medium"
-        >
-          Candidate name and role
-        </label>
-        <Input
-          id={`${idPrefix}-title`}
-          name="title"
-          required
-          placeholder={L.titlePlaceholder}
-          className="text-sm bg-background/50 backdrop-blur-sm"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label
-          htmlFor={`${idPrefix}-content`}
-          className="text-muted-foreground text-xs font-medium"
-        >
-          LinkedIn profile text
-        </label>
-        <Textarea
-          id={`${idPrefix}-content`}
-          name="content"
-          placeholder={L.contentPlaceholder}
-          className="min-h-[140px] text-sm bg-background/50 backdrop-blur-sm"
-        />
-      </div>
-      <div className="flex justify-end">
-        <Button type="submit" size="sm" className="cursor-pointer gap-1.5 shadow-md">
-          <Sparkles className="h-3.5 w-3.5" />
-          {L.createCta}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-function scoreTone(score: number | undefined): string {
-  if (score === undefined) return "bg-muted text-muted-foreground";
-  if (score >= 80)
-    return "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
-  if (score >= 60) return "bg-amber-500/20 text-amber-700 dark:text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]";
-  return "bg-rose-500/20 text-rose-700 dark:text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.2)]";
-}
-
-const rankStyles = (index: number, score?: number) => {
-  if (score === undefined) return "bg-white/40 dark:bg-black/40 border-white/20";
-  if (index === 0) return "bg-gradient-to-r from-amber-500/10 to-yellow-500/5 border-amber-500/30 shadow-[0_8px_30px_rgba(245,158,11,0.15)]";
-  if (index === 1) return "bg-gradient-to-r from-slate-400/10 to-gray-400/5 border-slate-400/30 shadow-[0_8px_30px_rgba(148,163,184,0.1)]";
-  if (index === 2) return "bg-gradient-to-r from-orange-600/10 to-red-600/5 border-orange-600/30 shadow-[0_8px_30px_rgba(234,88,12,0.1)]";
-  return "bg-white/40 dark:bg-black/40 border-white/20 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
-};
-
-const rankIcon = (index: number) => {
-  if (index === 0) return <Trophy className="h-6 w-6 text-amber-500 drop-shadow-md" />;
-  if (index === 1) return <Medal className="h-6 w-6 text-slate-400 drop-shadow-md" />;
-  if (index === 2) return <Award className="h-6 w-6 text-orange-500 drop-shadow-md" />;
-  return <span className="text-lg font-bold text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>;
-};
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -193,10 +75,25 @@ export default async function DashboardPage({
   if (!session?.user) redirect("/");
 
   await connectMongoose();
-  const all = await ItemModel.find({ ownerId: session.user.id })
-    .sort({ createdAt: -1 })
-    .limit(500)
-    .lean();
+  const [all, activeDoc] = await Promise.all([
+    ItemModel.find({ ownerId: session.user.id }).sort({ createdAt: -1 }).limit(500).lean(),
+    JobCriteriaModel.findOne({ ownerId: session.user.id, isActive: true }).lean(),
+  ]);
+
+  // Serialize for the client modal (ObjectIds and Mongoose internals can't cross the boundary).
+  const activeCriteria: ActiveCriteria | null = activeDoc
+    ? {
+        _id: String(activeDoc._id),
+        roleTitle: activeDoc.roleTitle,
+        rawRequirements: activeDoc.rawRequirements ?? "",
+        expandedCriteria: activeDoc.expandedCriteria ?? "",
+        rubric: activeDoc.rubric ? JSON.parse(JSON.stringify(activeDoc.rubric)) : undefined,
+        isActive: true,
+      }
+    : null;
+  const mustHaveCount = activeCriteria?.rubric?.mustHave?.length ?? 0;
+  const niceToHaveCount = activeCriteria?.rubric?.niceToHave?.length ?? 0;
+  const redFlagCount = activeCriteria?.rubric?.redFlags?.length ?? 0;
 
   const needle = q.trim().toLowerCase();
   const rows = all
@@ -205,12 +102,7 @@ export default async function DashboardPage({
       return (
         (!status || item.status === status) &&
         (!needle ||
-          [
-            item.title,
-            item.aiSummary ?? "",
-            fields.verdict ?? "",
-            ...(item.aiTags ?? []),
-          ]
+          [item.title, item.aiSummary ?? "", fields.verdict ?? "", ...(item.aiTags ?? [])]
             .join(" ")
             .toLowerCase()
             .includes(needle))
@@ -228,164 +120,159 @@ export default async function DashboardPage({
   ).length;
   const scored = all.filter((item) => typeof item.score === "number");
   const avgScore = scored.length
-    ? Math.round(
-        scored.reduce((sum, item) => sum + (item.score ?? 0), 0) /
-          scored.length,
-      )
+    ? Math.round(scored.reduce((sum, item) => sum + (item.score ?? 0), 0) / scored.length)
     : null;
   const filtering = Boolean(q || status);
 
   const kpis = [
-    { label: "In your pipeline", value: all.length, icon: Users },
+    { label: "In pipeline", value: all.length, icon: Users },
     { label: "AI evaluated", value: analyzed, icon: BadgeCheck },
-    { label: "Top matches (80%+)", value: topMatches, icon: Sparkles },
-    {
-      label: "Average match",
-      value: avgScore === null ? "—" : `${avgScore}%`,
-      icon: Gauge,
-    },
+    { label: "Top matches (80+)", value: topMatches, icon: Sparkles },
+    { label: "Average match", value: avgScore === null ? "--" : `${avgScore}%`, icon: Gauge },
   ];
 
   return (
-    <div className="space-y-10 pb-10">
-      <section className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="text-primary flex items-center gap-2 text-xs font-semibold tracking-[0.16em] uppercase drop-shadow-sm">
-            <span className="bg-primary h-1.5 w-1.5 rounded-full shadow-[0_0_8px_currentColor]" /> TalentRank AI
-          </p>
-          <div>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-              Talent pipeline
-            </h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl text-base font-medium">
-              {L.tagline}
-            </p>
-          </div>
+    <div className="mx-auto w-full max-w-7xl space-y-6 pb-10">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">{L.product}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            Talent pipeline
+          </h1>
+          <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">{L.tagline}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <JobCriteriaModal />
+        <div className="flex flex-wrap items-center gap-2">
+          <JobCriteriaModal initialCriteria={activeCriteria} />
           <ImportCandidateButton />
-          {all.length > 0 && (
-            <details className="group relative shrink-0">
-              <summary className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex cursor-pointer list-none items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-lg transition-all hover:scale-105 hover:shadow-xl select-none">
-                <Plus className="h-4 w-4" /> Add candidate
-              </summary>
-              <div className="border-border bg-card/80 backdrop-blur-2xl absolute top-full right-0 z-30 mt-3 w-80 max-w-[calc(100vw_-_2rem)] rounded-3xl border p-6 shadow-2xl sm:w-96">
-                <h2 className="mb-5 font-bold text-lg">Evaluate a candidate</h2>
-                <CreateForm idPrefix="top" />
-              </div>
-            </details>
-          )}
         </div>
+      </header>
+
+      {/* Active job criteria */}
+      <section
+        aria-label="Active job criteria"
+        className="flex flex-col gap-3 rounded-md border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        {activeCriteria ? (
+          <>
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Active role</p>
+                <p className="truncate text-sm font-medium text-white">{activeCriteria.roleTitle}</p>
+              </div>
+            </div>
+            <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs">
+              <div className="flex items-baseline gap-1.5">
+                <dd className="text-sm font-semibold text-emerald-400 tabular-nums">{mustHaveCount}</dd>
+                <dt className="text-muted-foreground">must-have</dt>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <dd className="text-sm font-semibold text-blue-400 tabular-nums">{niceToHaveCount}</dd>
+                <dt className="text-muted-foreground">nice-to-have</dt>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <dd className="text-sm font-semibold text-rose-400 tabular-nums">{redFlagCount}</dd>
+                <dt className="text-muted-foreground">red flags</dt>
+              </div>
+            </dl>
+          </>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-medium text-white">No active role</p>
+              <p className="text-xs text-muted-foreground">
+                Set job criteria so candidates are scored against your requirements.
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {all.length === 0 ? (
-        <section className="border-border bg-card/40 backdrop-blur-xl mx-auto w-full max-w-xl rounded-[2.5rem] border border-dashed p-8 text-center sm:p-12 shadow-xl">
-          <div className="bg-primary/10 text-primary mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-3xl shadow-inner">
-            <BriefcaseBusiness className="h-8 w-8" />
+        <section className="mx-auto w-full max-w-xl rounded-md border border-dashed border-border bg-card px-6 py-12 text-center">
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-border bg-well text-muted-foreground">
+            <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight">
-            Start building your talent pipeline
-          </h2>
-          <p className="text-muted-foreground mx-auto mt-3 max-w-md text-base leading-relaxed font-medium">
-            Add a candidate&apos;s LinkedIn profile to get an AI match score,
-            experience estimate, and interview recommendation.
+          <h2 className="text-lg font-semibold tracking-tight text-white">No candidates yet</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+            Paste a profile, upload a resume or scrape a LinkedIn URL to get a match score, an
+            experience estimate and a hiring recommendation.
           </p>
-          <Card className="mt-8 text-left shadow-2xl rounded-[2rem] overflow-hidden border-border/50 bg-background/50 backdrop-blur-xl">
-            <CardContent className="p-6 sm:p-8">
-              <CreateForm idPrefix="first" />
-            </CardContent>
-          </Card>
+          <div className="mt-6 flex justify-center">
+            <ImportCandidateButton />
+          </div>
         </section>
       ) : (
         <>
           <section
             aria-label="Pipeline overview"
-            className="grid grid-cols-2 gap-4 lg:grid-cols-4"
+            className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-4"
           >
             {kpis.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="relative overflow-hidden rounded-[2rem] bg-white/40 dark:bg-black/40 border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 sm:p-6 transition-all hover:bg-white/50 dark:hover:bg-black/50 hover:scale-[1.02]">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/15 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-muted-foreground truncate text-xs font-bold uppercase tracking-widest">
-                      {label}
-                    </p>
-                    <p className="mt-1 text-2xl font-black tabular-nums drop-shadow-sm">
-                      {value}
-                    </p>
-                  </div>
+              <div key={label} className="flex items-center justify-between gap-3 bg-card px-4 py-3.5">
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-muted-foreground">{label}</p>
+                  <p className="mt-1 font-mono text-2xl font-semibold text-white tabular-nums">
+                    {value}
+                  </p>
                 </div>
+                <Icon className="h-4 w-4 shrink-0 text-zinc-600" aria-hidden="true" />
               </div>
             ))}
           </section>
 
-          <section aria-labelledby="leaderboard-heading" className="space-y-6">
-            <div className="border-border flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <section aria-labelledby="leaderboard-heading" className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2
-                    id="leaderboard-heading"
-                    className="text-2xl font-extrabold tracking-tight"
-                  >
-                    Candidate Leaderboard
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 id="leaderboard-heading" className="text-base font-semibold text-white">
+                    Candidate leaderboard
                   </h2>
-                  <Badge
-                    variant="secondary"
-                    className="rounded-full px-3 py-1 font-bold bg-secondary/50 backdrop-blur-md"
-                  >
-                    {rows.length} candidates
-                  </Badge>
+                  <span className="rounded border border-border bg-well px-1.5 py-0.5 font-mono text-[11px] text-zinc-300 tabular-nums">
+                    {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
+                  </span>
                 </div>
-                <p className="text-muted-foreground mt-2 text-sm font-medium">
-                  Ranked by AI match score, highest first
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ranked by match score, highest first
                 </p>
               </div>
-              <form method="get" className="flex flex-wrap items-end gap-3">
-                <div className="relative min-w-[220px] flex-1 sm:flex-none">
+
+              <form method="get" className="flex flex-wrap items-center gap-2">
+                <div className="relative">
                   <label htmlFor="q" className="sr-only">
                     Search candidates
                   </label>
-                  <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Search
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
                   <Input
                     id="q"
                     name="q"
                     defaultValue={q}
-                    placeholder="Search candidates"
-                    className="h-10 rounded-xl pl-9 text-sm sm:w-56 bg-background/50 backdrop-blur-md shadow-inner"
+                    placeholder="Search name, summary or tag"
+                    className="h-9 w-64 border-input bg-well pl-9 text-sm"
                   />
                 </div>
                 <div>
                   <label htmlFor="status" className="sr-only">
                     Status
                   </label>
-                  <select
-                    id="status"
-                    name="status"
-                    defaultValue={status}
-                    className={SELECT_CLASS}
-                  >
+                  <select id="status" name="status" defaultValue={status} className={SELECT_CLASS}>
                     <option value="">Any status</option>
                     <option value="processed">Evaluated</option>
                     <option value="pending">Pending</option>
                     <option value="failed">Failed</option>
                   </select>
                 </div>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="sm"
-                  className="h-10 gap-2 rounded-xl px-4 shadow-sm backdrop-blur-md bg-background/50 hover:bg-background/80"
-                >
-                  <Search className="h-4 w-4" />
-                  <span className="sr-only sm:not-sr-only">Filter</span>
+                <Button type="submit" variant="outline" size="sm" className="h-9 cursor-pointer">
+                  Apply
                 </Button>
                 {filtering && (
                   <Link
                     href="/dashboard"
-                    className="text-muted-foreground px-2 pb-2.5 text-xs font-semibold underline underline-offset-4 hover:text-foreground"
+                    className="px-1 text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-white"
                   >
                     Clear
                   </Link>
@@ -394,20 +281,19 @@ export default async function DashboardPage({
             </div>
 
             {rows.length === 0 ? (
-              <div className="border-border bg-card/40 backdrop-blur-xl rounded-[2rem] border border-dashed px-6 py-16 text-center shadow-inner">
-                <FileText className="text-muted-foreground/50 mx-auto h-12 w-12" />
-                <p className="mt-4 text-lg font-bold">
-                  No candidates match these filters
-                </p>
-                <p className="text-muted-foreground mt-2 text-sm font-medium">
-                  Try a different search or clear your filters.
+              <div className="rounded-md border border-dashed border-border bg-card px-6 py-14 text-center">
+                <FileText className="mx-auto h-8 w-8 text-zinc-600" aria-hidden="true" />
+                <p className="mt-3 text-sm font-medium text-white">No candidates match these filters</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Try a different search or clear the filters.
                 </p>
               </div>
             ) : (
               <CandidateLeaderboard
                 candidates={rows.map((item) => ({
                   id: String(item._id),
-                  title: item.title,
+                  title: candidateDisplayName(item.title),
+                  headline: extractHeadline(item.content),
                   score: typeof item.score === "number" ? item.score : undefined,
                   status: item.status,
                   category: item.category,
@@ -416,8 +302,9 @@ export default async function DashboardPage({
                 }))}
               />
             )}
-            <p className="text-muted-foreground text-right text-xs font-semibold tracking-wide">
-              Showing {rows.length} of {all.length} candidates
+
+            <p className="text-right font-mono text-xs text-muted-foreground tabular-nums">
+              Showing {rows.length} of {all.length}
             </p>
           </section>
         </>

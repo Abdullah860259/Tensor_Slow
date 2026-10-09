@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
-  Sparkles,
-  Target,
-  SlidersHorizontal,
-  Loader2,
-  CheckCircle2,
   AlertTriangle,
+  CheckCircle2,
   HelpCircle,
+  Loader2,
   RotateCcw,
   Save,
-  Check,
+  Sparkles,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +27,17 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-interface Rubric {
+export interface Rubric {
+  roleSummary?: string;
   mustHave?: string[];
   niceToHave?: string[];
   redFlags?: string[];
   scoringGuidelines?: string;
   interviewQuestions?: string[];
+  fullCriteriaPrompt?: string;
 }
 
-interface ActiveCriteria {
+export interface ActiveCriteria {
   _id: string;
   roleTitle: string;
   rawRequirements: string;
@@ -45,44 +46,98 @@ interface ActiveCriteria {
   isActive: boolean;
 }
 
-export function JobCriteriaModal() {
+const INPUT_CLASS =
+  "border-input bg-well text-zinc-50 placeholder:text-zinc-500";
+
+type Tone = "emerald" | "blue" | "rose" | "slate";
+
+const TONE_CLASS: Record<Tone, string> = {
+  emerald: "text-emerald-400",
+  blue: "text-blue-400",
+  rose: "text-rose-400",
+  slate: "text-zinc-300",
+};
+
+function RubricList({
+  title,
+  items,
+  tone,
+  icon: Icon,
+  ordered = false,
+}: {
+  title: string;
+  items?: string[];
+  tone: Tone;
+  icon: LucideIcon;
+  ordered?: boolean;
+}): React.JSX.Element | null {
+  if (!items || items.length === 0) return null;
+  const ListTag = ordered ? "ol" : "ul";
+  return (
+    <div className="space-y-1.5">
+      <h4 className={`flex items-center gap-1.5 text-xs font-semibold ${TONE_CLASS[tone]}`}>
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+        {title}
+      </h4>
+      <ListTag
+        className={`space-y-1 pl-5 text-xs leading-relaxed text-zinc-300 ${
+          ordered ? "list-decimal" : "list-disc"
+        }`}
+      >
+        {items.map((item, idx) => (
+          <li key={`${idx}-${item}`}>{item}</li>
+        ))}
+      </ListTag>
+    </div>
+  );
+}
+
+export function JobCriteriaModal({
+  initialCriteria = null,
+}: {
+  initialCriteria?: ActiveCriteria | null;
+}) {
   const [open, setOpen] = useState(false);
-  const [activeCriteria, setActiveCriteria] = useState<ActiveCriteria | null>(null);
-  const [roleTitle, setRoleTitle] = useState("");
-  const [requirements, setRequirements] = useState("");
+  const [activeCriteria, setActiveCriteria] = useState<ActiveCriteria | null>(initialCriteria);
+  const [roleTitle, setRoleTitle] = useState(initialCriteria?.roleTitle ?? "");
+  const [requirements, setRequirements] = useState(initialCriteria?.rawRequirements ?? "");
+  const [generatedRubric, setGeneratedRubric] = useState<Rubric | null>(null);
+  const [expandedCriteriaText, setExpandedCriteriaText] = useState(
+    initialCriteria?.expandedCriteria ?? "",
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isRescoring, setIsRescoring] = useState(false);
-  const [generatedRubric, setGeneratedRubric] = useState<Rubric | null>(null);
-  const [expandedCriteriaText, setExpandedCriteriaText] = useState("");
   const router = useRouter();
 
-  const fetchActiveCriteria = async () => {
+  const fetchActiveCriteria = useCallback(async () => {
     try {
       const res = await fetch("/api/criteria");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.activeCriteria) {
-          setActiveCriteria(data.activeCriteria);
-          if (!roleTitle) setRoleTitle(data.activeCriteria.roleTitle);
-          if (!requirements) setRequirements(data.activeCriteria.rawRequirements);
-        }
-      }
+      if (!res.ok) return;
+      const data = await res.json();
+      const active: ActiveCriteria | null = data.activeCriteria ?? null;
+      if (!active) return;
+      setActiveCriteria(active);
+      setRoleTitle((prev) => prev || active.roleTitle);
+      setRequirements((prev) => prev || active.rawRequirements || "");
+      setExpandedCriteriaText((prev) => prev || active.expandedCriteria || "");
     } catch {
-      // Ignore background fetch error
+      // Background refresh only; the modal still works with what it has.
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (open) {
-      fetchActiveCriteria();
-    }
-  }, [open]);
+    if (open) void fetchActiveCriteria();
+  }, [open, fetchActiveCriteria]);
+
+  /** What the rubric panel shows: the unsaved draft if there is one, else the active rubric. */
+  const rubric: Rubric | null = generatedRubric ?? activeCriteria?.rubric ?? null;
+  const hasUnsavedDraft = generatedRubric !== null;
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!roleTitle.trim() || !requirements.trim()) {
-      toast.error("Please provide both a Role Title and rough requirements.");
+      toast.error("Enter a role title and some requirements first.");
       return;
     }
 
@@ -97,25 +152,25 @@ export function JobCriteriaModal() {
           requirements: requirements.trim(),
         }),
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Failed to generate criteria.");
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to generate criteria.");
-      }
-
-      setGeneratedRubric(data.criteria);
-      setExpandedCriteriaText(data.criteria.fullCriteriaPrompt || data.criteria.scoringGuidelines);
-      toast.success("AI has expanded your requirements into a comprehensive scoring rubric!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to expand criteria.");
+      setGeneratedRubric(data.criteria as Rubric);
+      setExpandedCriteriaText(
+        data.criteria?.fullCriteriaPrompt || data.criteria?.scoringGuidelines || "",
+      );
+      toast.success("Rubric generated. Review it, then apply it as the active criteria.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to generate criteria.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleSaveActive = async () => {
-    if (!roleTitle.trim() || (!expandedCriteriaText.trim() && !activeCriteria?.expandedCriteria)) {
-      toast.error("No criteria generated to save.");
+    const criteriaText = expandedCriteriaText.trim() || activeCriteria?.expandedCriteria || "";
+    if (!roleTitle.trim() || !criteriaText) {
+      toast.error("Generate a rubric before applying it.");
       return;
     }
 
@@ -128,19 +183,19 @@ export function JobCriteriaModal() {
           action: "save",
           roleTitle: roleTitle.trim(),
           requirements: requirements.trim(),
-          expandedCriteria: expandedCriteriaText.trim() || activeCriteria?.expandedCriteria,
-          rubric: generatedRubric || activeCriteria?.rubric,
+          expandedCriteria: criteriaText,
+          rubric: generatedRubric ?? activeCriteria?.rubric,
         }),
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Failed to save criteria.");
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save criteria.");
-
-      toast.success(`Active criteria set to: ${roleTitle}!`);
+      toast.success(`Active criteria set to ${roleTitle.trim()}.`);
+      setGeneratedRubric(null);
       await fetchActiveCriteria();
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Error saving criteria.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save criteria.");
     } finally {
       setIsSaving(false);
     }
@@ -154,202 +209,226 @@ export function JobCriteriaModal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "rescore_all" }),
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Failed to re-score candidates.");
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to re-score candidates.");
-
-      toast.success(data.message || "Leaderboard re-scored against new criteria!");
+      toast.success(data?.message || "Pipeline re-scored against the active criteria.");
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Error re-scoring candidates.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to re-score candidates.");
     } finally {
       setIsRescoring(false);
     }
   };
 
+  const busy = isGenerating || isSaving || isRescoring;
+
   return (
-    <React.Fragment>
+    <>
       <Button
         onClick={() => setOpen(true)}
         variant="outline"
-        className="h-9 cursor-pointer gap-2 rounded-lg border-zinc-800 bg-zinc-900/80 px-3.5 text-sm font-medium text-zinc-200 shadow-sm transition-colors hover:bg-zinc-800 hover:text-zinc-50"
+        className="h-9 cursor-pointer gap-2 border-input bg-transparent text-zinc-200 hover:bg-secondary hover:text-white"
       >
-        <Target className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-        <span className="truncate max-w-[140px] sm:max-w-[200px]">
-          {activeCriteria?.roleTitle ? `Role: ${activeCriteria.roleTitle}` : "Job Criteria"}
-        </span>
+        <Target className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        Job criteria
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto gap-0 rounded-2xl border border-zinc-800/80 bg-zinc-900 p-6 text-zinc-50 shadow-2xl sm:max-w-[680px]">
-          <DialogHeader className="space-y-1.5 text-left">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs">
-                AI Rubric Engine
-              </Badge>
-              {activeCriteria?.roleTitle && (
-                <span className="text-xs text-zinc-400">
-                  Active: <strong className="text-zinc-200">{activeCriteria.roleTitle}</strong>
-                </span>
+        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-[720px]">
+          <DialogHeader className="space-y-1 text-left">
+            <div className="flex flex-wrap items-center gap-2">
+              {hasUnsavedDraft ? (
+                <Badge
+                  variant="outline"
+                  className="border-amber-800/60 bg-amber-950/60 text-[11px] font-medium text-amber-300"
+                >
+                  Draft, not applied
+                </Badge>
+              ) : activeCriteria ? (
+                <Badge
+                  variant="outline"
+                  className="border-emerald-800/60 bg-emerald-950/60 text-[11px] font-medium text-emerald-300"
+                >
+                  Active: {activeCriteria.roleTitle}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="border-zinc-700 bg-zinc-800 text-[11px] font-medium text-zinc-400"
+                >
+                  No active role
+                </Badge>
               )}
             </div>
-            <DialogTitle className="text-xl font-bold tracking-tight text-zinc-50">
-              Target Job Requirements & Evaluation Criteria
+            <DialogTitle className="text-lg font-semibold tracking-tight text-white">
+              Job criteria
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
-              Input your raw job requirements or role context. AI will generate a strict, comprehensive rubric to score and rank candidates against.
+            <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+              Describe the role in rough notes. AI expands them into a scoring rubric that every
+              candidate is evaluated against.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleGenerate} className="mt-5 space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="role-title" className="text-xs font-semibold text-zinc-300">
-                Target Role Title <span className="text-rose-400">*</span>
+              <label htmlFor="role-title" className="text-xs font-medium text-zinc-300">
+                Role title <span className="text-rose-400">*</span>
               </label>
               <Input
                 id="role-title"
                 type="text"
-                placeholder="e.g. Senior Full Stack AI Engineer, Lead Product Designer"
+                placeholder="e.g. Senior React / Next.js Engineer"
                 value={roleTitle}
                 onChange={(e) => setRoleTitle(e.target.value)}
-                required
-                className="h-9 rounded-lg border-zinc-800 bg-zinc-950 text-zinc-50 placeholder:text-zinc-500 focus-visible:border-zinc-600 focus-visible:ring-zinc-600/40"
+                disabled={busy}
+                className={`h-9 ${INPUT_CLASS}`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label htmlFor="role-requirements" className="text-xs font-semibold text-zinc-300">
-                  Job Requirements, Stack & Notes <span className="text-rose-400">*</span>
-                </label>
-                <span className="text-[11px] text-zinc-500">Paste bullet points or rough thoughts</span>
-              </div>
+              <label htmlFor="role-requirements" className="text-xs font-medium text-zinc-300">
+                Requirements and notes <span className="text-rose-400">*</span>
+              </label>
               <Textarea
                 id="role-requirements"
-                required
                 rows={4}
-                placeholder="e.g. Must have 4+ years building with React & Next.js App Router. Deep experience integrating Gemini/OpenAI APIs for agentic workflows. Strong MongoDB and AWS cloud architecture. EdTech background is a strong plus..."
+                placeholder="e.g. 3+ years with React and Next.js App Router. Scalable cloud architecture. EdTech background is a strong plus. Avoid candidates with repeated tenures under a year."
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
-                className="min-h-[100px] resize-y rounded-lg border-zinc-800 bg-zinc-950 text-xs text-zinc-50 placeholder:text-zinc-500 focus-visible:border-zinc-600 focus-visible:ring-zinc-600/40"
+                disabled={busy}
+                className={`min-h-[100px] resize-y text-sm ${INPUT_CLASS}`}
               />
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end">
               <Button
                 type="submit"
-                disabled={isGenerating || !roleTitle.trim() || !requirements.trim()}
-                className="cursor-pointer gap-2 rounded-lg bg-zinc-50 text-zinc-950 hover:bg-zinc-200 disabled:opacity-50"
+                disabled={busy || !roleTitle.trim() || !requirements.trim()}
+                className="cursor-pointer gap-2"
               >
                 {isGenerating ? (
-                  <React.Fragment>
-                    <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
-                    Expanding Criteria with AI...
-                  </React.Fragment>
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                    Generating rubric...
+                  </>
                 ) : (
-                  <React.Fragment>
-                    <Sparkles className="h-4 w-4 text-emerald-600" />
-                    ✨ AI Expand Criteria
-                  </React.Fragment>
+                  <>
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    Generate rubric
+                  </>
                 )}
               </Button>
             </div>
           </form>
 
-          {/* Display Generated / Active Rubric */}
-          {(generatedRubric || activeCriteria?.rubric) && (
-            <div className="mt-6 space-y-4 rounded-xl border border-zinc-800 bg-zinc-950/80 p-5">
-              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                <h4 className="flex items-center gap-2 text-sm font-bold text-zinc-100">
-                  <SlidersHorizontal className="h-4 w-4 text-emerald-400" />
-                  Generated Candidate Evaluation Rubric
-                </h4>
-                <Badge variant="secondary" className="bg-zinc-800 text-zinc-300 text-[11px]">
-                  0-100 Match Rubric
-                </Badge>
+          {rubric && (
+            <div className="mt-6 space-y-4 rounded-md border border-border bg-well p-5">
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+                <h3 className="text-sm font-medium text-zinc-100">
+                  {hasUnsavedDraft ? "Generated rubric" : "Active rubric"}
+                </h3>
+                <span className="font-mono text-[11px] text-muted-foreground">Scored 0 to 100</span>
               </div>
 
-              {/* Must Haves */}
-              {((generatedRubric?.mustHave || activeCriteria?.rubric?.mustHave)?.length ?? 0) > 0 && (
-                <div className="space-y-1.5">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Mandatory Requirements (Must-Have)
-                  </span>
-                  <ul className="space-y-1 pl-4 text-xs text-zinc-300 list-disc">
-                    {(generatedRubric?.mustHave || activeCriteria?.rubric?.mustHave)?.map((item, idx) => (
-                      <li key={idx} className="leading-relaxed">{item}</li>
-                    ))}
-                  </ul>
-                </div>
+              {rubric.roleSummary && (
+                <p className="text-sm leading-relaxed text-zinc-300">{rubric.roleSummary}</p>
               )}
 
-              {/* Nice to Haves */}
-              {((generatedRubric?.niceToHave || activeCriteria?.rubric?.niceToHave)?.length ?? 0) > 0 && (
-                <div className="space-y-1.5">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                    <Sparkles className="h-3.5 w-3.5" /> Preferred Qualifications (Nice-to-Have)
-                  </span>
-                  <ul className="space-y-1 pl-4 text-xs text-zinc-300 list-disc">
-                    {(generatedRubric?.niceToHave || activeCriteria?.rubric?.niceToHave)?.map((item, idx) => (
-                      <li key={idx} className="leading-relaxed">{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <RubricList
+                title="Must-have (deal-breakers)"
+                items={rubric.mustHave}
+                tone="emerald"
+                icon={CheckCircle2}
+              />
+              <RubricList
+                title="Nice-to-have (bonus)"
+                items={rubric.niceToHave}
+                tone="blue"
+                icon={Sparkles}
+              />
+              <RubricList
+                title="Red flags"
+                items={rubric.redFlags}
+                tone="rose"
+                icon={AlertTriangle}
+              />
 
-              {/* Scoring Breakdown */}
-              {(generatedRubric?.scoringGuidelines || activeCriteria?.rubric?.scoringGuidelines) && (
-                <div className="space-y-1 rounded-lg border border-zinc-800/80 bg-zinc-900/60 p-3 text-xs">
-                  <span className="font-semibold text-zinc-200">Scoring Guidelines (0–100):</span>
-                  <p className="mt-1 text-zinc-400 leading-relaxed">
-                    {generatedRubric?.scoringGuidelines || activeCriteria?.rubric?.scoringGuidelines}
+              {rubric.scoringGuidelines && (
+                <div className="rounded-md border border-border bg-card p-3 text-xs">
+                  <h4 className="font-semibold text-zinc-200">Scoring guidelines</h4>
+                  <p className="mt-1 leading-relaxed whitespace-pre-line text-zinc-400">
+                    {rubric.scoringGuidelines}
                   </p>
                 </div>
               )}
 
-              {/* High-Signal Interview Questions */}
-              {((generatedRubric?.interviewQuestions || activeCriteria?.rubric?.interviewQuestions)?.length ?? 0) > 0 && (
-                <div className="space-y-1.5 pt-2 border-t border-zinc-800/80">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400 uppercase tracking-wider">
-                    <HelpCircle className="h-3.5 w-3.5" /> High-Signal Technical Screening Questions
-                  </span>
-                  <ol className="space-y-1 pl-4 text-xs text-zinc-300 list-decimal">
-                    {(generatedRubric?.interviewQuestions || activeCriteria?.rubric?.interviewQuestions)?.map((q, idx) => (
-                      <li key={idx} className="leading-relaxed">{q}</li>
-                    ))}
-                  </ol>
-                </div>
-              )}
+              <RubricList
+                title="Screening interview questions"
+                items={rubric.interviewQuestions}
+                tone="slate"
+                icon={HelpCircle}
+                ordered
+              />
 
-              {/* Actions: Save Active + Rescore */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleRescoreAll}
-                  disabled={isRescoring}
-                  className="cursor-pointer gap-2 rounded-lg border-zinc-800 bg-zinc-900 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50"
-                >
-                  {isRescoring ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <RotateCcw className="h-3.5 w-3.5" />
-                  )}
-                  Re-Score All Pipeline Candidates
-                </Button>
+              <details className="group rounded-md border border-border bg-card">
+                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-300 select-none [&::-webkit-details-marker]:hidden">
+                  Edit the evaluation prompt
+                </summary>
+                <div className="space-y-1.5 border-t border-border p-3">
+                  <label htmlFor="criteria-prompt" className="sr-only">
+                    Evaluation prompt
+                  </label>
+                  <Textarea
+                    id="criteria-prompt"
+                    rows={8}
+                    value={expandedCriteriaText}
+                    onChange={(e) => setExpandedCriteriaText(e.target.value)}
+                    disabled={busy}
+                    className={`min-h-[140px] resize-y font-mono text-xs leading-5 ${INPUT_CLASS}`}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    This text is injected into every candidate evaluation. Changes take effect when you
+                    apply the criteria.
+                  </p>
+                </div>
+              </details>
+
+              <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleRescoreAll}
+                    disabled={busy || hasUnsavedDraft || !activeCriteria}
+                    className="cursor-pointer gap-2 border-input bg-transparent text-xs text-zinc-200 hover:bg-secondary hover:text-white"
+                  >
+                    {isRescoring ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                    ) : (
+                      <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    {isRescoring ? "Re-scoring pipeline..." : "Re-score pipeline"}
+                  </Button>
+                  <p className="max-w-[300px] text-[11px] leading-relaxed text-muted-foreground">
+                    {hasUnsavedDraft
+                      ? "Apply the new criteria first, then re-score existing candidates."
+                      : "Re-scores every candidate one at a time. This can take a few minutes."}
+                  </p>
+                </div>
 
                 <Button
                   type="button"
                   onClick={handleSaveActive}
-                  disabled={isSaving}
-                  className="cursor-pointer gap-2 rounded-lg bg-emerald-500 text-zinc-950 font-semibold hover:bg-emerald-400 text-xs"
+                  disabled={busy}
+                  className="cursor-pointer gap-2 text-xs"
                 >
                   {isSaving ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                   ) : (
-                    <Save className="h-3.5 w-3.5" />
+                    <Save className="h-3.5 w-3.5" aria-hidden="true" />
                   )}
-                  Apply as Active Criteria
+                  Apply as active criteria
                 </Button>
               </div>
             </div>
@@ -360,13 +439,13 @@ export function JobCriteriaModal() {
               type="button"
               variant="ghost"
               onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-zinc-50"
+              className="cursor-pointer text-muted-foreground hover:text-white"
             >
               Close
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </React.Fragment>
+    </>
   );
 }

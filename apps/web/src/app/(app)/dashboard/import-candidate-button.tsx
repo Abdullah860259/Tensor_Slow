@@ -3,14 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Download,
-  Loader2,
-  FileText,
-  Link as LinkIcon,
-  UploadCloud,
-  Info,
-  CheckCircle2,
   FileCheck,
+  FileText,
+  Info,
+  Link as LinkIcon,
+  Loader2,
+  UploadCloud,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,333 +24,345 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CtaFrame, ctaPrimaryClass } from "@/components/hud/hud";
+
+type ImportTab = "paste" | "upload" | "url";
+
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+const INPUT_CLASS =
+  "h-9 border-input bg-well text-sm text-zinc-50 placeholder:text-zinc-500";
+const TAB_TRIGGER_CLASS =
+  "gap-1.5 text-xs font-medium text-muted-foreground data-[state=active]:bg-secondary data-[state=active]:text-white";
+
+/* -------------------------------------------------------------------------- */
+/* Shared field blocks (module level so inputs keep focus between renders)     */
+/* -------------------------------------------------------------------------- */
+
+function NameField({
+  id,
+  value,
+  onChange,
+  disabled,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+}): React.JSX.Element {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-xs font-medium text-zinc-300">
+        Candidate name <span className="text-muted-foreground">(optional)</span>
+      </label>
+      <Input
+        id={id}
+        type="text"
+        placeholder="e.g. Jane Doe"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={INPUT_CLASS}
+      />
+    </div>
+  );
+}
+
+function FormFooter({
+  isLoading,
+  submitLabel,
+  loadingLabel,
+  onCancel,
+}: {
+  isLoading: boolean;
+  submitLabel: string;
+  loadingLabel: string;
+  onCancel: () => void;
+}): React.JSX.Element {
+  return (
+    <DialogFooter className="gap-2 pt-2 sm:gap-2">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onCancel}
+        disabled={isLoading}
+        className="cursor-pointer text-muted-foreground hover:text-white"
+      >
+        Cancel
+      </Button>
+      <Button type="submit" disabled={isLoading} className="min-w-[150px] cursor-pointer gap-2">
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            {loadingLabel}
+          </>
+        ) : (
+          submitLabel
+        )}
+      </Button>
+    </DialogFooter>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 
 export function ImportCandidateButton() {
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("paste");
+  const [tab, setTab] = useState<ImportTab>("paste");
   const [name, setName] = useState("");
-  const [rawText, setRawText] = useState("");
+  const [pasteText, setPasteText] = useState("");
   const [url, setUrl] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileBase64, setFileBase64] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+  const [fileText, setFileText] = useState("");
+  const [filePdf, setFilePdf] = useState("");
+  const [dragging, setDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setSelectedFile(file);
-    if (!name) {
-      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
-      setName(cleanName);
-    }
-
-    const reader = new FileReader();
-    const isPdf = file.name.toLowerCase().endsWith(".pdf") || file.type.includes("pdf");
-    if (isPdf) {
-      reader.onload = () => {
-        setFileBase64(reader.result as string);
-        toast.success(`Loaded ${file.name}! Click "Evaluate Resume" to proceed.`);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      reader.onload = () => {
-        setRawText(reader.result as string);
-        toast.success(`Loaded ${file.name}! Click "Evaluate Resume" to proceed.`);
-      };
-      reader.readAsText(file);
-    }
+  const resetForm = () => {
+    setName("");
+    setPasteText("");
+    setUrl("");
+    setFile(null);
+    setFileText("");
+    setFilePdf("");
+    setDragging(false);
+    setTab("paste");
   };
 
-  const handleUploadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFile && !fileBase64 && !rawText) {
-      toast.error("Please click the dashed box to choose a PDF or TXT resume first.");
+  const handleOpenChange = (next: boolean) => {
+    // Don't let the dialog close mid-request; the result would be easy to miss.
+    if (!next && isLoading) return;
+    setOpen(next);
+  };
+
+  const closeDialog = () => handleOpenChange(false);
+
+  /** Reads a PDF as a data URL or a TXT file as text. Clears whatever was loaded before. */
+  const loadFile = (picked: File) => {
+    const lower = picked.name.toLowerCase();
+    const isPdf = picked.type === "application/pdf" || lower.endsWith(".pdf");
+    const isTxt = picked.type === "text/plain" || lower.endsWith(".txt");
+
+    if (!isPdf && !isTxt) {
+      toast.error("Unsupported file type. Upload a .pdf or .txt resume.");
+      return;
+    }
+    if (picked.size > MAX_FILE_BYTES) {
+      toast.error("That file is larger than 8 MB. Upload a smaller one or paste the text instead.");
       return;
     }
 
+    setFile(picked);
+    setFileText("");
+    setFilePdf("");
+    if (!name.trim()) {
+      setName(picked.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " "));
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      setFile(null);
+      toast.error("Could not read that file. Try another one.");
+    };
+    if (isPdf) {
+      reader.onload = () => setFilePdf(String(reader.result));
+      reader.readAsDataURL(picked);
+    } else {
+      reader.onload = () => setFileText(String(reader.result));
+      reader.readAsText(picked);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0];
+    if (picked) loadFile(picked);
+    // Allow picking the same file again after clearing.
+    e.target.value = "";
+  };
+
+  const submit = async (payload: Record<string, unknown>, fallbackError: string) => {
     setIsLoading(true);
     try {
-      const payload: Record<string, unknown> = {
-        name: name.trim() || undefined,
-      };
-
-      if (fileBase64) {
-        payload.pdfBase64 = fileBase64;
-      } else {
-        payload.rawText = rawText;
-      }
-
       const res = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Failed to process resume.");
+      if (!res.ok) throw new Error(data?.error || fallbackError);
 
-      toast.success(data?.message || "Candidate evaluated and ranked successfully!");
+      toast.success(data?.message || "Candidate imported and scored.");
       setOpen(false);
-      setSelectedFile(null);
-      setFileBase64("");
-      setRawText("");
-      setName("");
+      resetForm();
       router.refresh();
-      if (data?.itemId) {
-        router.push(`/items/${data.itemId}`);
-      }
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      if (data?.itemId) router.push(`/items/${data.itemId}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong. Try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePasteSubmit = async (e: React.FormEvent) => {
+  const handlePasteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rawText.trim()) {
-      toast.error("Please paste candidate profile or resume text first.");
+    if (!pasteText.trim()) {
+      toast.error("Paste the candidate's profile or resume text first.");
       return;
     }
+    void submit(
+      { rawText: pasteText.trim(), name: name.trim() || undefined },
+      "Failed to import candidate.",
+    );
+  };
 
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText: rawText.trim(), name: name.trim() || undefined }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Failed to import candidate");
-
-      toast.success(data?.message || "Candidate evaluated and ranked successfully!");
-      setOpen(false);
-      setName("");
-      setRawText("");
-      router.refresh();
-      if (data?.itemId) {
-        router.push(`/items/${data.itemId}`);
-      }
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
-    } finally {
-      setIsLoading(false);
+  const handleUploadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      toast.error("Choose a PDF or TXT resume first.");
+      return;
+    }
+    if (filePdf) {
+      void submit({ pdfBase64: filePdf, name: name.trim() || undefined }, "Failed to process resume.");
+    } else if (fileText.trim()) {
+      void submit({ rawText: fileText.trim(), name: name.trim() || undefined }, "Failed to process resume.");
+    } else {
+      toast.error("The file is still loading or contains no text.");
     }
   };
 
-  const handleUrlSubmit = async (e: React.FormEvent) => {
+  const handleUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) {
-      toast.error("Please enter a LinkedIn profile URL.");
+    const value = url.trim();
+    if (!value) {
+      toast.error("Enter a LinkedIn profile URL.");
       return;
     }
-
-    if (!url.includes("linkedin.com/")) {
-      toast.error("Please enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username)");
+    if (!value.includes("linkedin.com/")) {
+      toast.error("Enter a valid LinkedIn URL, e.g. https://linkedin.com/in/username");
       return;
     }
-
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Failed to scrape candidate");
-
-      toast.success(data?.message || "Candidate imported and scored successfully!");
-      setOpen(false);
-      setUrl("");
-      router.refresh();
-      if (data?.itemId) {
-        router.push(`/items/${data.itemId}`);
-      }
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+    void submit({ url: value }, "Failed to scrape candidate.");
   };
 
   return (
-    <React.Fragment>
-      <CtaFrame>
-        <Button
-          onClick={() => setOpen(true)}
-          className={`${ctaPrimaryClass} gap-2 cursor-pointer`}
-        >
-          <Download className="h-4 w-4" aria-hidden="true" /> Import Candidate
-        </Button>
-      </CtaFrame>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto gap-0 rounded-sm border border-slate-800 border-t-neon-cyan bg-[#05070b] p-6 text-white shadow-[0_0_48px_-12px_rgb(34_229_255/0.35)] sm:max-w-[560px]">
-          {/* Scan line while loading */}
-          {isLoading && (
-            <span
-              aria-hidden="true"
-              className="absolute inset-x-0 top-0 h-px overflow-hidden"
-            >
-              <span className="block h-full w-2/5 animate-scan bg-gradient-to-r from-transparent via-neon-cyan to-transparent motion-reduce:animate-none" />
-            </span>
-          )}
-          <DialogHeader className="space-y-1.5 text-left">
-            <p className="font-mono text-[11px] tracking-[0.24em] text-neon-cyan uppercase">
-              Candidate Ingestion
-            </p>
-            <DialogTitle className="font-display text-2xl font-bold tracking-tight text-white">
-              Import & Evaluate Candidate
+    <>
+      <Button onClick={() => setOpen(true)} className="h-9 cursor-pointer gap-2">
+        <UserPlus className="h-4 w-4" aria-hidden="true" />
+        Import candidate
+      </Button>
+
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-[560px]">
+          <DialogHeader className="space-y-1 text-left">
+            <DialogTitle className="text-lg font-semibold tracking-tight text-white">
+              Import candidate
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-slate-400">
-              Evaluate real candidates instantly against your active role criteria.
+            <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+              Add a profile and score it against your active job criteria.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid w-full grid-cols-3 rounded-xl bg-zinc-950 p-1 text-xs">
-              <TabsTrigger
-                value="paste"
-                className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-50"
-              >
-                <FileText className="h-3.5 w-3.5" /> Paste Text
+          <Tabs value={tab} onValueChange={(v) => setTab(v as ImportTab)} className="mt-4">
+            <TabsList className="grid w-full grid-cols-3 rounded-md bg-well p-1">
+              <TabsTrigger value="paste" className={TAB_TRIGGER_CLASS}>
+                <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+                Paste text
               </TabsTrigger>
-              <TabsTrigger
-                value="upload"
-                className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-50"
-              >
-                <UploadCloud className="h-3.5 w-3.5" /> PDF / Resume
+              <TabsTrigger value="upload" className={TAB_TRIGGER_CLASS}>
+                <UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />
+                PDF / Resume
               </TabsTrigger>
-              <TabsTrigger
-                value="url"
-                className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-50"
-              >
-                <LinkIcon className="h-3.5 w-3.5" /> URL Scrape
+              <TabsTrigger value="url" className={TAB_TRIGGER_CLASS}>
+                <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                URL scrape
               </TabsTrigger>
             </TabsList>
 
-            {/* TAB 1: PASTE TEXT (DEFAULT, FASTEST & 100% RELIABLE) */}
+            {/* Tab 1: paste text (default) */}
             <TabsContent value="paste">
               <form onSubmit={handlePasteSubmit} className="space-y-4 pt-3">
-                <div className="space-y-1.5">
-                  <label htmlFor="paste-candidate-name" className="text-xs font-medium text-zinc-300">
-                    Candidate Name (Optional)
-                  </label>
-                  <Input
-                    id="paste-candidate-name"
-                    type="text"
-                    placeholder="e.g. Muhammad Ahmed Asif"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={isLoading}
-                    className="h-9 rounded-lg border-zinc-800 bg-zinc-950 text-zinc-50 placeholder:text-zinc-500"
-                  />
-                </div>
+                <NameField id="paste-candidate-name" value={name} onChange={setName} disabled={isLoading} />
 
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="paste-raw-text" className="text-xs font-medium text-zinc-300">
-                      Profile / Resume Text <span className="text-rose-400">*</span>
-                    </label>
-                    <span className="text-[11px] text-zinc-500">100% Real Evaluation</span>
-                  </div>
+                  <label htmlFor="paste-raw-text" className="text-xs font-medium text-zinc-300">
+                    Profile or resume text <span className="text-rose-400">*</span>
+                  </label>
                   <Textarea
                     id="paste-raw-text"
-                    required
-                    rows={6}
-                    placeholder="Paste the candidate's Headline, About section, Experience history, and Skills directly from LinkedIn or their resume..."
-                    value={rawText}
-                    onChange={(e) => setRawText(e.target.value)}
+                    rows={7}
+                    placeholder="Paste the headline, about section, experience history and skills from LinkedIn, or the text of a resume."
+                    value={pasteText}
+                    onChange={(e) => setPasteText(e.target.value)}
                     disabled={isLoading}
-                    className="min-h-[140px] resize-y rounded-lg border-zinc-800 bg-zinc-950 text-xs text-zinc-50 placeholder:text-zinc-500"
+                    className="min-h-[160px] resize-y border-input bg-well text-sm text-zinc-50 placeholder:text-zinc-500"
                   />
                 </div>
 
-                <DialogFooter className="gap-2 pt-2 sm:gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setOpen(false)}
-                    disabled={isLoading}
-                    className="cursor-pointer rounded-lg text-zinc-400 hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="min-w-[140px] cursor-pointer gap-2 rounded-lg bg-zinc-50 text-zinc-950 hover:bg-zinc-200"
-                  >
-                    {isLoading ? (
-                      <React.Fragment>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Scoring Candidate...
-                      </React.Fragment>
-                    ) : (
-                      "Evaluate Profile"
-                    )}
-                  </Button>
-                </DialogFooter>
+                <FormFooter
+                  isLoading={isLoading}
+                  submitLabel="Evaluate profile"
+                  loadingLabel="Scoring candidate..."
+                  onCancel={closeDialog}
+                />
               </form>
             </TabsContent>
 
-            {/* TAB 2: PDF RESUME & LINKEDIN PDF EXPORT */}
+            {/* Tab 2: PDF or TXT resume, including LinkedIn "Save to PDF" exports */}
             <TabsContent value="upload">
               <form onSubmit={handleUploadSubmit} className="space-y-4 pt-3">
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 text-xs leading-relaxed text-zinc-300">
-                  <div className="flex items-center gap-2 font-semibold text-emerald-400">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    Recommended: 100% Complete Profile Data
-                  </div>
-                  <p className="mt-1 text-zinc-400">
-                    On LinkedIn, click <strong>More → Save to PDF</strong> on any profile to get a full export with <strong>all un-truncated descriptions, dates, and skills</strong>, or upload a resume.
+                <div className="flex items-start gap-2.5 rounded-md border border-border bg-well p-3 text-xs leading-relaxed text-muted-foreground">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-steel" aria-hidden="true" />
+                  <p>
+                    For the most complete data, open a LinkedIn profile and choose{" "}
+                    <span className="font-medium text-zinc-200">More, then Save to PDF</span>. The export
+                    keeps full job descriptions, dates and skills. Drop that file here, or upload a resume.
                   </p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="file-candidate-name" className="text-xs font-medium text-zinc-300">
-                    Candidate Name (Optional)
-                  </label>
-                  <Input
-                    id="file-candidate-name"
-                    type="text"
-                    placeholder="e.g. Muhammad Ahmed Asif"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={isLoading}
-                    className="h-9 rounded-lg border-zinc-800 bg-zinc-950 text-zinc-50 placeholder:text-zinc-500"
-                  />
-                </div>
+                <NameField id="file-candidate-name" value={name} onChange={setName} disabled={isLoading} />
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-300">
-                    Upload Resume or LinkedIn PDF Export (.pdf, .txt) <span className="text-rose-400">*</span>
-                  </label>
+                  <span className="text-xs font-medium text-zinc-300">
+                    Resume file (.pdf or .txt) <span className="text-rose-400">*</span>
+                  </span>
                   <label
                     htmlFor="file-upload-input"
-                    className="relative flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950 p-6 text-center hover:border-zinc-500 transition-colors cursor-pointer"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (!isLoading) setDragging(true);
+                    }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragging(false);
+                      if (isLoading) return;
+                      const dropped = e.dataTransfer.files?.[0];
+                      if (dropped) loadFile(dropped);
+                    }}
+                    className={`relative flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed bg-well p-6 text-center transition-colors focus-within:ring-1 focus-within:ring-ring ${
+                      dragging ? "border-steel bg-steel/5" : "border-zinc-700 hover:border-zinc-500"
+                    }`}
                   >
-                    <UploadCloud className="h-8 w-8 text-zinc-400 mb-2" />
-                    {selectedFile ? (
-                      <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-                        <FileCheck className="h-4 w-4" />
-                        <span>{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                      </div>
+                    <UploadCloud className="mb-2 h-7 w-7 text-zinc-500" aria-hidden="true" />
+                    {file ? (
+                      <span className="flex items-center gap-2 text-xs font-medium text-emerald-400">
+                        <FileCheck className="h-4 w-4" aria-hidden="true" />
+                        {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                      </span>
                     ) : (
                       <>
-                        <span className="text-xs font-medium text-zinc-300">Click to browse or drop file here</span>
-                        <span className="text-[11px] text-zinc-500 mt-1">Supports PDF and TXT resumes</span>
+                        <span className="text-xs font-medium text-zinc-300">
+                          Click to browse or drop a file here
+                        </span>
+                        <span className="mt-1 text-[11px] text-zinc-500">PDF or TXT, up to 8 MB</span>
                       </>
                     )}
                     <input
                       id="file-upload-input"
                       type="file"
-                      accept=".pdf,.txt"
+                      accept=".pdf,.txt,application/pdf,text/plain"
                       onChange={handleFileChange}
                       disabled={isLoading}
                       className="sr-only"
@@ -359,40 +370,21 @@ export function ImportCandidateButton() {
                   </label>
                 </div>
 
-                <DialogFooter className="gap-2 pt-2 sm:gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setOpen(false)}
-                    disabled={isLoading}
-                    className="cursor-pointer rounded-lg text-zinc-400 hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="min-w-[140px] cursor-pointer gap-2 rounded-lg bg-zinc-50 text-zinc-950 hover:bg-zinc-200"
-                  >
-                    {isLoading ? (
-                      <React.Fragment>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Extracting & Scoring...
-                      </React.Fragment>
-                    ) : (
-                      "Evaluate Resume"
-                    )}
-                  </Button>
-                </DialogFooter>
+                <FormFooter
+                  isLoading={isLoading}
+                  submitLabel="Evaluate resume"
+                  loadingLabel="Extracting and scoring..."
+                  onCancel={closeDialog}
+                />
               </form>
             </TabsContent>
 
-            {/* TAB 3: URL AUTO-SCRAPE */}
+            {/* Tab 3: automated LinkedIn scrape */}
             <TabsContent value="url">
               <form onSubmit={handleUrlSubmit} className="space-y-4 pt-3">
                 <div className="space-y-1.5">
                   <label htmlFor="url-input" className="text-xs font-medium text-zinc-300">
-                    LinkedIn Profile URL <span className="text-rose-400">*</span>
+                    LinkedIn profile URL <span className="text-rose-400">*</span>
                   </label>
                   <Input
                     id="url-input"
@@ -400,66 +392,45 @@ export function ImportCandidateButton() {
                     placeholder="https://www.linkedin.com/in/username"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    required
                     disabled={isLoading}
-                    className="h-10 rounded-lg border-zinc-800 bg-zinc-950 text-zinc-50"
+                    className={INPUT_CLASS}
                   />
                 </div>
 
-                <div className="flex items-start gap-2.5 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-xs leading-relaxed text-zinc-400">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                  <div>
-                    <span className="font-semibold text-zinc-200">Headless Scraper Note: </span>
-                    LinkedIn blocks automated requests with HTTP 999. If automated scraping encounters redirect checks, use the{" "}
+                <div className="flex items-start gap-2.5 rounded-md border border-amber-900/50 bg-amber-950/20 p-3 text-xs leading-relaxed text-zinc-400">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+                  <p>
+                    LinkedIn blocks most automated requests (HTTP 999). If the scrape fails, use{" "}
                     <button
                       type="button"
-                      onClick={() => setActiveTab("paste")}
-                      className="font-semibold text-zinc-200 underline hover:text-white"
+                      onClick={() => setTab("paste")}
+                      className="cursor-pointer font-medium text-zinc-200 underline underline-offset-2 hover:text-white"
                     >
-                      Paste Text
+                      Paste text
                     </button>{" "}
                     or{" "}
                     <button
                       type="button"
-                      onClick={() => setActiveTab("upload")}
-                      className="font-semibold text-zinc-200 underline hover:text-white"
+                      onClick={() => setTab("upload")}
+                      className="cursor-pointer font-medium text-zinc-200 underline underline-offset-2 hover:text-white"
                     >
                       PDF / Resume
                     </button>{" "}
-                    tabs for complete data.
-                  </div>
+                    for complete data.
+                  </p>
                 </div>
 
-                <DialogFooter className="gap-2 pt-2 sm:gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setOpen(false)}
-                    disabled={isLoading}
-                    className="cursor-pointer rounded-lg text-zinc-400 hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="min-w-[140px] cursor-pointer gap-2 rounded-lg bg-zinc-50 text-zinc-950 hover:bg-zinc-200"
-                  >
-                    {isLoading ? (
-                      <React.Fragment>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Scraping & Scoring...
-                      </React.Fragment>
-                    ) : (
-                      "Scrape & Evaluate"
-                    )}
-                  </Button>
-                </DialogFooter>
+                <FormFooter
+                  isLoading={isLoading}
+                  submitLabel="Scrape and evaluate"
+                  loadingLabel="Scraping and scoring..."
+                  onCancel={closeDialog}
+                />
               </form>
             </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>
-    </React.Fragment>
+    </>
   );
 }

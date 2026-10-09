@@ -91,8 +91,13 @@ export function CandidateLeaderboard({
     candidate: LeaderboardCandidate;
   } | null>(null);
 
-  // Active dropdown menu state (for 3-dots button)
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  // Active dropdown menu state (for 3-dots button with viewport positioning)
+  const [activeDropdown, setActiveDropdown] = useState<{
+    id: string;
+    top: number;
+    right: number;
+    candidate: LeaderboardCandidate;
+  } | null>(null);
 
   // Active rescoring candidates
   const [rescoringIds, setRescoringIds] = useState<Set<string>>(new Set());
@@ -105,12 +110,12 @@ export function CandidateLeaderboard({
   useEffect(() => {
     const handleClose = () => {
       setContextMenu(null);
-      setActiveDropdownId(null);
+      setActiveDropdown(null);
     };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setContextMenu(null);
-        setActiveDropdownId(null);
+        setActiveDropdown(null);
       }
     };
     window.addEventListener("click", handleClose);
@@ -125,7 +130,7 @@ export function CandidateLeaderboard({
 
   const handleReevaluate = async (candidate: LeaderboardCandidate) => {
     setContextMenu(null);
-    setActiveDropdownId(null);
+    setActiveDropdown(null);
     setRescoringIds((prev) => new Set(prev).add(candidate.id));
     toast.info(`Re-evaluating ${candidate.title}...`);
 
@@ -366,55 +371,31 @@ export function CandidateLeaderboard({
                         </Link>
 
                         {/* More actions menu button */}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDropdownId(activeDropdownId === candidate.id ? null : candidate.id);
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-md border border-input bg-card/60 text-zinc-400 hover:border-zinc-500 hover:bg-secondary hover:text-white transition-colors cursor-pointer"
-                            title="More options (or right-click row)"
-                          >
-                            <MoreVertical className="h-3.5 w-3.5" />
-                          </button>
-
-                          {activeDropdownId === candidate.id && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute right-0 top-9 z-40 w-48 rounded-lg border border-border bg-[#11141a] p-1.5 shadow-2xl text-left"
-                            >
-                              <button
-                                type="button"
-                                onClick={() => handleReevaluate(candidate)}
-                                disabled={isRescoring}
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
-                              >
-                                <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
-                                <span>Re-evaluate criteria</span>
-                              </button>
-                              <Link
-                                href={`/items/${candidate.id}`}
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
-                                <span>Inspect dossier</span>
-                              </Link>
-                              <div className="my-1 border-t border-border/80" />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveDropdownId(null);
-                                  setDeleteCandidate(candidate);
-                                }}
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                <span>Delete candidate</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeDropdown?.id === candidate.id) {
+                              setActiveDropdown(null);
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setActiveDropdown({
+                                id: candidate.id,
+                                top: rect.bottom + 6,
+                                right: Math.max(16, window.innerWidth - rect.right),
+                                candidate,
+                              });
+                            }
+                          }}
+                          className={`flex h-8 w-8 items-center justify-center rounded-md border transition-colors cursor-pointer ${
+                            activeDropdown?.id === candidate.id
+                              ? "border-zinc-500 bg-secondary text-white"
+                              : "border-input bg-card/60 text-zinc-400 hover:border-zinc-500 hover:bg-secondary hover:text-white"
+                          }`}
+                          title="More options (or right-click row)"
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -424,6 +405,46 @@ export function CandidateLeaderboard({
           </table>
         </div>
       </div>
+
+      {/* Floating Action Dropdown Menu (Fixed to avoid table row stacking/clipping) */}
+      {activeDropdown && (
+        <div
+          style={{ top: `${activeDropdown.top}px`, right: `${activeDropdown.right}px` }}
+          onClick={(e) => e.stopPropagation()}
+          className="fixed z-50 w-48 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
+        >
+          <button
+            type="button"
+            onClick={() => handleReevaluate(activeDropdown.candidate)}
+            disabled={rescoringIds.has(activeDropdown.candidate.id)}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Re-evaluate criteria</span>
+          </button>
+          <Link
+            href={`/items/${activeDropdown.candidate.id}`}
+            onClick={() => setActiveDropdown(null)}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
+            <span>Inspect dossier</span>
+          </Link>
+          <div className="my-1 border-t border-border/70" />
+          <button
+            type="button"
+            onClick={() => {
+              const toDelete = activeDropdown.candidate;
+              setActiveDropdown(null);
+              setDeleteCandidate(toDelete);
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Delete candidate</span>
+          </button>
+        </div>
+      )}
 
       {/* Floating Right-Click Context Menu */}
       {contextMenu && (

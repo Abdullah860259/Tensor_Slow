@@ -1,0 +1,53 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline — TalentRank AI
+# Verifies Type Integrity, Code Style, Unit Tests, AI Evals, and Production Build
+# ==============================================================================
+
+image: node:22
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  NODE_ENV: "production"
+
+# Cache node packages across pipeline runs for faster execution
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+
+stages:
+  - verify
+  - test
+  - build
+
+# Pre-job setup: install dependencies cleanly
+before_script:
+  - npm ci --prefer-offline
+
+# ------------------------------------------------------------------------------
+# Stage 1: Verify (Typecheck & ESLint 9)
+# ------------------------------------------------------------------------------
+typecheck_and_lint:
+  stage: verify
+  script:
+    - npm run typecheck
+    - npm run lint
+
+# ------------------------------------------------------------------------------
+# Stage 2: Test (Unit Tests & Structured AI Evals)
+# ------------------------------------------------------------------------------
+unit_tests_and_evals:
+  stage: test
+  script:
+    - npm run test
+    - npm run evals
+
+# ------------------------------------------------------------------------------
+# Stage 3: Build (Next.js 16 Turbopack Production Compilation)
+# ------------------------------------------------------------------------------
+production_build:
+  stage: build
+  script:
+    - npm run build

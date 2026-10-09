@@ -1,6 +1,6 @@
 # TalentRank AI — AI-Powered Candidate Evaluation & Talent Intelligence Platform
 
-[![CI](https://github.com/Ahmed-Asif1/tensorslow-aicon2k26/actions/workflows/ci.yml/badge.svg)](https://github.com/Ahmed-Asif1/tensorslow-aicon2k26/actions/workflows/ci.yml)
+[![GitLab Pipeline Status](https://gitlab.com/ahmed-group802741/talentrank-ai/badges/main/pipeline.svg)](https://gitlab.com/ahmed-group802741/talentrank-ai/-/pipelines)
 [![Repository](https://img.shields.io/badge/GitLab-Project-orange?logo=gitlab)](https://gitlab.com/ahmed-group802741/talentrank-ai)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green?logo=node.js)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16.4_Turbopack-black?logo=next.js)](https://nextjs.org)
@@ -13,7 +13,8 @@
 
 **GitLab Repository:** [https://gitlab.com/ahmed-group802741/talentrank-ai](https://gitlab.com/ahmed-group802741/talentrank-ai)  
 **Setup Guide:** [SETUP_GUIDE.md](SETUP_GUIDE.md)  
-**Architectural Explainer:** [EXPLAIN.md](EXPLAIN.md)
+**Architectural Explainer:** [EXPLAIN.md](EXPLAIN.md)  
+**Changelog:** [CHANGELOG.md](CHANGELOG.md)
 
 ---
 

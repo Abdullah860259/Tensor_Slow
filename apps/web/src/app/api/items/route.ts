@@ -169,3 +169,55 @@ export async function POST(req: Request): Promise<Response> {
     });
   }
 }
+
+export async function DELETE(req: Request): Promise<Response> {
+  try {
+    await connectMongoose();
+    const ownerId = await getSessionOwnerId();
+
+    if (!ownerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const { searchParams } = new URL(req.url);
+    let id: string | null = searchParams.get("id");
+
+    if (!id) {
+      try {
+        const body = (await req.json()) as { id?: string };
+        id = body?.id ?? null;
+      } catch {
+        // searchParams fallback
+      }
+    }
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: "Missing candidate ID" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const deleted = await ItemModel.findOneAndDelete({ _id: id, ownerId });
+    if (!deleted) {
+      return new Response(JSON.stringify({ error: "Candidate not found or unauthorized" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return Response.json({
+      success: true,
+      message: "Candidate profile deleted successfully.",
+    });
+  } catch (err) {
+    logger.error("[items] Failed to delete candidate", err);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}

@@ -18,6 +18,7 @@ import {
 import { FitBadge, Panel, ScoreRing, StatusBadge } from "@/components/ui/foundry";
 import { Chat } from "@/components/ai/chat";
 import { ReevaluateButton } from "./reevaluate-button";
+import { DeleteCandidateButton } from "./delete-candidate-button";
 
 type DossierFields = {
   strengths: string[];
@@ -140,8 +141,9 @@ export default async function CandidateDossierPage({
               </p>
             )}
           </div>
-          <div className="shrink-0">
+          <div className="flex shrink-0 items-center gap-2.5">
             <ReevaluateButton itemId={String(item._id)} />
+            <DeleteCandidateButton candidateId={String(item._id)} candidateName={name} />
           </div>
         </div>
       </header>

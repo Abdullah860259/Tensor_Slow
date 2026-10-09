@@ -341,11 +341,13 @@ export function ImportCandidateButton() {
                       const dropped = e.dataTransfer.files?.[0];
                       if (dropped) loadFile(dropped);
                     }}
-                    className={`relative flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed bg-well p-6 text-center transition-colors focus-within:ring-1 focus-within:ring-ring ${
-                      dragging ? "border-steel bg-steel/5" : "border-zinc-700 hover:border-zinc-500"
+                    className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed p-7 text-center transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500/40 ${
+                      dragging
+                        ? "border-blue-500 bg-blue-500/10 shadow-[0_0_24px_rgba(59,130,246,0.18)]"
+                        : "border-zinc-700 bg-well hover:border-blue-500/80 hover:bg-blue-950/20 hover:shadow-[0_0_20px_rgba(59,130,246,0.12)]"
                     }`}
                   >
-                    <UploadCloud className="mb-2 h-7 w-7 text-zinc-500" aria-hidden="true" />
+                    <UploadCloud className="mb-2 h-8 w-8 text-zinc-400 transition-colors duration-200 group-hover:text-blue-400" aria-hidden="true" />
                     {file ? (
                       <span className="flex items-center gap-2 text-xs font-medium text-emerald-400">
                         <FileCheck className="h-4 w-4" aria-hidden="true" />
@@ -353,10 +355,10 @@ export function ImportCandidateButton() {
                       </span>
                     ) : (
                       <>
-                        <span className="text-xs font-medium text-zinc-300">
+                        <span className="text-xs font-medium text-zinc-300 transition-colors duration-200 group-hover:text-white">
                           Click to browse or drop a file here
                         </span>
-                        <span className="mt-1 text-[11px] text-zinc-500">PDF or TXT, up to 8 MB</span>
+                        <span className="mt-1 text-[11px] text-zinc-500 transition-colors duration-200 group-hover:text-zinc-400">PDF or TXT, up to 8 MB</span>
                       </>
                     )}
                     <input

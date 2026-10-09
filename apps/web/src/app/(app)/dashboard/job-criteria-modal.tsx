@@ -228,10 +228,15 @@ export function JobCriteriaModal({
       <Button
         onClick={() => setOpen(true)}
         variant="outline"
-        className="h-9 cursor-pointer gap-2 border-input bg-transparent text-zinc-200 hover:bg-secondary hover:text-white"
+        className="group h-9 cursor-pointer gap-2 border-input bg-card/60 px-3.5 text-xs font-medium text-zinc-200 shadow-xs transition-all hover:border-emerald-500/50 hover:bg-zinc-800 hover:text-white"
       >
-        <Target className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-        Job criteria
+        <Target className="h-4 w-4 text-emerald-400 transition-transform group-hover:scale-110" aria-hidden="true" />
+        <span>Job criteria</span>
+        {activeCriteria?.rubric?.mustHave && activeCriteria.rubric.mustHave.length > 0 && (
+          <span className="ml-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
+            {activeCriteria.rubric.mustHave.length}
+          </span>
+        )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

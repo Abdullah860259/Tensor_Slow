@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { formatYears, getScoreStyle, getStatusStyle, pad2 } from "@/lib/candidate-ui";
 import { FitBadge, ScoreBar, Tag } from "@/components/ui/foundry";
 
@@ -70,7 +71,7 @@ export function CandidateLeaderboard({
               <th scope="col" className="px-2 py-2.5 font-medium">
                 Signals
               </th>
-              <th scope="col" className="w-32 px-4 py-2.5 text-right font-medium">
+              <th scope="col" className="w-28 px-4 py-2.5 text-right font-medium whitespace-nowrap">
                 <span className="sr-only">Action</span>
               </th>
             </tr>
@@ -159,13 +160,14 @@ export function CandidateLeaderboard({
                     )}
                   </td>
 
-                  <td className="px-4 py-3 text-right align-middle">
+                  <td className="px-4 py-3 text-right align-middle whitespace-nowrap">
                     <Link
                       href={`/items/${candidate.id}`}
                       aria-label={`Inspect profile: ${candidate.title}`}
-                      className="inline-flex h-8 items-center rounded-md border border-input px-3 text-xs font-medium text-zinc-200 transition-colors hover:bg-secondary hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                      className="group inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card/60 px-3 text-xs font-medium text-zinc-200 transition-all hover:border-zinc-500 hover:bg-secondary hover:text-white focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
                     >
-                      Inspect profile
+                      <span>Inspect</span>
+                      <ArrowRight className="h-3 w-3 text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-white" aria-hidden="true" />
                     </Link>
                   </td>
                 </tr>

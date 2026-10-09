@@ -207,7 +207,8 @@ export function Chat({
   initialMessages,
 }: ChatProps): React.JSX.Element {
   const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
 
   const transport = useMemo(
     () =>
@@ -229,8 +230,20 @@ export function Chat({
   const isStreaming = status === "streaming" || status === "submitted";
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, status]);
+    // Never auto-scroll the browser window on initial page mount (keeps dossier view at the top)
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Only scroll the internal chat message list, never the window/page
+    if (scrollContainerRef.current && (messages.length > 0 || isStreaming)) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages, status, isStreaming]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -294,7 +307,7 @@ export function Chat({
       </div>
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-6">
             <div className="mb-3.5 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-well text-emerald-400 shadow-sm">
@@ -360,8 +373,6 @@ export function Chat({
             <span>Formulating grounded response...</span>
           </div>
         )}
-
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Error state with retry */}

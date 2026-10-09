@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -83,6 +84,11 @@ export function CandidateLeaderboard({
 }): React.JSX.Element {
   const router = useRouter();
   const ranked = [...candidates].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Right-click context menu state
   const [contextMenu, setContextMenu] = useState<{
@@ -95,7 +101,7 @@ export function CandidateLeaderboard({
   const [activeDropdown, setActiveDropdown] = useState<{
     id: string;
     top: number;
-    right: number;
+    left: number;
     candidate: LeaderboardCandidate;
   } | null>(null);
 
@@ -120,10 +126,12 @@ export function CandidateLeaderboard({
     };
     window.addEventListener("click", handleClose);
     window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("click", handleClose);
       window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
@@ -379,10 +387,14 @@ export function CandidateLeaderboard({
                               setActiveDropdown(null);
                             } else {
                               const rect = e.currentTarget.getBoundingClientRect();
+                              // Dropdown is 192px (w-48) wide. Align right edge of menu with right edge of button:
+                              const menuWidth = 192;
+                              const left = Math.max(12, rect.right - menuWidth);
+                              const top = rect.bottom + 6;
                               setActiveDropdown({
                                 id: candidate.id,
-                                top: rect.bottom + 6,
-                                right: Math.max(16, window.innerWidth - rect.right),
+                                top,
+                                left,
                                 candidate,
                               });
                             }
@@ -406,93 +418,99 @@ export function CandidateLeaderboard({
         </div>
       </div>
 
-      {/* Floating Action Dropdown Menu (Fixed to avoid table row stacking/clipping) */}
-      {activeDropdown && (
-        <div
-          style={{ top: `${activeDropdown.top}px`, right: `${activeDropdown.right}px` }}
-          onClick={(e) => e.stopPropagation()}
-          className="fixed z-50 w-48 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
-        >
-          <button
-            type="button"
-            onClick={() => handleReevaluate(activeDropdown.candidate)}
-            disabled={rescoringIds.has(activeDropdown.candidate.id)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+      {/* Floating Action Dropdown Menu (Portalled to document.body to eliminate containing block & stacking issues) */}
+      {mounted &&
+        activeDropdown &&
+        createPortal(
+          <div
+            style={{ top: `${activeDropdown.top}px`, left: `${activeDropdown.left}px` }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed z-50 w-48 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Re-evaluate criteria</span>
-          </button>
-          <Link
-            href={`/items/${activeDropdown.candidate.id}`}
-            onClick={() => setActiveDropdown(null)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
-          >
-            <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
-            <span>Inspect dossier</span>
-          </Link>
-          <div className="my-1 border-t border-border/70" />
-          <button
-            type="button"
-            onClick={() => {
-              const toDelete = activeDropdown.candidate;
-              setActiveDropdown(null);
-              setDeleteCandidate(toDelete);
-            }}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span>Delete candidate</span>
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => handleReevaluate(activeDropdown.candidate)}
+              disabled={rescoringIds.has(activeDropdown.candidate.id)}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Re-evaluate criteria</span>
+            </button>
+            <Link
+              href={`/items/${activeDropdown.candidate.id}`}
+              onClick={() => setActiveDropdown(null)}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
+              <span>Inspect dossier</span>
+            </Link>
+            <div className="my-1 border-t border-border/70" />
+            <button
+              type="button"
+              onClick={() => {
+                const toDelete = activeDropdown.candidate;
+                setActiveDropdown(null);
+                setDeleteCandidate(toDelete);
+              }}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete candidate</span>
+            </button>
+          </div>,
+          document.body
+        )}
 
-      {/* Floating Right-Click Context Menu */}
-      {contextMenu && (
-        <div
-          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-          onClick={(e) => e.stopPropagation()}
-          className="fixed z-50 w-52 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
-        >
-          <div className="px-2.5 py-1.5 border-b border-border/70 mb-1">
-            <p className="truncate text-xs font-semibold text-white">{contextMenu.candidate.title}</p>
-            <p className="text-[10px] text-zinc-500 font-mono">Right-click actions</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => handleReevaluate(contextMenu.candidate)}
-            disabled={rescoringIds.has(contextMenu.candidate.id)}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+      {/* Floating Right-Click Context Menu (Portalled to document.body) */}
+      {mounted &&
+        contextMenu &&
+        createPortal(
+          <div
+            style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed z-50 w-52 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Re-evaluate against criteria</span>
-          </button>
+            <div className="px-2.5 py-1.5 border-b border-border/70 mb-1">
+              <p className="truncate text-xs font-semibold text-white">{contextMenu.candidate.title}</p>
+              <p className="text-[10px] text-zinc-500 font-mono">Right-click actions</p>
+            </div>
 
-          <Link
-            href={`/items/${contextMenu.candidate.id}`}
-            onClick={() => setContextMenu(null)}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
-          >
-            <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
-            <span>Inspect full dossier</span>
-          </Link>
+            <button
+              type="button"
+              onClick={() => handleReevaluate(contextMenu.candidate)}
+              disabled={rescoringIds.has(contextMenu.candidate.id)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Re-evaluate against criteria</span>
+            </button>
 
-          <div className="my-1 border-t border-border/70" />
+            <Link
+              href={`/items/${contextMenu.candidate.id}`}
+              onClick={() => setContextMenu(null)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
+              <span>Inspect full dossier</span>
+            </Link>
 
-          <button
-            type="button"
-            onClick={() => {
-              const cand = contextMenu.candidate;
-              setContextMenu(null);
-              setDeleteCandidate(cand);
-            }}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
-          >
-            <Trash2 className="h-3.5 w-3.5 text-rose-400" />
-            <span>Delete candidate</span>
-          </button>
-        </div>
-      )}
+            <div className="my-1 border-t border-border/70" />
+
+            <button
+              type="button"
+              onClick={() => {
+                const cand = contextMenu.candidate;
+                setContextMenu(null);
+                setDeleteCandidate(cand);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+              <span>Delete candidate</span>
+            </button>
+          </div>,
+          document.body
+        )}
 
       {/* Delete confirmation dialog for leaderboard */}
       <Dialog open={Boolean(deleteCandidate)} onOpenChange={(open) => !open && setDeleteCandidate(null)}>

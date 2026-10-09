@@ -280,8 +280,8 @@ export function ImportCandidateButton() {
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-[560px]">
-          <DialogHeader className="space-y-1.5 text-left">
+        <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-white shadow-2xl sm:max-w-[560px]">
+          <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
             <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
               Import candidate
             </DialogTitle>
@@ -290,7 +290,8 @@ export function ImportCandidateButton() {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as ImportTab)} className="mt-5">
+          <div className="flex-1 overflow-y-auto p-6 pt-5">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as ImportTab)}>
             <TabsList className="grid w-full grid-cols-3 rounded-md bg-well p-1">
               <TabsTrigger value="paste" className={TAB_TRIGGER_CLASS}>
                 <FileText className="h-3.5 w-3.5" aria-hidden="true" />
@@ -484,6 +485,7 @@ export function ImportCandidateButton() {
               </form>
             </TabsContent>
           </Tabs>
+          </div>
         </DialogContent>
       </Dialog>
     </>

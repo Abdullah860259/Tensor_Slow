@@ -250,8 +250,8 @@ export function JobCriteriaModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-[720px]">
-          <DialogHeader className="space-y-1.5 text-left">
+        <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-white shadow-2xl sm:max-w-[720px]">
+          <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
             <div className="flex flex-wrap items-center gap-2">
               {hasUnsavedDraft ? (
                 <Badge
@@ -284,6 +284,8 @@ export function JobCriteriaModal({
               candidate is evaluated against.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
           <form onSubmit={handleGenerate} className="mt-5 space-y-4">
             <div className="space-y-1.5">
@@ -448,8 +450,9 @@ export function JobCriteriaModal({
               </div>
             </div>
           )}
+          </div>
 
-          <DialogFooter className="gap-2 pt-4 sm:gap-2">
+          <DialogFooter className="p-4 border-t border-border shrink-0 bg-well/40 flex justify-end gap-2">
             <Button
               type="button"
               variant="ghost"

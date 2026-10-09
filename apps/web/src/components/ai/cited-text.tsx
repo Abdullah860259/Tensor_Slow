@@ -1,36 +1,175 @@
 import React from "react";
 import Link from "next/link";
 
-const CITATION = /\[\[item:([^|\]]+)\|([^\]]+)\]\]/g;
+const CITATION_REGEX = /\[\[item:([^|\]]+)\|([^\]]+)\]\]/g;
 
 /**
- * Renders assistant text with [[item:<id>|<title>]] markers as clickable source chips.
- * An unfinished marker at the end of a streaming message is hidden until it completes.
+ * Parses inline formatted spans: citations [[item:id|title]], bold **bold text**, and inline `code`.
  */
-export function CitedText({ text }: { text: string }): React.JSX.Element {
-  const visible = text.replace(/\[\[[^\]]*$/, "");
-  const re = new RegExp(CITATION.source, "g");
+function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[] {
+  // Normalize awkward trailing whitespace before punctuation (e.g. " ] ." -> " ].")
+  const sanitized = rawText.replace(/\s+([.,;:!?])/g, "$1");
   const nodes: React.ReactNode[] = [];
-  let last = 0;
+
+  // Match either citation [[item:...|...]] or bold **...** or code `...`
+  const tokenRegex = /(\[\[item:[^|\]]+\|[^\]]+\]\]|\*\*[^*]+\*\*|`[^`]+`)/g;
+  let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = re.exec(visible)) !== null) {
-    const id = match[1];
-    const title = match[2];
-    if (!id || !title) continue;
-    if (match.index > last) nodes.push(visible.slice(last, match.index));
-    nodes.push(
-      <Link
-        key={`${id}-${match.index}`}
-        href={`/items/${id}`}
-        className="mx-0.5 inline-flex max-w-[16rem] items-center truncate rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 align-baseline text-[11px] font-medium text-primary hover:bg-primary/20"
-        title={`Open source: ${title}`}
-      >
-        {title}
-      </Link>
-    );
-    last = match.index + match[0].length;
+  while ((match = tokenRegex.exec(sanitized)) !== null) {
+    const matchIndex = match.index;
+    const matchStr = match[0];
+
+    // Push leading plain text
+    if (matchIndex > lastIndex) {
+      nodes.push(sanitized.slice(lastIndex, matchIndex));
+    }
+
+    if (matchStr.startsWith("[[item:")) {
+      const citeMatch = /\[\[item:([^|\]]+)\|([^\]]+)\]\]/.exec(matchStr);
+      if (citeMatch) {
+        const id = citeMatch[1];
+        const title = citeMatch[2];
+        nodes.push(
+          <Link
+            key={`${keyPrefix}-cite-${id}-${matchIndex}`}
+            href={`/items/${id}`}
+            className="mx-1 inline-flex max-w-[16rem] items-center truncate rounded border border-emerald-500/30 bg-emerald-950/40 px-1.5 py-0.5 align-baseline font-mono text-[10px] font-medium text-emerald-300 hover:bg-emerald-900/60 transition-colors"
+            title={`Inspect provenance: ${title}`}
+          >
+            {title}
+          </Link>
+        );
+      }
+    } else if (matchStr.startsWith("**") && matchStr.endsWith("**")) {
+      const boldText = matchStr.slice(2, -2);
+      nodes.push(
+        <strong key={`${keyPrefix}-bold-${matchIndex}`} className="font-semibold text-white">
+          {boldText}
+        </strong>
+      );
+    } else if (matchStr.startsWith("`") && matchStr.endsWith("`")) {
+      const codeText = matchStr.slice(1, -1);
+      nodes.push(
+        <code
+          key={`${keyPrefix}-code-${matchIndex}`}
+          className="rounded border border-border bg-well px-1 py-0.5 font-mono text-[11px] text-emerald-300"
+        >
+          {codeText}
+        </code>
+      );
+    }
+
+    lastIndex = matchIndex + matchStr.length;
   }
-  if (last < visible.length) nodes.push(visible.slice(last));
-  return <>{nodes}</>;
+
+  if (lastIndex < sanitized.length) {
+    nodes.push(sanitized.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
+/**
+ * Rich markdown and citation renderer for Dossier Copilot messages.
+ * Formats bullet points, numbered lists, section headers, and inline citations seamlessly.
+ */
+export function CitedText({ text }: { text: string }): React.JSX.Element {
+  // Strip trailing partial citation tag during streaming
+  const visible = text.replace(/\[\[[^\]]*$/, "");
+  const lines = visible.split(/\r?\n/);
+
+  const elements: React.JSX.Element[] = [];
+  let currentList: { type: "ul" | "ol"; items: React.ReactNode[] } | null = null;
+
+  const flushList = (key: string) => {
+    if (!currentList) return;
+    if (currentList.type === "ul") {
+      elements.push(
+        <ul key={key} className="my-2 space-y-1.5 pl-0.5">
+          {currentList.items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-200">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" aria-hidden="true" />
+              <div className="flex-1">{item}</div>
+            </li>
+          ))}
+        </ul>
+      );
+    } else {
+      elements.push(
+        <ol key={key} className="my-2 space-y-1.5 pl-0.5">
+          {currentList.items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-200">
+              <span className="mt-0.5 font-mono text-xs font-semibold text-emerald-400 tabular-nums">
+                {idx + 1}.
+              </span>
+              <div className="flex-1">{item}</div>
+            </li>
+          ))}
+        </ol>
+      );
+    }
+    currentList = null;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    if (rawLine === undefined) continue;
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      flushList(`flush-${i}`);
+      continue;
+    }
+
+    // Header 3 or 2 (### or ##)
+    const headerMatch = trimmed.match(/^(#{1,4})\s+(.+)$/);
+    if (headerMatch && headerMatch[2]) {
+      flushList(`flush-${i}`);
+      elements.push(
+        <h4 key={`h-${i}`} className="mt-3.5 mb-1.5 font-sans text-sm font-semibold tracking-tight text-white">
+          {renderInlineSpans(headerMatch[2], `h-${i}`)}
+        </h4>
+      );
+      continue;
+    }
+
+    // Bullet list (* or - or •)
+    const bulletMatch = trimmed.match(/^[*•\-]\s+(.+)$/);
+    if (bulletMatch && bulletMatch[1]) {
+      if (currentList && currentList.type !== "ul") {
+        flushList(`flush-${i}`);
+      }
+      if (!currentList) {
+        currentList = { type: "ul", items: [] };
+      }
+      currentList.items.push(renderInlineSpans(bulletMatch[1], `li-${i}`));
+      continue;
+    }
+
+    // Numbered list (1. ...)
+    const numMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
+    if (numMatch && numMatch[1]) {
+      if (currentList && currentList.type !== "ol") {
+        flushList(`flush-${i}`);
+      }
+      if (!currentList) {
+        currentList = { type: "ol", items: [] };
+      }
+      currentList.items.push(renderInlineSpans(numMatch[1], `oli-${i}`));
+      continue;
+    }
+
+    // Standard paragraph line
+    flushList(`flush-${i}`);
+    elements.push(
+      <p key={`p-${i}`} className="my-1.5 text-sm leading-relaxed text-zinc-200">
+        {renderInlineSpans(trimmed, `p-${i}`)}
+      </p>
+    );
+  }
+
+  flushList("final-flush");
+
+  return <div className="space-y-1">{elements}</div>;
 }

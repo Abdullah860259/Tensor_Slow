@@ -114,9 +114,9 @@ function renderMessagePart(part: UIMessage["parts"][number], index: number) {
   switch (part.type) {
     case "text":
       return (
-        <p key={index} className="whitespace-pre-wrap leading-relaxed">
+        <div key={index} className="leading-relaxed">
           <CitedText text={part.text} />
-        </p>
+        </div>
       );
     case "reasoning":
       return (

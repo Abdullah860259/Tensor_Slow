@@ -41,10 +41,11 @@ Analyze the provided profile/resume text and evaluate the candidate strictly aga
 TARGET JOB ROLE CRITERIA & SCORING RUBRIC:
 ${criteriaOverride}
 
-ANTI-HALLUCINATION RULES:
+ANTI-HALLUCINATION & CALIBRATION RULES:
 1. Base all scores, verdicts, and extractions ONLY on explicitly stated facts in the text.
 2. DO NOT assume, infer, or guess skills, tools, or experience not directly written.
-3. If a requirement is not mentioned, the candidate explicitly DOES NOT meet it.`
+3. If a specific requirement is not mentioned, note it as an unmet gap.
+4. Holistic Scoring: Award proportionate partial credit for verified technical competencies (e.g. Next.js, React, Flutter, Python, TypeScript, Web Dev). Do NOT give a 0 score to software engineers with relevant foundations; reserve 0-19 strictly for non-technical, irrelevant, or spam profiles.`
     : EXTRACTION_PROMPT;
 
   const { object } = await generateObject({

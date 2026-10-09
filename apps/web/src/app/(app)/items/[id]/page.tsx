@@ -3,7 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import mongoose from "mongoose";
-import { ArrowLeft, FileText, HelpCircle, MessageSquareText, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowLeft, FileText, HelpCircle, MessageSquareText, ShieldAlert, ShieldCheck, Sparkles } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectMongoose } from "@/lib/db";
 import { ItemModel, JobCriteriaModel } from "@/lib/models";
@@ -13,6 +13,7 @@ import {
   formatYears,
   getScoreStyle,
   pad2,
+  cleanCandidateProfileText,
 } from "@/lib/candidate-ui";
 import { FitBadge, Panel, ScoreRing, StatusBadge } from "@/components/ui/foundry";
 import { Chat } from "@/components/ai/chat";
@@ -140,7 +141,7 @@ export default async function CandidateDossierPage({
             )}
           </div>
           <div className="shrink-0">
-            <ReevaluateButton />
+            <ReevaluateButton itemId={String(item._id)} />
           </div>
         </div>
       </header>
@@ -207,6 +208,28 @@ export default async function CandidateDossierPage({
         </div>
       </section>
 
+      {/* Executive Candidate Summary */}
+      {item.aiSummary && (
+        <section
+          aria-labelledby="summary-heading"
+          style={delay(120)}
+          className="tr-rise overflow-hidden rounded-lg border border-border bg-card p-6 sm:p-7"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-border pb-3.5 mb-4">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+              <h2 id="summary-heading" className="text-sm font-semibold tracking-tight text-white">
+                Executive Profile Summary
+              </h2>
+            </div>
+            <span className="font-mono text-[11px] text-zinc-500">AI Synthesized Narrative</span>
+          </div>
+          <p className="text-sm leading-relaxed text-zinc-200">
+            {item.aiSummary}
+          </p>
+        </section>
+      )}
+
       {/* Competency audit */}
       <div style={delay(160)} className="tr-rise grid gap-4 md:grid-cols-2">
         <Panel title="Strengths and stated evidence" icon={ShieldCheck} aside={pad2(fields.strengths.length)} bodyClassName="p-5">
@@ -268,7 +291,7 @@ export default async function CandidateDossierPage({
               Source text
             </span>
             <span className="font-mono text-[11px] text-zinc-500 tabular-nums">
-              {rawText.length.toLocaleString("en-US")} chars
+              {(cleanCandidateProfileText(rawText) || rawText).length.toLocaleString("en-US")} chars
               <span className="ml-2 inline-block transition-transform group-open:rotate-90 motion-reduce:transition-none">
                 ›
               </span>
@@ -277,7 +300,7 @@ export default async function CandidateDossierPage({
           <div className="border-t border-border bg-well p-5">
             {rawText ? (
               <pre className="max-h-[480px] overflow-auto font-mono text-xs leading-6 whitespace-pre-wrap text-zinc-400">
-                {rawText}
+                {cleanCandidateProfileText(rawText) || rawText}
               </pre>
             ) : (
               <p className="text-sm text-zinc-500">No extracted text is stored for this candidate.</p>

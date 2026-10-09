@@ -5,6 +5,7 @@ import { ItemModel } from "@/lib/models/item";
 import { processItem } from "@/lib/items/process";
 import { connectMongoose } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { cleanCandidateProfileText } from "@/lib/candidate-ui";
 
 // Parse scraper JSON into a clean text summary
 function parseProfile(data: any): string {
@@ -192,6 +193,9 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // Sanitize source text to remove LinkedIn navigation junk, boilerplate, and tracking queries
+    cleanText = cleanCandidateProfileText(cleanText);
 
     // Save candidate to DB
     const title = candidateName ? `${candidateName} - LinkedIn Profile` : url || "Imported Candidate";

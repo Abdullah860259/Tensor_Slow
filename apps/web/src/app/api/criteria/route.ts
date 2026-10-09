@@ -60,16 +60,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const prompt = `You are a Principal Technical Recruiter and Hiring Bar Raiser.
+      const prompt = `You are a calibrated Principal Technical Recruiter and Hiring Bar Raiser.
 The hiring team wants to hire for the following position:
 
 Target Role: ${roleTitle}
 Hiring Manager Requirements & Context:
 ${requirements}
 
-Expand these notes into a comprehensive, objective, and ruthlessly strict evaluation rubric:
-- Set clear year-of-experience or technology baselines.
-- Define a 0-100 scoring breakdown with explicit point bonuses and deductions.
+Expand these notes into a comprehensive, balanced, and nuanced evaluation rubric:
+- Set clear skill expectations across junior, mid, and senior levels.
+- Define a 0-100 scoring breakdown with calibrated weighted categories:
+  * Core Tech Stack (up to 40 pts) - award proportionate partial credit for emerging candidates with 1-2 yrs or related application framework experience.
+  * Engineering Depth & Architecture (up to 25 pts)
+  * Domain & Preferred Bonuses (up to 20 pts)
+  * Trajectory & Education (up to 15 pts)
+- Provide clear benchmark bands: Strong Fit (80-100), Potential (50-79), Unqualified for Senior (0-49).
+- Reserve low scores (<20) strictly for non-technical or spam profiles. Do not assign 0 to real software engineers.
 - Formulate 3 high-signal interview questions to verify claims during screening.`;
 
       const { object } = await generateObject({
@@ -106,7 +112,23 @@ Expand these notes into a comprehensive, objective, and ruthlessly strict evalua
       });
     }
 
-    // 3. Re-score all existing candidates against the active criteria
+    // 3. Re-score a single candidate against active criteria
+    if (action === "rescore_item") {
+      const { itemId } = body;
+      if (!itemId) {
+        return NextResponse.json({ error: "Missing itemId" }, { status: 400 });
+      }
+      const status = await processItem(itemId, ownerId);
+      if (status === "failed") {
+        return NextResponse.json({ error: "Failed to evaluate candidate" }, { status: 500 });
+      }
+      return NextResponse.json({
+        success: true,
+        message: "Candidate re-evaluated against the active criteria!",
+      });
+    }
+
+    // 4. Re-score all existing candidates against the active criteria
     if (action === "rescore_all") {
       const candidates = await ItemModel.find({ ownerId }).select("_id").lean();
       let rescoredCount = 0;

@@ -97,3 +97,58 @@ export function extractHeadline(content: string | null | undefined): string | un
 export function formatYears(years: number): string {
   return Number.isInteger(years) ? String(years) : years.toFixed(1);
 }
+
+/**
+ * Intelligent sanitizer for candidate profile text (e.g. from pasted LinkedIn text or scraped PDF resumes).
+ * Strips web navigation boilerplate, noise, repeated headers, tracking URLs, and collapses excess whitespace.
+ */
+export function cleanCandidateProfileText(raw: string | null | undefined): string {
+  if (!raw || typeof raw !== "string") return "";
+
+  const lines = raw.split(/\r?\n/);
+  const boilerplatePatterns = [
+    /^skip to main content/i,
+    /^sign in\b/i,
+    /^join now\b/i,
+    /^join to view full profile/i,
+    /^see all \d+ (experiences|skills|connections|details|updates)/i,
+    /^show all \d+ (experiences|skills|connections|details|updates)/i,
+    /^show more\b/i,
+    /^show less\b/i,
+    /^report this profile/i,
+    /^people also viewed/i,
+    /^people you may know/i,
+    /^page \d+ of \d+/i,
+    /^printed from linkedin/i,
+    /^©\s*\d{4}\s*linkedin/i,
+    /^activity\s*$/i,
+    /^endorse(d)?\b/i,
+    /^message\s*$/i,
+    /^more\s*$/i,
+    /^connect\s*$/i,
+    /^follow\s*$/i,
+  ];
+
+  const cleanedLines: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      cleanedLines.push("");
+      continue;
+    }
+
+    // Skip lines matching boilerplate
+    const isBoilerplate = boilerplatePatterns.some((p) => p.test(trimmed));
+    if (isBoilerplate) continue;
+
+    // Strip tracking parameters from inline URLs (e.g. ?trk=... or &lipi=...)
+    const sanitizedLine = line
+      .replace(/[?&](trk|lipi|miniProfileUrn|trackingId|originalReferer)=[^&\s)]+/gi, "")
+      .replace(/[\u200B-\u200D\uFEFF]/g, ""); // remove invisible zero-width characters
+
+    cleanedLines.push(sanitizedLine);
+  }
+
+  // Join and collapse 3+ consecutive newlines to 2, and trim ends
+  return cleanedLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}

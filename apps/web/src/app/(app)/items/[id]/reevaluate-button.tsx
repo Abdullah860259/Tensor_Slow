@@ -11,7 +11,7 @@ import { toast } from "sonner";
  * Uses the existing /api/criteria "rescore_all" action, because no per-candidate
  * evaluation route was provided. If you add one, change the request below.
  */
-export function ReevaluateButton(): React.JSX.Element {
+export function ReevaluateButton({ itemId }: { itemId?: string }): React.JSX.Element {
   const router = useRouter();
   const [isRunning, setIsRunning] = useState(false);
 
@@ -21,7 +21,9 @@ export function ReevaluateButton(): React.JSX.Element {
       const res = await fetch("/api/criteria", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "rescore_all" }),
+        body: JSON.stringify(
+          itemId ? { action: "rescore_item", itemId } : { action: "rescore_all" }
+        ),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Failed to re-evaluate.");

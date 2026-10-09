@@ -1,40 +1,428 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  ArrowRight,
-  Sparkles,
-  Shield,
-  Database,
-  Cpu,
-  Loader2,
   AlertCircle,
-  User,
-  Target,
-  SlidersHorizontal,
-  Bot,
-  Zap,
+  ArrowRight,
   CheckCircle2,
-  FileText,
-  Search,
-  ExternalLink,
-  ChevronRight,
-  Terminal,
-  ShieldCheck,
-  Scale,
+  Clock,
   Compass,
+  EyeOff,
+  Loader2,
+  Scale,
+  User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { domain } from "@/lib/domain";
-import { InteractiveSimulator } from "@/components/marketing/interactive-simulator";
+
+/* ================================================================== */
+/* Motion primitives. Everything respects prefers-reduced-motion.      */
+/* ================================================================== */
+
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(m.matches);
+    const onChange = () => setReduced(m.matches);
+    m.addEventListener("change", onChange);
+    return () => m.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
+function useInView<T extends Element>(threshold = 0.2) {
+  const ref = useRef<T>(null);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          setSeen(true);
+          io.disconnect();
+        }
+      },
+      { threshold, rootMargin: "0px 0px -8% 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+  return [ref, seen] as const;
+}
+
+/** Soft fade and rise, once, when the block scrolls into view. */
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}): React.JSX.Element {
+  const [ref, seen] = useInView<HTMLDivElement>(0.15);
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-1000 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+        seen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Headline text that resolves word by word (fade, lift, un-blur). */
+function Words({
+  text,
+  step = 55,
+  delay = 0,
+}: {
+  text: string;
+  step?: number;
+  delay?: number;
+}): React.JSX.Element {
+  const [ref, seen] = useInView<HTMLSpanElement>(0.3);
+  return (
+    <span ref={ref}>
+      {text.split(" ").map((word, i) => (
+        <React.Fragment key={`${word}-${i}`}>
+          <span
+            style={{ transitionDelay: `${delay + i * step}ms` }}
+            className={`inline-block transition-[opacity,transform,filter] duration-1000 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:blur-none motion-reduce:transition-none ${
+              seen ? "translate-y-0 opacity-100 blur-0" : "translate-y-2 opacity-0 blur-sm"
+            }`}
+          >
+            {word}
+          </span>{" "}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+}
+
+/** Paragraph whose words brighten one by one as it scrolls through the viewport. */
+function ScrollText({ text, className = "" }: { text: string; className?: string }): React.JSX.Element {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [progress, setProgress] = useState(0);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const el = ref.current;
+      if (!el) return;
+      const { top, height } = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const value = (vh * 0.85 - top) / (height + vh * 0.45);
+      setProgress(Math.min(1, Math.max(0, value)));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const words = text.split(" ");
+  return (
+    <p ref={ref} className={className}>
+      {words.map((word, i) => {
+        const lit = reduced ? 1 : Math.min(1, Math.max(0, (progress * (words.length + 4) - i) / 4));
+        return (
+          <React.Fragment key={`${word}-${i}`}>
+            <span className="transition-opacity duration-300" style={{ opacity: 0.16 + 0.84 * lit }}>
+              {word}
+            </span>{" "}
+          </React.Fragment>
+        );
+      })}
+    </p>
+  );
+}
+
+/* ================================================================== */
+/* Typography + shared UI                                              */
+/* ================================================================== */
+
+function Kicker({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return <p className="text-sm text-zinc-500">{children}</p>;
+}
+
+function H2({ id, text, className = "" }: { id?: string; text: string; className?: string }): React.JSX.Element {
+  return (
+    <h2
+      id={id}
+      className={`font-serif text-balance text-4xl font-normal tracking-tight text-white sm:text-6xl sm:leading-[1.05] ${className}`}
+    >
+      <Words text={text} />
+    </h2>
+  );
+}
+
+function CtaPair({
+  onAnonymous,
+  onDemo,
+  loading,
+  demoLoading,
+  primaryLabel,
+  secondaryLabel,
+  center = false,
+}: {
+  onAnonymous: () => void;
+  onDemo: () => void;
+  loading: boolean;
+  demoLoading: boolean;
+  primaryLabel: string;
+  secondaryLabel: string;
+  center?: boolean;
+}): React.JSX.Element {
+  return (
+    <div className={`flex flex-col gap-3 sm:flex-row ${center ? "items-center justify-center" : "items-start"}`}>
+      <Button
+        size="lg"
+        onClick={onAnonymous}
+        disabled={loading || demoLoading}
+        className="h-11 gap-2 bg-white px-7 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            <span>Starting session…</span>
+          </>
+        ) : (
+          <>
+            <span>{primaryLabel}</span>
+            <ArrowRight aria-hidden="true" />
+          </>
+        )}
+      </Button>
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={onDemo}
+        disabled={loading || demoLoading}
+        className="h-11 gap-2 border-zinc-800 bg-transparent px-6 text-sm font-medium text-zinc-200 hover:bg-zinc-900 hover:text-white"
+      >
+        {demoLoading ? (
+          <>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            <span>Signing in…</span>
+          </>
+        ) : (
+          <>
+            <User className="text-zinc-400" aria-hidden="true" />
+            <span>{secondaryLabel}</span>
+          </>
+        )}
+      </Button>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/* Content                                                             */
+/* ================================================================== */
+
+const MANIFESTO =
+  "Hiring engineers means reading hundreds of profiles and trusting your gut. TalentRank reads every one against the same criteria, scores it from zero to one hundred, and shows you exactly where each answer came from.";
+
+const PROBLEMS = [
+  {
+    icon: EyeOff,
+    title: "The resume black box",
+    body: "Keyword filters reward buzzword stuffing. Qualified builders get rejected while unqualified resume gamers pass through.",
+  },
+  {
+    icon: Clock,
+    title: "The time sink",
+    body: "Engineering managers spend 15+ hours a week scanning 10-page PDFs instead of talking to the best people.",
+  },
+  {
+    icon: Scale,
+    title: "Subjective blind spots",
+    body: "Unstructured interviews and manual scoring bring inconsistent criteria and missed tenure red flags.",
+  },
+];
+
+const QUESTIONS = [
+  {
+    q: "Does Alex have Next.js App Router experience?",
+    a: "Yes. Alex migrated Coursera's learner dashboard from the Pages Router to the App Router and owned the server component rollout across two teams.",
+    cite: "Coursera Experience § 2022–2024",
+    match: 98,
+    tone: "text-emerald-300 border-emerald-800/60 bg-emerald-950/60",
+  },
+  {
+    q: "Were any red flags detected?",
+    a: "One minor flag: a seven-month tenure in 2019. Every role since has run longer than two years, and no unexplained gaps appear.",
+    cite: "Career Timeline § 2018–2020",
+    match: 91,
+    tone: "text-amber-300 border-amber-800/60 bg-amber-950/60",
+  },
+  {
+    q: "Has Alex designed scalable cloud architecture?",
+    a: "Yes. The profile states Alex led a move to autoscaling services on AWS that handled 4× traffic during enrollment peaks.",
+    cite: "Coursera Experience § 2023",
+    match: 94,
+    tone: "text-emerald-300 border-emerald-800/60 bg-emerald-950/60",
+  },
+];
+
+const METRICS = [
+  { value: "< 850ms", label: "Parsing and ingestion latency" },
+  { value: "768-D", label: "Multimodal vector embeddings in MongoDB Atlas" },
+  { value: "100%", label: "Deterministic rubric scoring" },
+  { value: "33 / 33", label: "Automated quality gates passed" },
+];
+
+/* Tutorial visuals ------------------------------------------------- */
+
+function IngestVisual(): React.JSX.Element {
+  const rows = [
+    ["alex_rivera_resume.pdf", "212 KB", "text-zinc-500"],
+    ["Text extracted", "4,812 chars", "text-emerald-400"],
+    ["Gemini embedding · 768-D", "412 ms", "text-emerald-400"],
+  ];
+  return (
+    <div className="space-y-2.5 font-mono text-xs">
+      {rows.map(([left, right, tone]) => (
+        <div key={left} className="flex items-center justify-between rounded-md border border-border bg-well px-3 py-2.5">
+          <span className="text-zinc-300">{left}</span>
+          <span className={tone}>{right}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CriteriaVisual(): React.JSX.Element {
+  const rows = [
+    { label: "Must have", dot: "bg-emerald-500", text: "3+ years of React and Next.js" },
+    { label: "Must have", dot: "bg-emerald-500", text: "Scalable cloud architecture" },
+    { label: "Nice to have", dot: "bg-amber-500", text: "EdTech or education experience" },
+    { label: "Red flag", dot: "bg-rose-500", text: "Multiple tenures under one year" },
+  ];
+  return (
+    <ul className="space-y-2.5">
+      {rows.map((r) => (
+        <li key={r.text} className="flex items-start gap-3 text-sm">
+          <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${r.dot}`} aria-hidden="true" />
+          <span className="text-zinc-300">
+            <span className="mr-2 text-xs text-zinc-500">{r.label}</span>
+            {r.text}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RankVisual(): React.JSX.Element {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <div>
+          <p className="text-sm font-medium text-white">Alex Rivera</p>
+          <p className="text-xs text-zinc-500">Senior Frontend Engineer</p>
+        </div>
+        <div className="text-right">
+          <p className="font-mono text-3xl font-semibold tabular-nums text-emerald-400">94</p>
+          <p className="text-xs text-emerald-300">Strong Fit</p>
+        </div>
+      </div>
+      <div className="mt-4 flex h-1.5 gap-[2px]" aria-hidden="true">
+        {Array.from({ length: 10 }, (_, i) => (
+          <span key={i} className={`flex-1 ${i < 9 ? "bg-emerald-500" : "bg-zinc-800"}`} />
+        ))}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {["react", "nextjs", "edtech", "aws"].map((t) => (
+          <span key={t} className="rounded border border-border bg-well px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CopilotVisual(): React.JSX.Element {
+  return (
+    <div className="space-y-3 text-sm">
+      <p className="text-zinc-500">Where has Alex worked with Next.js?</p>
+      <p className="leading-relaxed text-zinc-200">
+        Alex led the App Router migration at Coursera and built the learner dashboard in Next.js.
+      </p>
+      <span className="inline-flex items-center gap-1.5 rounded border border-emerald-800/60 bg-emerald-950/60 px-2 py-1 font-mono text-[11px] text-emerald-300">
+        <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+        Coursera Experience § 2022–2024
+      </span>
+    </div>
+  );
+}
+
+const STEPS = [
+  {
+    n: "01",
+    label: "Ingest",
+    title: "Bring in a candidate, any way you have one.",
+    body: "Drop a PDF resume, paste text, or scrape a LinkedIn profile. The text is extracted and turned into a 768-dimension Gemini vector in MongoDB Atlas in under a second.",
+    visual: <IngestVisual />,
+  },
+  {
+    n: "02",
+    label: "Define",
+    title: "Describe the role in plain English.",
+    body: "Write rough notes about who you need. The criteria engine expands them into must-haves, nice-to-haves, and red flags you can edit before anything is scored.",
+    visual: <CriteriaVisual />,
+  },
+  {
+    n: "03",
+    label: "Rank",
+    title: "Get a score from 0 to 100.",
+    body: "Every candidate is scored against the same rubric, with a transparent breakdown and a clear band: Strong Fit, Potential, or Unqualified.",
+    visual: <RankVisual />,
+  },
+  {
+    n: "04",
+    label: "Ask",
+    title: "Ask questions and see the source.",
+    body: "Query a candidate's actual experience. Each answer cites the exact section of the profile it came from, so nothing is taken on trust.",
+    visual: <CopilotVisual />,
+  },
+];
+
+/* ================================================================== */
+/* Page                                                                */
+/* ================================================================== */
 
 export default function MarketingPage(): React.JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [active, setActive] = useState(0);
+  const [step, setStep] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const handleStartAnonymous = async () => {
     try {
@@ -71,410 +459,304 @@ export default function MarketingPage(): React.JSX.Element {
     }
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-[#09090b] text-[#fafafa] selection:bg-blue-500/30">
-      {/* Top Header / Navigation Bar */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800/80 bg-[#09090b]/80 px-4 backdrop-blur-md sm:px-8 md:px-12">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-[#11141a]">
-            <Compass className="h-5 w-5 text-emerald-400" />
-          </div>
-          <div>
-            <span className="font-mono text-sm font-bold tracking-wider text-white">
-              TALENTRANK<span className="text-emerald-400"> // </span>AI
-            </span>
-          </div>
-          <div className="hidden items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-0.5 font-mono text-[11px] text-emerald-300 md:flex">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-            <span>OPERATIONAL · FOUNDRY CORE</span>
-          </div>
-        </div>
+  /* Thin reading-progress line under the nav (written straight to the DOM, no re-render). */
+  useEffect(() => {
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`;
+      }
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+  /* Which tutorial step is crossing the middle of the viewport. */
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setStep(Number((e.target as HTMLElement).dataset.i ?? 0));
+        });
+      },
+      { rootMargin: "-45% 0px -45% 0px" }
+    );
+    stepRefs.current.forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  const current = QUESTIONS[active] ?? QUESTIONS[0]!;
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-blue-500/30">
+      {/* Navigation */}
+      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-[#09090b]/80 px-4 backdrop-blur-md sm:px-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card">
+            <Compass className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+          </div>
+          <span className="text-sm font-semibold tracking-wide text-white">TalentRank AI</span>
+          <span className="ml-1 hidden items-center gap-1.5 text-xs text-zinc-500 sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+            Live demo
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleDemoLogin}
             disabled={demoLoading || loading}
-            className="h-8 cursor-pointer border-zinc-800 bg-zinc-900/80 text-xs font-medium text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+            className="text-xs text-zinc-300 hover:text-white"
           >
-            {demoLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <User className="h-3.5 w-3.5 text-zinc-400" />
-            )}
-            <span className="hidden sm:inline">Demo Account</span>
+            {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User aria-hidden="true" />}
+            <span>Demo Account</span>
           </Button>
-
           <Button
             size="sm"
             onClick={handleStartAnonymous}
             disabled={loading || demoLoading}
-            className="h-8 cursor-pointer gap-1.5 bg-zinc-100 text-xs font-semibold text-zinc-950 shadow-sm transition-transform hover:scale-[1.02] hover:bg-white active:scale-[0.98]"
+            className="bg-zinc-100 text-xs font-semibold text-zinc-950 hover:bg-white"
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Launching...</span>
-              </>
-            ) : (
-              <>
-                <span>Instant Demo</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </>
-            )}
+            {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+            <span>Launch Demo</span>
           </Button>
         </div>
+        <div
+          ref={barRef}
+          aria-hidden="true"
+          className="absolute inset-x-0 -bottom-px h-px bg-emerald-400/70"
+          style={{ transform: "scaleX(0)", transformOrigin: "left" }}
+        />
       </header>
 
-      {/* Hero Section */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center px-4 py-12 sm:px-6 md:py-20 lg:px-8">
-        <div className="max-w-4xl text-center">
-          {/* Kicker Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-[#11141a] px-3.5 py-1 text-xs font-mono text-zinc-300 shadow-inner">
-            <Target className="h-3.5 w-3.5 text-emerald-400" />
-            <span>DEFENSE-GRADE CANDIDATE INTELLIGENCE & MATCHING</span>
-          </div>
-
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
-            Autonomous Candidate Ranking &amp; Evidence-Grounded Scoring
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-            Evaluate engineering talent against deterministic, custom job criteria. Ingest LinkedIn
-            profiles and PDF resumes, detect disqualifying red flags, and query candidate dossiers
-            with MongoDB Atlas Vector RAG.
-          </p>
-
-          {/* Primary Action Buttons */}
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              onClick={handleStartAnonymous}
-              disabled={loading || demoLoading}
-              className="h-11 cursor-pointer gap-2 bg-white px-7 text-sm font-semibold text-zinc-950 shadow-lg transition-transform hover:scale-[1.02] hover:bg-zinc-100 active:scale-[0.98]"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Connecting Anonymous Session...</span>
-                </>
-              ) : (
-                <>
-                  <span>Launch Live Evaluation Demo</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleDemoLogin}
-              disabled={demoLoading || loading}
-              className="h-11 cursor-pointer gap-2 border-zinc-800 bg-zinc-900/80 px-6 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
-            >
-              {demoLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <User className="h-4 w-4 text-zinc-400" />
-                  <span>Sign In with Demo Account</span>
-                </>
-              )}
-            </Button>
-          </div>
-
-          <p className="mt-3 text-xs text-zinc-500 font-mono">
-            Zero sign-up required · 1-click ephemeral sandbox · MongoDB Atlas &amp; Gemini 2.5/3.0
-          </p>
-
-          {error && (
-            <div className="mx-auto mt-4 flex max-w-md items-center gap-2 rounded-md border border-rose-900/60 bg-rose-950/40 p-3 text-xs text-rose-300">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
-              <span>{error}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Interactive Simulator Console Section */}
-        <section aria-label="Interactive Product Console" className="mt-12 w-full max-w-5xl">
-          <div className="mb-3 flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-emerald-400" />
-              <span className="font-mono text-xs font-semibold text-zinc-300">
-                LIVE INTERACTIVE SIMULATION CONSOLE
-              </span>
-            </div>
-            <span className="font-mono text-[11px] text-zinc-500">
-              CLICK TABS &amp; FILTERS TO EXPLORE
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="mx-auto max-w-5xl px-4 pb-28 pt-24 sm:px-8 sm:pb-40 sm:pt-36">
+          <Reveal>
+            <span className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1 text-xs text-zinc-300">
+              Precision candidate evaluation and matching
             </span>
-          </div>
-
-          <InteractiveSimulator onLaunchDemo={handleStartAnonymous} />
-        </section>
-
-        {/* Telemetry / Metrics Strip */}
-        <section
-          aria-label="System Metrics"
-          className="mt-16 grid w-full max-w-5xl grid-cols-2 gap-px overflow-hidden rounded-lg border border-zinc-800 bg-zinc-800 sm:grid-cols-4"
-        >
-          <div className="bg-[#11141a] p-4 text-left">
-            <span className="font-mono text-[11px] text-zinc-500">01 / INGESTION</span>
-            <div className="mt-1 font-mono text-2xl font-bold text-white">&lt; 850ms</div>
-            <p className="mt-1 text-xs text-zinc-400">PDF &amp; LinkedIn profile parsing latency</p>
-          </div>
-
-          <div className="bg-[#11141a] p-4 text-left">
-            <span className="font-mono text-[11px] text-zinc-500">02 / EMBEDDINGS</span>
-            <div className="mt-1 font-mono text-2xl font-bold text-emerald-400">768-D</div>
-            <p className="mt-1 text-xs text-zinc-400">Gemini vectors in MongoDB Atlas</p>
-          </div>
-
-          <div className="bg-[#11141a] p-4 text-left">
-            <span className="font-mono text-[11px] text-zinc-500">03 / CRITERIA</span>
-            <div className="mt-1 font-mono text-2xl font-bold text-white">100%</div>
-            <p className="mt-1 text-xs text-zinc-400">Deterministic scoring &amp; red-flag audit</p>
-          </div>
-
-          <div className="bg-[#11141a] p-4 text-left">
-            <span className="font-mono text-[11px] text-zinc-500">04 / QUALITY</span>
-            <div className="mt-1 font-mono text-2xl font-bold text-blue-400">33 / 33</div>
-            <p className="mt-1 text-xs text-zinc-400">Automated test suites passing</p>
-          </div>
-        </section>
-
-        {/* Architectural Pillars / Features Grid */}
-        <section aria-labelledby="architecture-heading" className="mt-20 w-full max-w-5xl text-left">
-          <div className="mb-6">
-            <div className="flex items-center gap-2 font-mono text-xs font-semibold text-emerald-400">
-              <Zap className="h-3.5 w-3.5" />
-              <span>CORE ARCHITECTURAL PILLARS</span>
-            </div>
-            <h2 id="architecture-heading" className="mt-1 text-2xl font-bold text-white sm:text-3xl">
-              Engineered for High-Confidence Engineering Hiring
-            </h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Traditional ATS software searches for static keywords. TalentRank AI analyzes career
-              trajectory, architectural contributions, and role alignment.
+          </Reveal>
+          <h1 className="mt-8 max-w-4xl font-serif text-balance text-5xl font-normal tracking-tight text-white sm:text-7xl sm:leading-[1.02] md:text-8xl">
+            <Words text="Candidate intelligence engineered for technical hiring." step={70} delay={150} />
+          </h1>
+          <Reveal delay={900}>
+            <p className="mt-10 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl">
+              Evaluate engineering talent against deterministic, custom job criteria. Ingest LinkedIn profiles and
+              resumes, uncover hidden red flags, and score candidates 0–100 with zero hallucination.
             </p>
+          </Reveal>
+          <Reveal delay={1150}>
+            <div className="mt-10">
+              <CtaPair
+                onAnonymous={handleStartAnonymous}
+                onDemo={handleDemoLogin}
+                loading={loading}
+                demoLoading={demoLoading}
+                primaryLabel="Launch Live Demo"
+                secondaryLabel="Sign In as Demo User"
+              />
+            </div>
+            <p className="mt-4 text-sm text-zinc-500">
+              Zero sign-up required. Powered by MongoDB Atlas Vector Search and Google Gemini.
+            </p>
+            {error && (
+              <div
+                role="alert"
+                className="mt-6 flex max-w-md items-center gap-2 rounded-md border border-rose-900/60 bg-rose-950/40 p-3 text-xs text-rose-300"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
+                <span>{error}</span>
+              </div>
+            )}
+          </Reveal>
+        </section>
+
+        {/* Manifesto: words brighten as you scroll */}
+        <section aria-label="What TalentRank does" className="border-t border-border">
+          <div className="mx-auto max-w-4xl px-4 py-32 sm:px-8 sm:py-48">
+            <ScrollText
+              text={MANIFESTO}
+              className="font-serif text-balance text-3xl leading-[1.25] tracking-tight text-white sm:text-5xl sm:leading-[1.2]"
+            />
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* Pillar 1 */}
-            <div className="rounded-lg border border-zinc-800 bg-[#11141a] p-6 transition-all hover:border-zinc-700">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
-                <Target className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-white">
-                Dynamic Job Criteria &amp; Rubric Synthesizer
-              </h3>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                Provide rough job notes or technical bullet points. Our AI engine compiles them into
-                structured Must-Haves, Nice-to-Haves, and explicit Red Flags. Re-score your entire
-                candidate pipeline with one click when requirements shift.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 font-mono text-[11px] text-zinc-400">
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  1-Click Batch Rescore
-                </span>
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  Rubric Prompt Inspector
-                </span>
-              </div>
-            </div>
-
-            {/* Pillar 2 */}
-            <div className="rounded-lg border border-zinc-800 bg-[#11141a] p-6 transition-all hover:border-zinc-700">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-blue-500/30 bg-blue-950/40 text-blue-400">
-                <Database className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-white">
-                Atlas Vector Search &amp; Grounded RAG Copilot
-              </h3>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                Every candidate profile is split, vectorized into 768 dimensions using Google
-                Gemini, and indexed in MongoDB Atlas. Recruiter chat queries are answered with exact
-                provenance citations to specific resume lines and timestamps.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 font-mono text-[11px] text-zinc-400">
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  Cosine Similarity HNSW
-                </span>
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  BM25 Keyword Fallback
-                </span>
-              </div>
-            </div>
-
-            {/* Pillar 3 */}
-            <div className="rounded-lg border border-zinc-800 bg-[#11141a] p-6 transition-all hover:border-zinc-700">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-amber-500/30 bg-amber-950/40 text-amber-400">
-                <FileText className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-white">
-                Tri-Modal Ingestion Engine
-              </h3>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                Ingest candidates through three friction-free channels: scrape LinkedIn profiles
-                via URL, drag-and-drop raw PDF resumes with binary text extraction, or paste
-                clipboard summaries. Automated validation ensures zero malformed records.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 font-mono text-[11px] text-zinc-400">
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  PDF Binary Parsing
-                </span>
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  Direct LinkedIn Scraping
-                </span>
-              </div>
-            </div>
-
-            {/* Pillar 4 */}
-            <div className="rounded-lg border border-zinc-800 bg-[#11141a] p-6 transition-all hover:border-zinc-700">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-rose-500/30 bg-rose-950/40 text-rose-400">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-white">
-                Defensive Audit &amp; Red-Flag Detection
-              </h3>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                Identify unexplained employment gaps, exaggerated titles, and missing baseline
-                qualifications automatically. The system delivers a transparent hiring verdict:
-                Strong Fit, Potential, or Unqualified.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 font-mono text-[11px] text-zinc-400">
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  Anti-Hallucination Guardrails
-                </span>
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                  Screening Question Generator
-                </span>
-              </div>
+        {/* Act I: Problem */}
+        <section aria-labelledby="problem-heading" className="border-t border-border">
+          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
+            <Kicker>The problem</Kicker>
+            <H2 id="problem-heading" text="Why technical screening is broken." className="mt-4 max-w-2xl" />
+            <div className="mt-20 grid gap-14 sm:grid-cols-3 sm:gap-10">
+              {PROBLEMS.map((p, i) => (
+                <Reveal key={p.title} delay={i * 150}>
+                  <p.icon className="h-5 w-5 text-rose-400" aria-hidden="true" />
+                  <h3 className="mt-5 font-serif text-2xl font-normal tracking-tight text-white">{p.title}</h3>
+                  <p className="mt-3 text-pretty text-sm leading-relaxed text-zinc-400">{p.body}</p>
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Comparison Matrix: Legacy ATS vs TalentRank AI */}
-        <section aria-labelledby="comparison-heading" className="mt-20 w-full max-w-5xl text-left">
-          <div className="mb-6">
-            <div className="flex items-center gap-2 font-mono text-xs font-semibold text-blue-400">
-              <Scale className="h-3.5 w-3.5" />
-              <span>SYSTEM COMPARISON MATRIX</span>
+        {/* Act II: How it works (sticky index, steps light up as they cross the middle) */}
+        <section aria-labelledby="how-heading" className="border-t border-border">
+          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
+            <div className="grid gap-16 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-20">
+              <div className="md:sticky md:top-32 md:self-start">
+                <Kicker>How it works</Kicker>
+                <H2 id="how-heading" text="From a pile of profiles to a ranked shortlist." className="mt-4 !text-4xl sm:!text-5xl" />
+                <ul className="mt-12 hidden space-y-3 md:block" aria-hidden="true">
+                  {STEPS.map((s, i) => (
+                    <li
+                      key={s.n}
+                      className={`flex items-center gap-4 text-sm transition-colors duration-500 ${
+                        i === step ? "text-white" : "text-zinc-600"
+                      }`}
+                    >
+                      <span
+                        className={`h-px transition-all duration-500 ${
+                          i === step ? "w-10 bg-emerald-400" : "w-5 bg-zinc-700"
+                        }`}
+                      />
+                      <span className="font-mono text-xs">{s.n}</span>
+                      <span>{s.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <ol>
+                {STEPS.map((s, i) => (
+                  <li
+                    key={s.n}
+                    data-i={i}
+                    ref={(el) => {
+                      stepRefs.current[i] = el;
+                    }}
+                    className={`flex flex-col justify-center py-10 transition-opacity duration-700 md:min-h-[75vh] ${
+                      i === step ? "opacity-100" : "md:opacity-25"
+                    }`}
+                  >
+                    <span className="font-mono text-xs text-zinc-500">{s.n}</span>
+                    <h3 className="mt-3 text-balance font-serif text-3xl font-normal tracking-tight text-white sm:text-4xl">
+                      {s.title}
+                    </h3>
+                    <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-zinc-400">{s.body}</p>
+                    <div className="mt-8 rounded-lg border border-border bg-card p-6">{s.visual}</div>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <h2 id="comparison-heading" className="mt-1 text-2xl font-bold text-white sm:text-3xl">
-              Why Keyword-Based ATS Tools Fail Technical Hiring
-            </h2>
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-[#11141a]">
-            <table className="w-full min-w-[600px] border-collapse text-left text-xs">
-              <thead>
-                <tr className="border-b border-zinc-800 bg-[#0c0f14] font-mono text-zinc-400">
-                  <th className="p-3 w-1/3">CAPABILITY</th>
-                  <th className="p-3 w-1/3 text-zinc-500">LEGACY ATS &amp; KEYWORD FILTERS</th>
-                  <th className="p-3 w-1/3 text-emerald-400 font-semibold">TALENTRANK AI (FOUNDRY CORE)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/80 text-zinc-300">
-                <tr>
-                  <td className="p-3 font-medium text-white">Evaluation Logic</td>
-                  <td className="p-3 text-zinc-500">Keyword counts (easily gamed by buzzword stuffing)</td>
-                  <td className="p-3 text-emerald-300 font-medium">Deep semantic understanding against strict rubric</td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-medium text-white">Rubric Adaptability</td>
-                  <td className="p-3 text-zinc-500">Rigid dropdowns and static Boolean filters</td>
-                  <td className="p-3 text-emerald-300 font-medium">Dynamic AI-expanded rubrics with 1-click batch rescoring</td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-medium text-white">Verification &amp; Citations</td>
-                  <td className="p-3 text-zinc-500">None; recruiter must manually read 10-page PDFs</td>
-                  <td className="p-3 text-emerald-300 font-medium">Direct provenance citations linked to resume sections</td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-medium text-white">Interview Readiness</td>
-                  <td className="p-3 text-zinc-500">Manual prep by engineering managers</td>
-                  <td className="p-3 text-emerald-300 font-medium">Auto-generated high-signal technical screening questions</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </section>
 
-        {/* Final CTA Strip */}
-        <section className="mt-20 w-full max-w-5xl rounded-xl border border-zinc-800 bg-gradient-to-b from-[#11141a] to-[#0c0f14] p-8 text-center sm:p-12">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
-            <Compass className="h-6 w-6" />
+        {/* Act III: Dossier preview */}
+        <section aria-labelledby="dossier-heading" className="border-t border-border">
+          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
+            <Kicker>See it answer</Kicker>
+            <H2 id="dossier-heading" text="Every answer points back to the source." className="mt-4 max-w-3xl" />
+            <Reveal className="mt-16">
+              <div className="overflow-hidden rounded-lg border border-border bg-card">
+                <div className="flex items-center justify-between border-b border-border px-5 py-3">
+                  <p className="text-sm font-medium text-white">Alex Rivera</p>
+                  <p className="text-xs text-zinc-500">Sample dossier</p>
+                </div>
+                <div className="grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+                  <div className="flex flex-col gap-2 border-b border-border p-4 md:border-b-0 md:border-r">
+                    {QUESTIONS.map((item, i) => (
+                      <button
+                        key={item.q}
+                        type="button"
+                        aria-pressed={i === active}
+                        onClick={() => setActive(i)}
+                        className={`cursor-pointer rounded-md border px-3.5 py-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          i === active
+                            ? "border-zinc-700 bg-accent text-white"
+                            : "border-transparent text-zinc-400 hover:bg-secondary hover:text-zinc-200"
+                        }`}
+                      >
+                        {item.q}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="min-h-[15rem] p-6 sm:p-8" aria-live="polite">
+                    <div key={active} className="animate-[fadeIn_0.45s_ease-out] motion-reduce:animate-none">
+                      <p className="text-pretty font-serif text-2xl leading-snug text-zinc-100">{current.a}</p>
+                      <div className="mt-6 flex flex-wrap items-center gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[11px] ${current.tone}`}
+                        >
+                          <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                          {current.cite}
+                        </span>
+                        <span className="font-mono text-[11px] text-zinc-500">Match {current.match}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
           </div>
+        </section>
 
-          <h2 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Evaluate Candidates with Defense-Grade Precision
-          </h2>
+        {/* Act IV: Metrics */}
+        <section aria-label="System metrics" className="border-t border-border">
+          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-14 lg:grid-cols-4">
+              {METRICS.map((m, i) => (
+                <Reveal key={m.value} delay={i * 120} className="border-l border-border pl-5">
+                  <dt className="font-serif text-4xl font-normal tracking-tight text-white tabular-nums sm:text-5xl">
+                    {m.value}
+                  </dt>
+                  <dd className="mt-3 text-sm leading-relaxed text-zinc-400">{m.label}</dd>
+                </Reveal>
+              ))}
+            </dl>
+          </div>
+        </section>
 
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">
-            Test the live ranking pipeline, inspect candidate dossiers, and experience vector
-            retrieval in real time with zero setup friction.
-          </p>
-
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              onClick={handleStartAnonymous}
-              disabled={loading || demoLoading}
-              className="h-11 cursor-pointer gap-2 bg-white px-8 text-sm font-semibold text-zinc-950 shadow-md hover:bg-zinc-100"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Connecting...</span>
-                </>
-              ) : (
-                <>
-                  <span>Launch Instant Demo</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleDemoLogin}
-              disabled={demoLoading || loading}
-              className="h-11 cursor-pointer gap-2 border-zinc-800 bg-zinc-900 text-sm font-medium text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
-            >
-              <User className="h-4 w-4 text-zinc-400" />
-              <span>Explore as Demo User</span>
-            </Button>
+        {/* Act V: Closing CTA */}
+        <section aria-labelledby="cta-heading" className="border-t border-border">
+          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
+            <div className="rounded-xl border border-border bg-gradient-to-b from-card to-well px-6 py-20 text-center sm:px-12 sm:py-28">
+              <H2 id="cta-heading" text="Run the pipeline on a real candidate." className="mx-auto max-w-3xl" />
+              <Reveal delay={500}>
+                <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-zinc-400 sm:text-lg">
+                  Judges and engineering leads: launch the live demo, import a profile, and watch it get scored,
+                  explained, and cited.
+                </p>
+                <div className="mt-10">
+                  <CtaPair
+                    center
+                    onAnonymous={handleStartAnonymous}
+                    onDemo={handleDemoLogin}
+                    loading={loading}
+                    demoLoading={demoLoading}
+                    primaryLabel="Launch Live Demo"
+                    secondaryLabel="Explore as Demo User"
+                  />
+                </div>
+              </Reveal>
+            </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-zinc-800/80 bg-[#09090b] py-8 text-xs font-mono text-zinc-500">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-8">
-          <div className="flex items-center gap-2 text-zinc-400">
-            <Compass className="h-4 w-4 text-emerald-400" />
-            <span className="font-semibold text-white">TalentRank AI</span>
-            <span>· Defense-Grade Talent Intelligence</span>
+      <footer className="border-t border-border py-8 text-xs text-zinc-500">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-8">
+          <div className="flex items-center gap-2">
+            <Compass className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+            <span className="font-medium text-zinc-300">TalentRank AI</span>
           </div>
-
-          <div className="flex items-center gap-4 text-zinc-500">
-            <span>Next.js 16.4</span>
-            <span>·</span>
-            <span>MongoDB Atlas</span>
-            <span>·</span>
-            <span>Google Gemini</span>
-            <span>·</span>
-            <span className="text-emerald-400">33/33 Tests Passing</span>
-          </div>
+          <p className="text-center">Next.js 16.4 · MongoDB Atlas · Google Gemini · Better Auth</p>
         </div>
       </footer>
+
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}`}</style>
     </div>
   );
 }

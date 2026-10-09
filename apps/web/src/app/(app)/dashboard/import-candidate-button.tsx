@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { CtaFrame, ctaPrimaryClass } from "@/components/hud/hud";
 
 export function ImportCandidateButton() {
   const [open, setOpen] = useState(false);
@@ -181,19 +182,33 @@ export function ImportCandidateButton() {
 
   return (
     <React.Fragment>
-      <Button
-        onClick={() => setOpen(true)}
-        className="h-9 cursor-pointer gap-2 rounded-lg border-0 bg-zinc-50 px-3.5 text-sm font-medium text-zinc-950 shadow-sm transition-colors hover:bg-zinc-200"
-      >
-        <Download className="h-4 w-4" aria-hidden="true" /> Import Candidate
-      </Button>
+      <CtaFrame>
+        <Button
+          onClick={() => setOpen(true)}
+          className={`${ctaPrimaryClass} gap-2 cursor-pointer`}
+        >
+          <Download className="h-4 w-4" aria-hidden="true" /> Import Candidate
+        </Button>
+      </CtaFrame>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto gap-0 rounded-2xl border border-zinc-800/80 bg-zinc-900 p-6 text-zinc-50 shadow-2xl sm:max-w-[560px]">
+        <DialogContent className="max-h-[90vh] overflow-y-auto gap-0 rounded-sm border border-slate-800 border-t-neon-cyan bg-[#05070b] p-6 text-white shadow-[0_0_48px_-12px_rgb(34_229_255/0.35)] sm:max-w-[560px]">
+          {/* Scan line while loading */}
+          {isLoading && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-px overflow-hidden"
+            >
+              <span className="block h-full w-2/5 animate-scan bg-gradient-to-r from-transparent via-neon-cyan to-transparent motion-reduce:animate-none" />
+            </span>
+          )}
           <DialogHeader className="space-y-1.5 text-left">
-            <DialogTitle className="text-lg font-semibold tracking-tight text-zinc-50">
+            <p className="font-mono text-[11px] tracking-[0.24em] text-neon-cyan uppercase">
+              Candidate Ingestion
+            </p>
+            <DialogTitle className="font-display text-2xl font-bold tracking-tight text-white">
               Import & Evaluate Candidate
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
+            <DialogDescription className="text-sm leading-relaxed text-slate-400">
               Evaluate real candidates instantly against your active role criteria.
             </DialogDescription>
           </DialogHeader>

@@ -1,10 +1,17 @@
 import React from "react";
 import Link from "next/link";
-import { clampScore, getScoreStyle, getStatusDot } from "@/lib/candidate-ui";
+import { Radio } from "lucide-react";
+import { pad2 } from "@/lib/candidate-ui";
+import {
+  Panel,
+  ScoreRing,
+  SegmentedBar,
+  StatusReadout,
+} from "@/components/hud/hud";
 
 /**
  * Presentational only: no data fetching, no hooks, so it stays a React Server
- * Component. Map whatever your dashboard query returns into this shape.
+ * Component. Map whatever the dashboard query returns into this shape.
  */
 export type LeaderboardCandidate = {
   id: string;
@@ -17,7 +24,7 @@ export type LeaderboardCandidate = {
 };
 
 const GRID =
-  "grid grid-cols-[2rem_minmax(0,1fr)_auto] gap-x-4 md:grid-cols-[2rem_minmax(0,1fr)_5.5rem_7rem_8.5rem]";
+  "grid grid-cols-[2rem_minmax(0,1fr)_auto] gap-x-4 md:grid-cols-[2.5rem_minmax(0,1fr)_6rem_9rem_15rem]";
 
 export function CandidateLeaderboard({
   candidates,
@@ -29,21 +36,24 @@ export function CandidateLeaderboard({
   );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900 shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-zinc-50">Candidates</h2>
-          <span className="rounded-md bg-zinc-800 px-1.5 py-0.5 text-xs font-medium text-zinc-300 tabular-nums">
-            {ranked.length}
-          </span>
-        </div>
-        <p className="text-xs text-zinc-400">Sorted by ATS score</p>
-      </div>
-
+    <Panel
+      accent="cyan"
+      title="Candidate telemetry"
+      icon={Radio}
+      bodyClassName="p-0"
+      aside={
+        <p className="font-mono text-[11px] tracking-[0.14em] text-slate-400 uppercase">
+          <span className="text-white tabular-nums">{pad2(ranked.length)}</span>{" "}
+          tracked / sort: ats desc
+        </p>
+      }
+    >
       {ranked.length === 0 ? (
-        <div className="px-4 py-14 text-center">
-          <p className="text-sm font-medium text-zinc-100">No candidates yet</p>
-          <p className="mt-1 text-sm text-zinc-400">
+        <div className="px-4 py-16 text-center">
+          <p className="font-mono text-xs tracking-[0.18em] text-neon-cyan uppercase">
+            No signal
+          </p>
+          <p className="mt-2 text-sm text-slate-400">
             Import a LinkedIn profile to score your first candidate.
           </p>
         </div>
@@ -51,88 +61,67 @@ export function CandidateLeaderboard({
         <>
           <div
             aria-hidden="true"
-            className={`${GRID} border-b border-zinc-800/80 px-4 py-2 text-xs font-medium text-zinc-400`}
+            className={`${GRID} border-b border-slate-800/90 px-4 py-2 font-mono text-[10px] tracking-[0.2em] text-slate-400 uppercase`}
           >
-            <span>#</span>
+            <span>Rk</span>
             <span>Candidate</span>
-            <span className="hidden md:block">Experience</span>
+            <span className="hidden md:block">Exp</span>
             <span className="hidden md:block">Status</span>
-            <span className="text-right">ATS score</span>
+            <span className="text-right">Match</span>
           </div>
 
-          <ul className="divide-y divide-zinc-800/80">
+          <ul className="divide-y divide-slate-800/70">
             {ranked.map((candidate, index) => {
-              const style = getScoreStyle(candidate.score);
-              const safe = clampScore(candidate.score);
               const subline = [
                 candidate.category,
                 ...(candidate.aiTags ?? []).slice(0, 3),
               ]
                 .filter(Boolean)
-                .join(", ");
+                .join(" / ");
 
               return (
                 <li key={candidate.id}>
                   <Link
                     href={`/items/${candidate.id}`}
-                    className={`${GRID} items-center px-4 py-3 transition-colors hover:bg-zinc-800/50 focus-visible:bg-zinc-800/50 focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:outline-none focus-visible:ring-inset`}
+                    className={`${GRID} items-center px-4 py-3 transition-colors hover:bg-neon-cyan/[0.04] hover:shadow-[inset_2px_0_0_0_var(--color-neon-cyan)] focus-visible:bg-neon-cyan/[0.04] focus-visible:ring-1 focus-visible:ring-neon-cyan focus-visible:outline-none focus-visible:ring-inset`}
                   >
                     <span
-                      className={`text-sm tabular-nums ${
-                        index < 3 ? "font-medium text-zinc-50" : "text-zinc-400"
+                      className={`font-mono text-sm tabular-nums ${
+                        index < 3 ? "font-semibold text-neon-cyan" : "text-slate-400"
                       }`}
                     >
-                      {index + 1}
+                      {pad2(index + 1)}
                     </span>
 
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-zinc-50">
+                      <span className="block truncate font-display text-[15px] font-semibold text-white">
                         {candidate.title}
                       </span>
                       {subline && (
-                        <span className="block truncate text-xs text-zinc-400">
+                        <span className="block truncate font-mono text-[11px] text-slate-400">
                           {subline}
                         </span>
                       )}
                     </span>
 
-                    <span className="hidden text-sm text-zinc-300 tabular-nums md:block">
+                    <span className="hidden font-mono text-sm text-slate-100 tabular-nums md:block">
                       {candidate.yearsOfExperience === undefined
-                        ? "—"
-                        : `${candidate.yearsOfExperience} yrs`}
+                        ? "--"
+                        : `${pad2(candidate.yearsOfExperience)} yrs`}
                     </span>
 
-                    <span className="hidden items-center gap-1.5 text-xs text-zinc-300 capitalize md:flex">
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${getStatusDot(candidate.status)}`}
-                        aria-hidden="true"
+                    <StatusReadout
+                      status={candidate.status}
+                      className="hidden md:inline-flex"
+                    />
+
+                    <span className="flex items-center justify-end gap-4">
+                      <SegmentedBar
+                        score={candidate.score}
+                        segments={10}
+                        className="hidden w-28 sm:flex"
                       />
-                      {candidate.status}
-                    </span>
-
-                    <span className="flex items-center justify-end gap-3">
-                      <span
-                        className="hidden h-1 w-12 overflow-hidden rounded-full bg-zinc-800 sm:block"
-                        aria-hidden="true"
-                      >
-                        <span
-                          className={`block h-full rounded-full ${style.bar}`}
-                          style={{ width: `${safe}%` }}
-                        />
-                      </span>
-                      <span
-                        className="flex min-w-[3.25rem] items-center justify-end gap-2"
-                        title={style.label}
-                      >
-                        <span
-                          className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`}
-                          aria-hidden="true"
-                        />
-                        <span className="text-sm font-semibold text-zinc-50 tabular-nums">
-                          {candidate.score === undefined ? "—" : candidate.score}
-                        </span>
-                        <span className="sr-only">{style.label}</span>
-                      </span>
+                      <ScoreRing score={candidate.score} size={44} />
                     </span>
                   </Link>
                 </li>
@@ -141,6 +130,6 @@ export function CandidateLeaderboard({
           </ul>
         </>
       )}
-    </div>
+    </Panel>
   );
 }

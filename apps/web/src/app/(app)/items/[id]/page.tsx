@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
+  Activity,
   AlertCircle,
   ArrowLeft,
   BadgeCheck,
@@ -13,28 +14,42 @@ import {
   Flag,
   Gauge,
   RotateCcw,
+  ShieldCheck,
   Sparkles,
-  type LucideIcon,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectMongoose } from "@/lib/db";
 import { ItemModel } from "@/lib/models";
 import { processItem } from "@/lib/items/process";
 import { domain } from "@/lib/domain";
-import { clampScore, getScoreStyle, getStatusDot } from "@/lib/candidate-ui";
+import { clampScore, getScoreStyle, pad2 } from "@/lib/candidate-ui";
 import { Button } from "@/components/ui/button";
 import { Chat } from "@/components/ai/chat";
+import {
+  Panel,
+  RadarChart,
+  ScoreRing,
+  SegmentedBar,
+  StatusReadout,
+  type Accent,
+  type RadarAxis,
+} from "@/components/hud/hud";
 
 type CandidateFields = {
   strengths: string[];
   weaknesses: string[];
   verdict?: string;
   yearsOfExperience?: number;
+  /**
+   * Optional. Rendered as a radar chart when the evaluation provides at least
+   * three entries shaped like { name: string; score: number } (0-100).
+   */
+  competencies: RadarAxis[];
 };
 
 function getCandidateFields(value: unknown): CandidateFields {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return { strengths: [], weaknesses: [] };
+    return { strengths: [], weaknesses: [], competencies: [] };
   }
 
   const fields = value as Record<string, unknown>;
@@ -55,172 +70,102 @@ function getCandidateFields(value: unknown): CandidateFields {
       Number.isFinite(fields.yearsOfExperience)
         ? fields.yearsOfExperience
         : undefined,
+    competencies: Array.isArray(fields.competencies)
+      ? fields.competencies
+          .map((entry): RadarAxis | null => {
+            if (!entry || typeof entry !== "object") return null;
+            const e = entry as Record<string, unknown>;
+            const label = typeof e.name === "string" ? e.name : e.label;
+            const score = typeof e.score === "number" ? e.score : e.value;
+            if (typeof label !== "string" || typeof score !== "number") {
+              return null;
+            }
+            if (!Number.isFinite(score)) return null;
+            return { label, value: clampScore(score) };
+          })
+          .filter((entry): entry is RadarAxis => entry !== null)
+          .slice(0, 8)
+      : [],
   };
 }
 
 /* -------------------------------------------------------------------------- */
-/* Building blocks                                                            */
+/* Local blocks                                                               */
 /* -------------------------------------------------------------------------- */
 
-function BentoCard({
-  className = "",
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div
-      className={`rounded-xl border border-zinc-800/80 bg-zinc-900 p-5 shadow-sm ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function CardLabel({
-  icon: Icon,
-  children,
-  aside,
-}: {
-  icon: LucideIcon;
-  children: React.ReactNode;
-  aside?: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-[13px] font-medium text-zinc-400">
-        <Icon className="h-3.5 w-3.5 text-zinc-500" aria-hidden="true" />
-        {children}
-      </div>
-      {aside}
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: string }): React.JSX.Element {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-200 capitalize">
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${getStatusDot(status)}`}
-        aria-hidden="true"
-      />
-      {status}
-    </span>
-  );
-}
-
-function ScoreRing({ score }: { score: number | undefined }): React.JSX.Element {
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
-  const safe = clampScore(score);
-  const style = getScoreStyle(score);
-
-  return (
-    <div
-      className="relative h-24 w-24 shrink-0"
-      role="img"
-      aria-label={
-        score === undefined
-          ? "ATS score unavailable"
-          : `ATS score ${score} out of 100`
-      }
-    >
-      <svg
-        viewBox="0 0 100 100"
-        className="h-full w-full -rotate-90"
-        aria-hidden="true"
-      >
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          fill="none"
-          strokeWidth="7"
-          className="stroke-zinc-800"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          fill="none"
-          strokeWidth="7"
-          strokeLinecap="round"
-          className={style.stroke}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - safe / 100)}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-3xl font-semibold tracking-tight text-zinc-50 tabular-nums">
-          {score === undefined ? "—" : score}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function InsightList({
+function InsightPanel({
   title,
-  description,
   items,
   kind,
   className = "",
 }: {
   title: string;
-  description: string;
   items: string[];
   kind: "strength" | "weakness";
   className?: string;
 }): React.JSX.Element {
   const positive = kind === "strength";
-  const Icon = positive ? Check : Flag;
-  const iconBox = positive
-    ? "bg-emerald-500/10 text-emerald-400 ring-emerald-500/20"
-    : "bg-rose-500/10 text-rose-400 ring-rose-500/20";
-  const itemIcon = positive ? "text-emerald-400" : "text-rose-400";
+  const accent: Accent = positive ? "cyan" : "orange";
+  const tone = positive ? "text-neon-cyan" : "text-neon-orange";
+  const rail = positive ? "border-neon-cyan/30" : "border-neon-orange/30";
+  const prefix = positive ? "S" : "F";
 
   return (
-    <BentoCard className={className}>
-      <div className="flex items-start gap-3">
+    <Panel
+      accent={accent}
+      title={title}
+      icon={positive ? Check : Flag}
+      className={className}
+      aside={
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${iconBox}`}
+          className={`font-mono text-xs font-semibold tabular-nums ${tone}`}
         >
-          <Icon className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+          {pad2(items.length)}
         </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-medium text-zinc-50">{title}</h3>
-          <p className="text-xs text-zinc-400">{description}</p>
-        </div>
-        <span className="rounded-md bg-zinc-800 px-1.5 py-0.5 text-xs font-medium text-zinc-300 tabular-nums">
-          {items.length}
-        </span>
-      </div>
-
+      }
+    >
       {items.length ? (
-        <ul className="mt-4 divide-y divide-zinc-800/80">
+        <ul className="space-y-3">
           {items.map((item, index) => (
             <li
               key={`${index}-${item}`}
-              className="flex items-start gap-3 py-3 text-sm leading-6 text-zinc-200 first:pt-0 last:pb-0"
+              className={`flex items-start gap-3 border-l py-0.5 pl-3 ${rail}`}
             >
-              <Icon
-                className={`mt-1.5 h-3.5 w-3.5 shrink-0 ${itemIcon}`}
-                strokeWidth={2.5}
-                aria-hidden="true"
-              />
-              <span>{item}</span>
+              <span
+                className={`pt-[3px] font-mono text-[11px] font-semibold ${tone}`}
+              >
+                {prefix}
+                {pad2(index + 1)}
+              </span>
+              <span className="text-sm leading-6 text-slate-200">{item}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-400">
+        <p className="border border-dashed border-slate-800 p-6 text-center font-mono text-xs text-slate-400">
           {positive
             ? "No strengths were extracted for this candidate yet."
             : "No weaknesses were extracted for this candidate yet."}
-        </div>
+        </p>
       )}
-    </BentoCard>
+    </Panel>
+  );
+}
+
+/** Tag styled as a bracketed system readout. */
+function Tag({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): React.JSX.Element {
+  return (
+    <span
+      className={`inline-flex items-center rounded-sm border border-slate-800 bg-slate-950 px-2 py-1 font-mono text-[11px] tracking-[0.12em] text-slate-300 uppercase ${className}`}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -272,6 +217,9 @@ export default async function ItemDetailPage({
   const score = typeof item.score === "number" ? item.score : undefined;
   const scoreStyle = getScoreStyle(score);
   const years = item.fields.yearsOfExperience;
+  const strengthCount = item.fields.strengths.length;
+  const flagCount = item.fields.weaknesses.length;
+  const hasRadar = item.fields.competencies.length >= 3;
 
   const verdictText =
     item.fields.verdict ||
@@ -280,14 +228,14 @@ export default async function ItemDetailPage({
       : "No hiring recommendation is available for this profile yet.");
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 pb-12 text-zinc-100">
+    <div className="mx-auto w-full max-w-7xl space-y-6 pb-14">
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 rounded-md py-1 text-sm text-zinc-400 transition-colors hover:text-zinc-50 focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:outline-none"
+          className="inline-flex items-center gap-2 py-1 font-mono text-xs tracking-[0.16em] text-slate-400 uppercase transition-colors hover:text-neon-cyan focus-visible:ring-1 focus-visible:ring-neon-cyan focus-visible:outline-none"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Candidate leaderboard
         </Link>
         <form action={reRunExtractionAction}>
@@ -295,7 +243,7 @@ export default async function ItemDetailPage({
             type="submit"
             variant="outline"
             size="sm"
-            className="cursor-pointer gap-2 rounded-lg border-zinc-800 bg-zinc-900 text-zinc-200 shadow-sm hover:bg-zinc-800 hover:text-zinc-50"
+            className="h-9 cursor-pointer gap-2 rounded-sm border-neon-cyan/40 bg-transparent px-3 font-mono text-xs tracking-[0.16em] text-neon-cyan uppercase hover:bg-neon-cyan/10 hover:text-neon-cyan"
           >
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             Re-run evaluation
@@ -303,157 +251,226 @@ export default async function ItemDetailPage({
         </form>
       </div>
 
-      {/* Title + meta */}
-      <header className="space-y-3">
+      {/* Title block */}
+      <header className="space-y-4">
+        <p className="flex items-center gap-2 font-mono text-[11px] tracking-[0.24em] text-slate-400 uppercase">
+          <span className="h-1.5 w-1.5 bg-neon-cyan" aria-hidden="true" />
+          Candidate file
+          <span className="text-slate-600" aria-hidden="true">
+            /
+          </span>
+          <span className="text-slate-200">{item._id.slice(-8)}</span>
+        </p>
+        <h1 className="font-display text-4xl leading-[1] font-bold tracking-tighter text-white sm:text-6xl">
+          {item.title}
+        </h1>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusPill status={item.status} />
-          {item.category && (
-            <span className="inline-flex items-center rounded-full border border-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-300">
-              {item.category}
-            </span>
-          )}
+          <Tag>
+            <StatusReadout status={item.status} />
+          </Tag>
+          {item.category && <Tag>{item.category}</Tag>}
           {item.severity && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-300">
+            <Tag>
               <span
-                className={`h-1.5 w-1.5 rounded-full ${
+                className={`mr-2 h-1.5 w-1.5 rounded-full ${
                   item.severity === "low"
-                    ? "bg-emerald-400"
+                    ? "bg-neon-cyan"
                     : item.severity === "medium"
-                      ? "bg-amber-400"
-                      : "bg-rose-400"
+                      ? "bg-neon-orange"
+                      : "bg-rose-500"
                 }`}
                 aria-hidden="true"
               />
-              {domain.labels.severityLabel}:{" "}
-              <span className="capitalize">{item.severity}</span>
-            </span>
+              {domain.labels.severityLabel}: {item.severity}
+            </Tag>
           )}
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
-          {item.title}
-        </h1>
       </header>
 
-      {/* Bento grid */}
+      {/* HUD grid */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12">
         {/* Verdict */}
-        <BentoCard className="flex flex-col gap-4 md:col-span-2 lg:col-span-6">
-          <CardLabel icon={Sparkles}>AI verdict</CardLabel>
-          <p className="text-lg leading-7 text-zinc-50">{verdictText}</p>
-        </BentoCard>
+        <Panel
+          accent="plasma"
+          title="AI verdict"
+          icon={Sparkles}
+          className="md:col-span-2 lg:col-span-6"
+          bodyClassName="p-5"
+        >
+          <p className="font-display text-xl leading-8 text-white sm:text-2xl sm:leading-9">
+            {verdictText}
+          </p>
+        </Panel>
 
-        {/* ATS score */}
-        <BentoCard className="flex flex-col gap-4 lg:col-span-3">
-          <CardLabel icon={Gauge}>ATS score</CardLabel>
-          <div className="flex items-center gap-4">
-            <ScoreRing score={score} />
-            <div className="min-w-0 space-y-1">
-              <p className="flex items-center gap-2 text-sm font-medium text-zinc-50">
-                <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${scoreStyle.dot}`}
-                  aria-hidden="true"
-                />
-                {scoreStyle.label}
-              </p>
-              <p className="text-xs text-zinc-400">
-                {score === undefined ? "No score yet" : "out of 100"}
-              </p>
-            </div>
-          </div>
-        </BentoCard>
+        {/* ATS match */}
+        <Panel
+          accent={score === undefined ? "slate" : score >= 80 ? "cyan" : "orange"}
+          title="ATS match"
+          icon={Gauge}
+          className="lg:col-span-3"
+          bodyClassName="flex flex-col items-center gap-4 p-5"
+        >
+          <ScoreRing score={score} size={136} ticks />
+          <SegmentedBar score={score} segments={20} className="w-full" />
+          <p
+            className={`font-mono text-[11px] tracking-[0.18em] uppercase ${scoreStyle.text}`}
+          >
+            {scoreStyle.label}
+          </p>
+        </Panel>
 
         {/* Experience */}
-        <BentoCard className="flex flex-col justify-between gap-4 lg:col-span-3">
-          <CardLabel icon={BriefcaseBusiness}>Experience</CardLabel>
-          <p className="flex items-baseline gap-2">
-            <span className="text-5xl font-semibold tracking-tight text-zinc-50 tabular-nums">
-              {years === undefined ? "—" : years}
+        <Panel
+          accent="slate"
+          title="Experience"
+          icon={BriefcaseBusiness}
+          className="lg:col-span-3"
+          bodyClassName="flex flex-col justify-center p-5"
+        >
+          <p className="flex items-baseline gap-2 font-mono">
+            <span className="text-7xl font-semibold tracking-tighter text-white tabular-nums">
+              {years === undefined ? "--" : pad2(years)}
             </span>
-            <span className="text-sm text-zinc-400">
-              {years === 1 ? "year" : "years"}
+            <span className="text-sm tracking-[0.18em] text-slate-400 uppercase">
+              yrs
             </span>
           </p>
-        </BentoCard>
+        </Panel>
 
-        {/* Strengths / Weaknesses */}
-        <InsightList
+        {/* Strengths / flags */}
+        <InsightPanel
           title="Strengths"
-          description="Reasons to move forward"
           items={item.fields.strengths}
           kind="strength"
-          className="lg:col-span-6"
+          className="lg:col-span-4"
         />
-        <InsightList
+        <InsightPanel
           title="Weaknesses and flags"
-          description="Points to discuss or validate"
           items={item.fields.weaknesses}
           kind="weakness"
-          className="lg:col-span-6"
+          className="lg:col-span-4"
         />
+
+        {/* Signal profile: radar when competencies exist, always the balance bar */}
+        <Panel
+          accent="cyan"
+          title="Signal profile"
+          icon={Activity}
+          className="md:col-span-2 lg:col-span-4"
+          bodyClassName="space-y-5 p-5"
+        >
+          {hasRadar && <RadarChart axes={item.fields.competencies} />}
+          <div className="space-y-3">
+            <div className="flex h-3 gap-[3px]" aria-hidden="true">
+              {strengthCount + flagCount === 0 ? (
+                <span className="flex-1 -skew-x-[18deg] bg-slate-800" />
+              ) : (
+                <>
+                  {strengthCount > 0 && (
+                    <span
+                      className="-skew-x-[18deg] bg-neon-cyan shadow-[0_0_8px_rgb(34_229_255/0.6)]"
+                      style={{ flexGrow: strengthCount, flexBasis: 0 }}
+                    />
+                  )}
+                  {flagCount > 0 && (
+                    <span
+                      className="-skew-x-[18deg] bg-neon-orange shadow-[0_0_8px_rgb(255_122_26/0.6)]"
+                      style={{ flexGrow: flagCount, flexBasis: 0 }}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+            <dl className="grid grid-cols-2 gap-4 font-mono">
+              <div>
+                <dt className="text-[11px] tracking-[0.16em] text-slate-400 uppercase">
+                  Strengths
+                </dt>
+                <dd className="text-3xl font-semibold text-neon-cyan tabular-nums">
+                  {pad2(strengthCount)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] tracking-[0.16em] text-slate-400 uppercase">
+                  Flags
+                </dt>
+                <dd className="text-3xl font-semibold text-neon-orange tabular-nums">
+                  {pad2(flagCount)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </Panel>
 
         {/* Overview */}
         {item.aiSummary && (
-          <BentoCard className="flex flex-col gap-4 md:col-span-2 lg:col-span-5">
-            <CardLabel icon={BadgeCheck}>Candidate overview</CardLabel>
-            <p className="text-sm leading-6 text-zinc-200">{item.aiSummary}</p>
+          <Panel
+            accent="plasma"
+            title="Candidate overview"
+            icon={BadgeCheck}
+            className="md:col-span-2 lg:col-span-5"
+            bodyClassName="space-y-4 p-5"
+          >
+            <p className="text-sm leading-6 text-slate-200">{item.aiSummary}</p>
             {item.aiTags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {item.aiTags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="rounded-md border border-zinc-800 bg-zinc-800/50 px-2 py-0.5 text-xs text-zinc-300"
-                  >
+                  <Tag key={tag} className="normal-case tracking-normal">
                     {tag}
-                  </span>
+                  </Tag>
                 ))}
               </div>
             )}
-          </BentoCard>
+          </Panel>
         )}
 
-        {/* Scraped profile */}
-        <BentoCard
-          className={`flex flex-col gap-4 md:col-span-2 ${
+        {/* Source profile */}
+        <Panel
+          accent="slate"
+          title="Scraped LinkedIn profile"
+          icon={FileText}
+          className={`md:col-span-2 ${
             item.aiSummary ? "lg:col-span-7" : "lg:col-span-12"
           }`}
+          aside={
+            <span className="font-mono text-[11px] tracking-[0.14em] text-slate-400 uppercase">
+              Source
+            </span>
+          }
+          bodyClassName="p-5"
         >
-          <CardLabel
-            icon={FileText}
-            aside={
-              <span className="text-xs text-zinc-400">
-                Source used for evaluation
-              </span>
-            }
-          >
-            Scraped LinkedIn profile
-          </CardLabel>
           {item.content ? (
-            <div className="max-h-[480px] overflow-y-auto rounded-lg border border-zinc-800/80 bg-zinc-950 p-4 text-[13px] leading-6 whitespace-pre-wrap text-zinc-300">
+            <div className="max-h-[480px] overflow-y-auto rounded-sm border border-slate-800/90 bg-black p-4 font-mono text-[12.5px] leading-6 whitespace-pre-wrap text-slate-300">
               {item.content}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-zinc-800 p-8 text-center">
+            <div className="border border-dashed border-slate-800 p-8 text-center">
               <AlertCircle
-                className="mx-auto h-6 w-6 text-zinc-500"
+                className="mx-auto h-6 w-6 text-slate-500"
                 aria-hidden="true"
               />
-              <p className="mt-3 text-sm font-medium text-zinc-100">
+              <p className="mt-3 font-mono text-xs tracking-[0.16em] text-slate-100 uppercase">
                 No scraped profile text
               </p>
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-slate-400">
                 The original profile content was not saved with this candidate.
               </p>
             </div>
           )}
-        </BentoCard>
+        </Panel>
 
         {/* Chat */}
-        <BentoCard className="flex flex-col gap-4 md:col-span-2 lg:col-span-12">
-          <CardLabel icon={Sparkles}>Ask about this candidate</CardLabel>
-          <div className="rounded-lg border border-zinc-800/80 bg-zinc-950 p-3">
+        <Panel
+          accent="plasma"
+          title="Ask about this candidate"
+          icon={ShieldCheck}
+          className="md:col-span-2 lg:col-span-12"
+          bodyClassName="p-5"
+        >
+          <div className="rounded-sm border border-slate-800/90 bg-black p-3">
             <Chat itemId={item._id} />
           </div>
-        </BentoCard>
+        </Panel>
       </div>
     </div>
   );

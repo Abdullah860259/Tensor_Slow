@@ -1,61 +1,56 @@
 /**
- * Shared presentational helpers for the leaderboard and candidate detail views.
- * Pure functions, no React: safe to import from server and client components.
+ * Shared presentational helpers for the dashboard and candidate views.
+ * Pure functions, no React: safe from server and client components.
  *
- * Class names are written out in full so Tailwind v4's source scanner picks them up.
+ * Class names are written out in full so Tailwind v4's source scanner finds them.
+ * Each style only sets a text color; rings, bars and dots use `currentColor`
+ * (bg-current / stroke="currentColor") so one class drives the whole readout.
  */
 
 export type ScoreStyle = {
   /** Qualitative band shown next to the score. */
   label: string;
-  /** Text color for the score number when it needs to carry the band color. */
+  /** Text color; descendants use currentColor. */
   text: string;
-  /** SVG stroke color for the progress ring. */
-  stroke: string;
-  /** Solid background for dot badges. */
-  dot: string;
-  /** Solid background for progress bars. */
-  bar: string;
+  stroke?: string;
+  dot?: string;
+  bar?: string;
 };
 
-const STRONG: ScoreStyle = {
-  label: "Strong match",
-  text: "text-emerald-400",
-  stroke: "stroke-emerald-400",
-  dot: "bg-emerald-400",
-  bar: "bg-emerald-400",
-};
-
-const MODERATE: ScoreStyle = {
-  label: "Moderate match",
-  text: "text-amber-400",
-  stroke: "stroke-amber-400",
-  dot: "bg-amber-400",
-  bar: "bg-amber-400",
-};
-
-const WEAK: ScoreStyle = {
-  label: "Weak match",
-  text: "text-rose-400",
-  stroke: "stroke-rose-400",
-  dot: "bg-rose-400",
-  bar: "bg-rose-400",
-};
-
-const UNSCORED: ScoreStyle = {
-  label: "Not scored",
-  text: "text-zinc-400",
-  stroke: "stroke-zinc-600",
-  dot: "bg-zinc-600",
-  bar: "bg-zinc-600",
-};
-
-/** Same thresholds as the previous scoreTone(): 80+ strong, 60+ moderate, else weak. */
+/** Same thresholds as before: 80+ strong, 60+ moderate, else weak. */
 export function getScoreStyle(score: number | null | undefined): ScoreStyle {
-  if (typeof score !== "number" || !Number.isFinite(score)) return UNSCORED;
-  if (score >= 80) return STRONG;
-  if (score >= 60) return MODERATE;
-  return WEAK;
+  if (typeof score !== "number" || !Number.isFinite(score)) {
+    return {
+      label: "Not scored",
+      text: "text-slate-500",
+      stroke: "stroke-slate-500",
+      dot: "bg-slate-500",
+      bar: "bg-slate-500",
+    };
+  }
+  if (score >= 80)
+    return {
+      label: "Strong match",
+      text: "text-neon-cyan",
+      stroke: "stroke-neon-cyan",
+      dot: "bg-neon-cyan",
+      bar: "bg-neon-cyan",
+    };
+  if (score >= 60)
+    return {
+      label: "Moderate match",
+      text: "text-neon-orange",
+      stroke: "stroke-neon-orange",
+      dot: "bg-neon-orange",
+      bar: "bg-neon-orange",
+    };
+  return {
+    label: "Weak match",
+    text: "text-rose-500",
+    stroke: "stroke-rose-500",
+    dot: "bg-rose-500",
+    bar: "bg-rose-500",
+  };
 }
 
 export function clampScore(score: number | null | undefined): number {
@@ -63,9 +58,20 @@ export function clampScore(score: number | null | undefined): number {
   return Math.max(0, Math.min(100, score));
 }
 
-/** Dot color for the processing status badge. */
+/** processed = nominal (cyan), failed = alert (red), anything else = pending (orange). */
+export function getStatusStyle(status: string): { text: string } {
+  if (status === "processed") return { text: "text-neon-cyan" };
+  if (status === "failed") return { text: "text-rose-500" };
+  return { text: "text-neon-orange" };
+}
+
 export function getStatusDot(status: string): string {
-  if (status === "processed") return "bg-emerald-400";
-  if (status === "failed") return "bg-rose-400";
-  return "bg-amber-400";
+  if (status === "processed") return "bg-neon-cyan";
+  if (status === "failed") return "bg-rose-500";
+  return "bg-neon-orange";
+}
+
+/** Zero-padded readout, e.g. 7 -> "07". */
+export function pad2(value: number): string {
+  return String(Math.max(0, Math.trunc(value))).padStart(2, "0");
 }

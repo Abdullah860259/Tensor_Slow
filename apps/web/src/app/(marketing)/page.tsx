@@ -57,7 +57,7 @@ export default function MarketingPage(): React.JSX.Element {
       <header className="flex h-16 items-center justify-between border-b border-border px-6 md:px-12">
         <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
           <Sparkles className="h-5 w-5 text-primary" />
-          <span>AICON Starter</span>
+          <span>{domain.labels.product}</span>
         </div>
         <Button
           variant="outline"
@@ -74,7 +74,7 @@ export default function MarketingPage(): React.JSX.Element {
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 md:py-24 text-center max-w-4xl mx-auto">
         <Badge variant="secondary" className="mb-4 gap-1.5 py-1 px-3 text-xs font-medium">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span>Production-Ready AI Spine</span>
+          <span>AI-Powered Candidate Evaluation & Ranking</span>
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
@@ -198,7 +198,7 @@ export default function MarketingPage(): React.JSX.Element {
 
       {/* Footer */}
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        AICON Hackathon 2026 · App-Agnostic Starter Foundation
+        TalentRank AI · AI-Powered Candidate Evaluation & Talent Intelligence
       </footer>
     </div>
   );

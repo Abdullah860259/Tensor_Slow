@@ -22,15 +22,35 @@ const DomainExtractSchema = ExtractResultSchema.extend({
  */
 export async function extractStructuredData(
   content: string,
-  modelOverride?: LanguageModel
+  modelOverride?: LanguageModel,
+  criteriaOverride?: string
 ): Promise<ExtractOutput> {
   const trimmed = content.trim();
   const model = modelOverride || fastModel;
 
+  const instructions = criteriaOverride
+    ? `You are an expert technical candidate evaluation engine for ${domain.labels.plural!.toLowerCase()}.
+Analyze the provided profile/resume text and evaluate the candidate strictly against the custom job criteria below:
+1. A concise, informative 1-2 sentence summary of their relevant background.
+2. 3 to 5 descriptive, lower-case tags (skills, domain, tools).
+3. category: a short label representing role fit ('Strong Fit', 'Potential', or 'Unqualified').
+4. severity: 'critical' or 'high' for strong fits to interview immediately, 'medium' for potential fits, 'low' for unqualified candidates.
+5. score: an integer from 0 to 100 based strictly on the scoring rubric below.
+6. The domain fields: strengths (evidence-backed points matching criteria), weaknesses (missing requirements, red flags, or gaps), verdict (clear hiring recommendation), yearsOfExperience (estimated total years of relevant experience).
+
+TARGET JOB ROLE CRITERIA & SCORING RUBRIC:
+${criteriaOverride}
+
+ANTI-HALLUCINATION RULES:
+1. Base all scores, verdicts, and extractions ONLY on explicitly stated facts in the text.
+2. DO NOT assume, infer, or guess skills, tools, or experience not directly written.
+3. If a requirement is not mentioned, the candidate explicitly DOES NOT meet it.`
+    : EXTRACTION_PROMPT;
+
   const { object } = await generateObject({
     model,
     schema: DomainExtractSchema,
-    instructions: EXTRACTION_PROMPT,
+    instructions,
     prompt: trimmed || "No content provided.",
   });
 

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Toaster, toast } from "@/components/ui/sonner";
+import { domain } from "@/lib/domain";
 
 export default function AppLayout({
   children,
@@ -76,7 +77,7 @@ export default function AppLayout({
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-bold tracking-tight text-foreground">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span className="hidden sm:inline">AICON Starter</span>
+            <span className="hidden sm:inline">{domain.labels.product}</span>
           </Link>
 
           <nav className="flex items-center gap-4 text-sm font-medium">

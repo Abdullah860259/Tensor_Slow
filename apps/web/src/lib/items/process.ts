@@ -1,7 +1,7 @@
 import { extractStructuredData } from "@/lib/ai/extract";
 import { embedText } from "@/lib/ai/embed";
 import { connectMongoose } from "@/lib/db";
-import { ItemModel } from "@/lib/models";
+import { ItemModel, JobCriteriaModel } from "@/lib/models";
 import { logger } from "@/lib/logger";
 
 /**
@@ -15,9 +15,20 @@ export async function processItem(itemId: string, ownerId: string): Promise<"pro
   const item = await ItemModel.findOne({ _id: itemId, ownerId });
   if (!item) return "failed";
 
+  // Check if owner has configured active custom job criteria
+  let criteriaPrompt: string | undefined;
+  try {
+    const activeCriteria = await JobCriteriaModel.findOne({ ownerId, isActive: true });
+    if (activeCriteria?.expandedCriteria) {
+      criteriaPrompt = `Target Job Role: ${activeCriteria.roleTitle}\n\n${activeCriteria.expandedCriteria}`;
+    }
+  } catch (critErr) {
+    logger.warn("[process] Failed to fetch active job criteria", { error: String(critErr) });
+  }
+
   const text = (item.content || item.title).trim();
   const [extraction, embedding] = await Promise.allSettled([
-    extractStructuredData(text),
+    extractStructuredData(text, undefined, criteriaPrompt),
     embedText(`${item.title}\n${text}`),
   ]);
 

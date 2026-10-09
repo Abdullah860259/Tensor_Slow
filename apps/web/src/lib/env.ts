@@ -18,6 +18,8 @@ const serverEnvSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   DEMO_USER_EMAIL: z.string().email().default("demo@example.com"),
+  LINKEDIN_SESSION_COOKIE: z.string().optional(),
+  CHAT_MODEL_ID: z.string().optional().default("gemini-3.6-flash"),
 });
 
 const clientEnvSchema = z.object({

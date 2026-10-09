@@ -38,17 +38,16 @@ async function getSessionOwnerId(): Promise<string | null> {
 }
 
 export async function GET(req: Request): Promise<Response> {
-  const ownerId = await getSessionOwnerId();
-
-  if (!ownerId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   try {
     await connectMongoose();
+    const ownerId = await getSessionOwnerId();
+
+    if (!ownerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Queries are strictly scoped to the server session ownerId
     const items = await ItemModel.find({ ownerId }).sort({ createdAt: -1 }).lean();
@@ -76,49 +75,42 @@ export async function GET(req: Request): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  const ownerId = await getSessionOwnerId();
-
-  if (!ownerId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  // Zod validation with ItemCreateInputSchema — client-supplied ownerId is never trusted
-  const parsed = ItemCreateInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response(
-      JSON.stringify({ error: "Invalid input", details: parsed.error.format() }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
-
-  const { title, content, sourceUrl, mime } = parsed.data;
-
-  // Auto-populate aiSummary, aiTags, and embedding via AI extraction and embedding helpers
-  let aiSummary: string | undefined;
-  let aiTags: string[] = [];
-  let embedding: number[] | undefined;
-  let status: "pending" | "processed" | "failed" = "pending";
-
-  const contentToProcess = content && content.trim().length > 0 ? content : title;
-
   try {
     await connectMongoose();
+    const ownerId = await getSessionOwnerId();
+
+    if (!ownerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Zod validation with ItemCreateInputSchema — client-supplied ownerId is never trusted
+    const parsed = ItemCreateInputSchema.safeParse(body);
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: parsed.error.format() }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const { title, content, sourceUrl, mime } = parsed.data;
+
+    const contentToProcess = content && content.trim().length > 0 ? content : title;
 
     const item = await ItemModel.create({
       ownerId, // Enforce session ownerId
@@ -133,7 +125,15 @@ export async function POST(req: Request): Promise<Response> {
     const id = item._id.toString();
     
     // Call the shared process pipeline so domain fields (category, severity, score, fields) are properly populated
-    await processItem(id, ownerId);
+    try {
+      await processItem(id, ownerId);
+    } catch (processErr: any) {
+      logger.error("[items] LLM processing failed", processErr);
+      return new Response(JSON.stringify({ error: `LLM processing failed: ${processErr.message}` }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     
     // Re-fetch the item to get the fully processed fields
     const processedItem = await ItemModel.findById(id).lean();

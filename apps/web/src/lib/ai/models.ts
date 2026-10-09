@@ -159,9 +159,11 @@ export function getEmbeddingModelWithQuotaFallback(modelId: string = "gemini-emb
   return fallbackEmbeddingModel;
 }
 
+export const DEFAULT_CHAT_MODEL = process.env.CHAT_MODEL_ID || "gemini-3.6-flash";
+
 export const chatModel: LanguageModel = USE_GATEWAY
-  ? gateway("google/gemini-3.8-flash")
-  : getModelWithQuotaFallback("gemini-3.8-flash");
+  ? gateway(`google/${DEFAULT_CHAT_MODEL}`)
+  : getModelWithQuotaFallback(DEFAULT_CHAT_MODEL);
 
 export const fastModel: LanguageModel = USE_GATEWAY
   ? gateway("google/gemini-3.5-flash-lite")

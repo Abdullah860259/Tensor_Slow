@@ -1,0 +1,87 @@
+# ==============================================================================
+# Environment & Secrets (Crucial: Never commit credentials)
+# ==============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa*
+cookies*.txt
+secrets/
+
+# ==============================================================================
+# Node & Package Managers
+# ==============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==============================================================================
+# Next.js & Build Artifacts
+# ==============================================================================
+.next/
+out/
+build/
+dist/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# Next.js generated agent files
+AGENTS.md
+CLAUDE.md
+
+# ==============================================================================
+# Testing & Code Coverage
+# ==============================================================================
+coverage/
+playwright-report/
+test-results/
+.nyc_output/
+
+# ==============================================================================
+# Python & Virtual Environments
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+env/
+venv/
+.python-version
+
+# ==============================================================================
+# Operating System & IDE Files
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Temporary & Local Suggestions
+claude suggestions/
+claudes suggestions/
+"claude suggestions"/
+"claudes suggestions"/

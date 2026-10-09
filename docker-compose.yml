@@ -1,0 +1,38 @@
+services:
+  atlas-local:
+    image: mongodb/mongodb-atlas-local:8.0
+    container_name: aicon-atlas-local
+    hostname: aicon-atlas-local
+    restart: unless-stopped
+    environment:
+      - DO_NOT_TRACK=1
+      - MONGODB_INITDB_DATABASE=aicon
+    ports:
+      - "27017:27017"
+    volumes:
+      - atlas-data:/data/db
+      - atlas-config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Optional FastAPI sidecar (uncomment if heavy Python ML/OCR is needed)
+  # api:
+  #   build:
+  #     context: ./apps/api
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - PORT=8000
+  #     - ALLOWED_ORIGINS=http://localhost:3000
+  #   depends_on:
+  #     atlas-local:
+  #       condition: service_healthy
+
+volumes:
+  atlas-data:
+  atlas-config:

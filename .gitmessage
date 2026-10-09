@@ -1,0 +1,31 @@
+# <type>(<scope>): <subject>
+#
+# Allowed types:
+#   feat     - A new feature or capability
+#   fix      - A bug fix
+#   refactor - Code restructuring without behavioral changes
+#   perf     - Performance improvements
+#   test     - Adding or correcting tests
+#   docs     - Documentation updates
+#   build    - Build system, toolchain, or external dependencies
+#   ci       - CI configuration, workflows, or scripts
+#   chore    - Maintenance tasks or general housekeeping
+#
+# Common scopes:
+#   web, api, shared, auth, db, ai, rag, ui, config
+#
+# Guidelines:
+#   - Subject: Imperative mood ("add", not "added"), lowercase, 72 characters max.
+#   - Body: Explain the motivation and context. What problem is being solved?
+#     Why was this approach chosen over alternatives?
+#   - Footer: Reference tracking IDs (e.g., Closes #123) or breaking changes.
+# ------------------------------------------------------------------------------
+
+# Context and motivation:
+
+
+# Key changes and technical decisions:
+
+
+# Issue references / Breaking changes (if any):
+

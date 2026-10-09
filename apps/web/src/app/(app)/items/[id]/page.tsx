@@ -1,141 +1,85 @@
 import React from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { redirect, notFound } from "next/navigation";
-import { revalidatePath } from "next/cache";
-import {
-  Activity,
-  AlertTriangle,
-  ArrowLeft,
-  BadgeCheck,
-  Check,
-  ChevronDown,
-  FileText,
-  Gauge,
-  ListChecks,
-  MessageSquare,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import mongoose from "mongoose";
+import { ArrowLeft, FileText, HelpCircle, MessageSquareText, ShieldAlert, ShieldCheck } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectMongoose } from "@/lib/db";
 import { ItemModel, JobCriteriaModel } from "@/lib/models";
-import { processItem } from "@/lib/items/process";
 import {
   candidateDisplayName,
-  clampScore,
   extractHeadline,
   formatYears,
   getScoreStyle,
   pad2,
 } from "@/lib/candidate-ui";
-import { Button } from "@/components/ui/button";
+import { FitBadge, Panel, ScoreRing, StatusBadge } from "@/components/ui/foundry";
 import { Chat } from "@/components/ai/chat";
-import {
-  FitBadge,
-  Panel,
-  ScoreBar,
-  ScoreRing,
-  StatusBadge,
-  Tag,
-} from "@/components/ui/foundry";
+import { ReevaluateButton } from "./reevaluate-button";
 
-type Competency = { label: string; value: number };
-
-type CandidateFields = {
+type DossierFields = {
   strengths: string[];
   weaknesses: string[];
+  redFlags: string[];
+  interviewQuestions: string[];
   verdict?: string;
   yearsOfExperience?: number;
-  competencies: Competency[];
 };
 
-function getCandidateFields(value: unknown): CandidateFields {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return { strengths: [], weaknesses: [], competencies: [] };
-  }
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string" && entry.trim() !== "")
+    : [];
+}
 
+function getDossierFields(value: unknown): DossierFields {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { strengths: [], weaknesses: [], redFlags: [], interviewQuestions: [] };
+  }
   const fields = value as Record<string, unknown>;
   return {
-    strengths: Array.isArray(fields.strengths)
-      ? fields.strengths.filter((entry): entry is string => typeof entry === "string")
-      : [],
-    weaknesses: Array.isArray(fields.weaknesses)
-      ? fields.weaknesses.filter((entry): entry is string => typeof entry === "string")
-      : [],
+    strengths: stringList(fields.strengths),
+    weaknesses: stringList(fields.weaknesses),
+    redFlags: stringList(fields.redFlags),
+    interviewQuestions: stringList(fields.interviewQuestions),
     verdict: typeof fields.verdict === "string" ? fields.verdict : undefined,
     yearsOfExperience:
       typeof fields.yearsOfExperience === "number" && Number.isFinite(fields.yearsOfExperience)
         ? fields.yearsOfExperience
         : undefined,
-    competencies: Array.isArray(fields.competencies)
-      ? fields.competencies
-          .map((entry): Competency | null => {
-            if (!entry || typeof entry !== "object") return null;
-            const e = entry as Record<string, unknown>;
-            const label = typeof e.name === "string" ? e.name : e.label;
-            const score = typeof e.score === "number" ? e.score : e.value;
-            if (typeof label !== "string" || typeof score !== "number") return null;
-            if (!Number.isFinite(score)) return null;
-            return { label, value: clampScore(score) };
-          })
-          .filter((entry): entry is Competency => entry !== null)
-          .slice(0, 8)
-      : [],
   };
 }
 
-/* -------------------------------------------------------------------------- */
-/* Local blocks                                                               */
-/* -------------------------------------------------------------------------- */
+function delay(ms: number): React.CSSProperties {
+  return { animationDelay: `${ms}ms` };
+}
 
-function FindingsPanel({
-  title,
+function BulletList({
   items,
-  kind,
-  emptyText,
-  className = "",
+  dot,
+  empty,
 }: {
-  title: string;
   items: string[];
-  kind: "strength" | "risk";
-  emptyText: string;
-  className?: string;
+  dot: string;
+  empty: string;
 }): React.JSX.Element {
-  const positive = kind === "strength";
-  const Icon = positive ? Check : AlertTriangle;
-  const iconTone = positive ? "text-emerald-500" : "text-rose-500";
-
+  if (items.length === 0) {
+    return <p className="text-sm text-zinc-500">{empty}</p>;
+  }
   return (
-    <Panel
-      title={title}
-      icon={positive ? BadgeCheck : AlertTriangle}
-      className={className}
-      aside={pad2(items.length)}
-    >
-      {items.length > 0 ? (
-        <ul className="space-y-3">
-          {items.map((item, index) => (
-            <li key={`${index}-${item}`} className="flex items-start gap-3 text-sm leading-6 text-zinc-200">
-              <Icon className={`mt-1 h-4 w-4 shrink-0 ${iconTone}`} aria-hidden="true" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="rounded border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
-          {emptyText}
-        </p>
-      )}
-    </Panel>
+    <ul className="space-y-3">
+      {items.map((item, i) => (
+        <li key={`${i}-${item}`} className="flex items-start gap-3 text-sm leading-relaxed text-zinc-300">
+          <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Page                                                                       */
-/* -------------------------------------------------------------------------- */
-
-export default async function ItemDetailPage({
+export default async function CandidateDossierPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -143,269 +87,225 @@ export default async function ItemDetailPage({
   const { id } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/");
+  if (!mongoose.isValidObjectId(id)) notFound();
 
   await connectMongoose();
-  const [rawItem, criteriaDoc] = await Promise.all([
+  const [item, activeDoc] = await Promise.all([
     ItemModel.findOne({ _id: id, ownerId: session.user.id }).lean(),
     JobCriteriaModel.findOne({ ownerId: session.user.id, isActive: true }).lean(),
   ]);
-  if (!rawItem) notFound();
+  if (!item) notFound();
 
-  const updatedAt = (rawItem as { updatedAt?: Date | string }).updatedAt;
-  const item = {
-    _id: rawItem._id.toString(),
-    title: rawItem.title,
-    content: rawItem.content || "",
-    status: rawItem.status || "pending",
-    aiSummary: rawItem.aiSummary,
-    aiTags: rawItem.aiTags || [],
-    category: rawItem.category,
-    score: rawItem.score,
-    fields: getCandidateFields(rawItem.fields),
-    updatedAt: new Date(updatedAt ?? rawItem.createdAt ?? Date.now()),
-  };
-
-  const rubric = (criteriaDoc?.rubric ?? {}) as { interviewQuestions?: unknown };
-  const screeningQuestions = Array.isArray(rubric.interviewQuestions)
-    ? rubric.interviewQuestions.filter((q): q is string => typeof q === "string")
-    : [];
-
-  async function reRunExtractionAction() {
-    "use server";
-    const currentSession = await auth.api.getSession({ headers: await headers() });
-    if (!currentSession?.user) redirect("/");
-    await processItem(id, currentSession.user.id);
-    revalidatePath(`/items/${id}`);
-    revalidatePath("/dashboard");
-  }
-
-  const score = typeof item.score === "number" ? item.score : undefined;
-  const scoreStyle = getScoreStyle(score);
-  const years = item.fields.yearsOfExperience;
+  const fields = getDossierFields(item.fields);
   const name = candidateDisplayName(item.title);
   const headline = extractHeadline(item.content);
-  const competencies = item.fields.competencies;
-  const hasOverview = Boolean(item.aiSummary);
-  const hasCompetencies = competencies.length > 0;
+  const score = typeof item.score === "number" ? item.score : undefined;
+  const scoreStyle = getScoreStyle(score);
+  const tags = item.aiTags ?? [];
+  const verdict = fields.verdict || item.aiSummary || "";
+  const rawText = typeof item.content === "string" ? item.content : "";
 
-  const verdictText =
-    item.fields.verdict ||
-    (item.status === "pending"
-      ? "This profile is waiting for an AI evaluation."
-      : "No hiring recommendation is available for this profile yet.");
-
-  const stamp = item.updatedAt.toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  // Prefer questions stored on the candidate; otherwise use the active role's rubric.
+  const rubricQuestions = stringList(
+    (activeDoc?.rubric as unknown as { interviewQuestions?: unknown } | undefined)
+      ?.interviewQuestions,
+  );
+  const questions = fields.interviewQuestions.length > 0 ? fields.interviewQuestions : rubricQuestions;
+  const gapItems = fields.weaknesses;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 pb-14">
-      {/* Top bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto w-full max-w-5xl space-y-10 pb-12">
+      {/* Header */}
+      <header className="tr-rise space-y-6">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 py-1 text-sm text-muted-foreground transition-colors hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="group inline-flex items-center gap-2 rounded-md text-xs font-medium text-zinc-500 transition-colors hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Candidate leaderboard
+          <ArrowLeft
+            className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+            aria-hidden="true"
+          />
+          Back to pipeline
         </Link>
-        <form action={reRunExtractionAction}>
-          <Button
-            type="submit"
-            variant="outline"
-            size="sm"
-            className="h-9 cursor-pointer gap-2 border-input bg-transparent text-zinc-200 hover:bg-secondary hover:text-white"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-            Re-evaluate
-          </Button>
-        </form>
-      </div>
 
-      {/* Dossier header */}
-      <header className="space-y-3">
-        <p className="font-mono text-xs text-muted-foreground">
-          Candidate file <span className="text-zinc-600">/</span>{" "}
-          <span className="text-zinc-300">{item._id.slice(-8)}</span>
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{name}</h1>
-        {headline && <p className="max-w-3xl text-base text-zinc-300">{headline}</p>}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <StatusBadge status={item.status} />
-          <FitBadge score={score} />
-          {years !== undefined && (
-            <span className="font-mono text-xs text-zinc-300 tabular-nums">
-              {formatYears(years)} yrs experience
-            </span>
-          )}
-          <span className="font-mono text-xs text-muted-foreground">
-            {item.status === "processed" ? "Evaluated" : "Updated"} {stamp}
-          </span>
-          {item.category && <Tag>{item.category}</Tag>}
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Hiring recommendation */}
-        <Panel
-          title="Hiring recommendation"
-          icon={Sparkles}
-          className="lg:col-span-8"
-          bodyClassName="p-5"
-        >
-          <div className="flex gap-4">
-            <span className={`w-0.5 shrink-0 self-stretch ${scoreStyle.bar}`} aria-hidden="true" />
-            <p className="text-lg leading-8 font-medium text-white">{verdictText}</p>
-          </div>
-        </Panel>
-
-        {/* Match gauge */}
-        <Panel
-          title="Match score"
-          icon={Gauge}
-          aside="0 to 100"
-          className="lg:col-span-4"
-          bodyClassName="flex flex-col items-center gap-4 p-5"
-        >
-          <ScoreRing score={score} size={116} />
-          <ScoreBar score={score} segments={20} className="w-full" />
-          <p className={`text-sm font-medium ${scoreStyle.text}`}>{scoreStyle.label}</p>
-        </Panel>
-
-        {/* Strengths and risks */}
-        <FindingsPanel
-          title="Verified strengths"
-          items={item.fields.strengths}
-          kind="strength"
-          emptyText="No strengths extracted yet. Re-evaluate to try again."
-          className="lg:col-span-6"
-        />
-        <FindingsPanel
-          title="Risk flags and missing requirements"
-          items={item.fields.weaknesses}
-          kind="risk"
-          emptyText="No risks or gaps extracted yet. Re-evaluate to try again."
-          className="lg:col-span-6"
-        />
-
-        {/* Overview */}
-        {hasOverview && (
-          <Panel
-            title="Candidate overview"
-            icon={BadgeCheck}
-            className={hasCompetencies ? "lg:col-span-7" : "lg:col-span-12"}
-            bodyClassName="space-y-4 p-5"
-          >
-            <p className="text-sm leading-6 text-zinc-200">{item.aiSummary}</p>
-            {item.aiTags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {item.aiTags.map((tag: string) => (
-                  <Tag key={tag}>{tag}</Tag>
-                ))}
-              </div>
-            )}
-          </Panel>
-        )}
-
-        {/* Competencies */}
-        {hasCompetencies && (
-          <Panel
-            title="Competencies"
-            icon={Activity}
-            className={hasOverview ? "lg:col-span-5" : "lg:col-span-12"}
-            bodyClassName="p-5"
-          >
-            <ul className="space-y-3">
-              {competencies.map((c) => {
-                const style = getScoreStyle(c.value);
-                return (
-                  <li key={c.label}>
-                    <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-                      <span className="truncate text-zinc-200">{c.label}</span>
-                      <span className={`font-mono text-xs tabular-nums ${style.text}`}>
-                        {Math.round(c.value)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-zinc-800" aria-hidden="true">
-                      <div className={`h-full ${style.bar}`} style={{ width: `${c.value}%` }} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </Panel>
-        )}
-
-        {/* Screening questions */}
-        <Panel
-          title="Tailored screening questions"
-          icon={ListChecks}
-          aside={criteriaDoc?.roleTitle ? `For ${criteriaDoc.roleTitle}` : undefined}
-          className="lg:col-span-12"
-          bodyClassName="p-5"
-        >
-          {screeningQuestions.length > 0 ? (
-            <ol className="space-y-3">
-              {screeningQuestions.map((question, index) => (
-                <li key={`${index}-${question}`} className="flex items-start gap-3 text-sm leading-6 text-zinc-200">
-                  <span className="pt-px font-mono text-xs font-semibold text-muted-foreground tabular-nums">
-                    {pad2(index + 1)}
-                  </span>
-                  <span>{question}</span>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="rounded border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
-              No screening questions yet. Set job criteria from the dashboard to generate questions for
-              this role.
-            </p>
-          )}
-        </Panel>
-
-        {/* Source profile */}
-        <details className="group overflow-hidden rounded-md border border-border bg-card lg:col-span-12">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 select-none [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2 text-[13px] font-medium text-zinc-100">
-              <FileText className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-              Source profile
-            </span>
-            <span className="flex items-center gap-3">
-              <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                {item.content.length.toLocaleString("en-US")} characters
-              </span>
-              <ChevronDown
-                className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none"
-                aria-hidden="true"
-              />
-            </span>
-          </summary>
-          <div className="border-t border-border p-4">
-            {item.content ? (
-              <pre className="max-h-[480px] overflow-auto rounded border border-border bg-well p-4 font-mono text-xs leading-6 whitespace-pre-wrap text-zinc-300">
-                {item.content}
-              </pre>
-            ) : (
-              <p className="rounded border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                The original profile text was not saved with this candidate.
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="font-serif text-4xl font-normal tracking-tight text-balance text-white sm:text-5xl">
+              {name}
+            </h1>
+            {headline && (
+              <p className="mt-3 max-w-2xl text-base leading-relaxed text-pretty text-zinc-400">
+                {headline}
               </p>
             )}
           </div>
-        </details>
-
-        {/* Recruiter chat */}
-        <Panel
-          title="Ask about this candidate"
-          icon={MessageSquare}
-          className="lg:col-span-12"
-          bodyClassName="p-4"
-        >
-          <div className="rounded border border-border bg-well p-3">
-            <Chat itemId={item._id} />
+          <div className="shrink-0">
+            <ReevaluateButton />
           </div>
+        </div>
+      </header>
+
+      {/* Executive verdict */}
+      <section
+        aria-labelledby="verdict-heading"
+        style={delay(80)}
+        className="tr-rise overflow-hidden rounded-lg border border-border bg-card"
+      >
+        <div className="grid gap-8 p-6 sm:p-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
+          <div className="flex flex-col items-center gap-3 md:items-start">
+            <ScoreRing score={score} size={128} stroke={8} />
+            <p className={`font-mono text-[11px] tracking-wide uppercase ${scoreStyle.text}`}>
+              Match score
+            </p>
+          </div>
+
+          <div className="min-w-0 space-y-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="verdict-heading" className="text-sm text-zinc-500">
+                Hiring recommendation
+              </h2>
+              <FitBadge score={score} className="px-2.5 py-1 text-xs" />
+              <StatusBadge status={item.status} />
+            </div>
+
+            {verdict ? (
+              <p className="max-w-2xl font-serif text-xl leading-snug text-pretty text-zinc-100 sm:text-2xl">
+                {verdict}
+              </p>
+            ) : (
+              <p className="max-w-2xl text-sm leading-relaxed text-zinc-500">
+                No verdict yet. Re-evaluate this candidate to generate one.
+              </p>
+            )}
+
+            <dl className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border pt-4">
+              <div>
+                <dt className="text-xs text-zinc-500">Experience</dt>
+                <dd className="mt-1 font-mono text-sm text-zinc-200 tabular-nums">
+                  {fields.yearsOfExperience === undefined
+                    ? "--"
+                    : `${formatYears(fields.yearsOfExperience)} yrs`}
+                </dd>
+              </div>
+              {tags.length > 0 && (
+                <div className="min-w-0">
+                  <dt className="text-xs text-zinc-500">Signals</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1">
+                    {tags.slice(0, 6).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded border border-border bg-well px-1.5 py-0.5 font-mono text-[10px] text-zinc-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      {/* Competency audit */}
+      <div style={delay(160)} className="tr-rise grid gap-4 md:grid-cols-2">
+        <Panel title="Strengths and stated evidence" icon={ShieldCheck} aside={pad2(fields.strengths.length)} bodyClassName="p-5">
+          <BulletList
+            items={fields.strengths}
+            dot="bg-emerald-500"
+            empty="No strengths were extracted from this profile."
+          />
+        </Panel>
+
+        <Panel
+          title="Discrepancies, gaps and red flags"
+          icon={ShieldAlert}
+          aside={pad2(gapItems.length + fields.redFlags.length)}
+          bodyClassName="p-5"
+        >
+          {gapItems.length === 0 && fields.redFlags.length === 0 ? (
+            <p className="text-sm text-zinc-500">No gaps or red flags were detected.</p>
+          ) : (
+            <div className="space-y-5">
+              {fields.redFlags.length > 0 && (
+                <BulletList items={fields.redFlags} dot="bg-rose-500" empty="" />
+              )}
+              {gapItems.length > 0 && <BulletList items={gapItems} dot="bg-amber-500" empty="" />}
+            </div>
+          )}
         </Panel>
       </div>
+
+      {/* Screening questions */}
+      {questions.length > 0 && (
+        <section aria-labelledby="questions-heading" style={delay(220)} className="tr-rise space-y-5">
+          <div className="flex items-center gap-2.5">
+            <HelpCircle className="h-4 w-4 text-blue-400" aria-hidden="true" />
+            <h2
+              id="questions-heading"
+              className="font-serif text-2xl font-normal tracking-tight text-white"
+            >
+              Screening interview questions
+            </h2>
+          </div>
+          <ol className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+            {questions.map((question, i) => (
+              <li key={`${i}-${question}`} className="flex items-start gap-4 px-5 py-4">
+                <span className="mt-0.5 font-mono text-xs text-blue-400 tabular-nums">{pad2(i + 1)}</span>
+                <p className="text-sm leading-relaxed text-zinc-200">{question}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {/* Source drawer */}
+      <section aria-label="Source text" style={delay(280)} className="tr-rise">
+        <details className="group overflow-hidden rounded-lg border border-border bg-card">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5 text-sm font-medium text-zinc-200 transition-colors select-none hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-zinc-500" aria-hidden="true" />
+              Source text
+            </span>
+            <span className="font-mono text-[11px] text-zinc-500 tabular-nums">
+              {rawText.length.toLocaleString("en-US")} chars
+              <span className="ml-2 inline-block transition-transform group-open:rotate-90 motion-reduce:transition-none">
+                ›
+              </span>
+            </span>
+          </summary>
+          <div className="border-t border-border bg-well p-5">
+            {rawText ? (
+              <pre className="max-h-[480px] overflow-auto font-mono text-xs leading-6 whitespace-pre-wrap text-zinc-400">
+                {rawText}
+              </pre>
+            ) : (
+              <p className="text-sm text-zinc-500">No extracted text is stored for this candidate.</p>
+            )}
+          </div>
+        </details>
+      </section>
+
+      {/* RAG copilot */}
+      <section aria-labelledby="copilot-heading" style={delay(340)} className="tr-rise space-y-5">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <MessageSquareText className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+            <h2
+              id="copilot-heading"
+              className="font-serif text-2xl font-normal tracking-tight text-white"
+            >
+              Ask this dossier
+            </h2>
+          </div>
+          <p className="mt-1.5 text-sm text-zinc-500">
+            Query the candidate&apos;s actual experience. Answers cite the section they came from.
+          </p>
+        </div>
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <Chat itemId={String(item._id)} />
+        </div>
+      </section>
     </div>
   );
 }

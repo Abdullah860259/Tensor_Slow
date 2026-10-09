@@ -4,17 +4,14 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
-  LogOut,
-  User,
   ArrowUpRight,
-  ShieldAlert,
-  Loader2,
   CheckCircle2,
+  Compass,
+  Loader2,
+  LogOut,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +23,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { domain } from "@/lib/domain";
+
+/**
+ * Calm entrance motion shared by every page inside the shell.
+ * Server components opt in with className="tr-rise" (fade and lift) or "tr-fade",
+ * and stagger with an inline animationDelay. Disabled under prefers-reduced-motion.
+ */
+const SHELL_MOTION_CSS = `
+@keyframes tr-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes tr-fade{from{opacity:0}to{opacity:1}}
+.tr-rise{animation:tr-rise .7s cubic-bezier(.22,1,.36,1) both}
+.tr-fade{animation:tr-fade .6s ease-out both}
+@media (prefers-reduced-motion:reduce){.tr-rise,.tr-fade{animation:none}}
+`;
 
 export default function AppLayout({
   children,
@@ -39,8 +49,16 @@ export default function AppLayout({
   const [signingOut, setSigningOut] = useState(false);
 
   const isAnonymous = Boolean(
-    session?.user && ("isAnonymous" in session.user ? session.user.isAnonymous : false)
+    session?.user && ("isAnonymous" in session.user ? session.user.isAnonymous : false),
   );
+  const isDemo =
+    !isAnonymous &&
+    /demo/i.test(`${session?.user?.name ?? ""} ${session?.user?.email ?? ""}`);
+  const accountLabel = isAnonymous
+    ? "Anonymous Guest"
+    : isDemo
+      ? "Demo User"
+      : session?.user?.name || session?.user?.email || "Signed in";
 
   const router = useRouter();
   const handleSignOut = async () => {
@@ -71,60 +89,50 @@ export default function AppLayout({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Shell Header */}
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-background/95 px-4 sm:px-8 backdrop-blur-xs">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2 font-bold tracking-tight text-foreground">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="hidden sm:inline">{domain.labels.product}</span>
-          </Link>
+    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-blue-500/30">
+      <style>{SHELL_MOTION_CSS}</style>
 
-          <nav className="flex items-center gap-4 text-sm font-medium">
-            <Link
-              href="/dashboard"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Dashboard
-            </Link>
-          </nav>
-        </div>
+      {/* Shell header */}
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-[#09090b]/80 px-4 backdrop-blur-md sm:px-8">
+        <Link
+          href="/dashboard"
+          className="group flex items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card transition-colors group-hover:border-zinc-600">
+            <Compass className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+          </span>
+          <span className="text-[13px] font-semibold tracking-[0.18em] text-white uppercase">
+            {domain.labels.product}
+          </span>
+        </Link>
 
-        {/* User Session Bar */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isPending ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              <span>Loading session...</span>
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <span>Loading session</span>
             </div>
           ) : session?.user ? (
-            <div className="flex items-center gap-3">
-              {isAnonymous ? (
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-normal"
-                  >
-                    <ShieldAlert className="h-3 w-3" />
-                    <span>Anonymous User</span>
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setUpgradeOpen(true)}
-                    className="h-8 gap-1 text-xs cursor-pointer"
-                  >
-                    <span>Upgrade</span>
-                    <ArrowUpRight className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <User className="h-3.5 w-3.5" />
-                  <span className="max-w-[140px] truncate font-medium text-foreground">
-                    {session.user.name || session.user.email}
-                  </span>
-                </div>
+            <>
+              <span className="inline-flex max-w-[180px] items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-zinc-300">
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                    isAnonymous ? "bg-amber-500" : "bg-emerald-500"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="truncate">{accountLabel}</span>
+              </span>
+
+              {isAnonymous && (
+                <button
+                  type="button"
+                  onClick={() => setUpgradeOpen(true)}
+                  className="hidden cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:inline-flex"
+                >
+                  Upgrade account
+                  <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                </button>
               )}
 
               <Button
@@ -132,54 +140,52 @@ export default function AppLayout({
                 size="sm"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-destructive cursor-pointer"
+                className="h-8 cursor-pointer gap-1.5 text-xs text-zinc-400 transition-colors hover:bg-transparent hover:text-white"
                 title="Sign out"
               >
                 {signingOut ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <LogOut className="h-3.5 w-3.5" />
+                  <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
-                <span className="hidden sm:inline">Sign Out</span>
+                <span className="hidden sm:inline">Sign out</span>
+                <span className="sr-only sm:hidden">Sign out</span>
               </Button>
-            </div>
+            </>
           ) : (
             <Link href="/">
-              <Button size="sm" variant="default" className="h-8 text-xs cursor-pointer">
-                Sign In
+              <Button size="sm" variant="default" className="h-8 cursor-pointer text-xs">
+                Sign in
               </Button>
             </Link>
           )}
         </div>
       </header>
 
-      {/* Main App Content */}
-      <main className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
-        {children}
-      </main>
+      {/* Main app content */}
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12">{children}</main>
 
-      {/* Global Toaster for notifications */}
+      {/* Global toaster for notifications */}
       <Toaster />
 
-      {/* Upgrade Anonymous Account Dialog */}
+      {/* Upgrade anonymous account dialog */}
       <Dialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="gap-0 rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-md">
           <form onSubmit={handleUpgradeAccount}>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span>Upgrade to Permanent Account</span>
+            <DialogHeader className="space-y-1.5 text-left">
+              <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
+                Keep your work
               </DialogTitle>
-              <DialogDescription>
-                Convert your anonymous session into a permanent account to preserve your items, chat
-                threads, and AI analysis across devices.
+              <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+                Convert your anonymous session into a permanent account to preserve your candidates,
+                chat threads, and AI analysis across devices.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="py-4 space-y-3">
-              <div className="space-y-1">
-                <label htmlFor="upgrade-email" className="text-xs font-medium text-foreground">
-                  Email Address
+            <div className="space-y-4 py-5">
+              <div className="space-y-1.5">
+                <label htmlFor="upgrade-email" className="text-xs font-medium text-zinc-300">
+                  Email address
                 </label>
                 <Input
                   id="upgrade-email"
@@ -188,27 +194,22 @@ export default function AppLayout({
                   placeholder="name@example.com"
                   value={upgradeEmail}
                   onChange={(e) => setUpgradeEmail(e.target.value)}
-                  className="text-sm"
+                  className="h-9 border-input bg-well text-sm text-zinc-50 placeholder:text-zinc-500"
                 />
               </div>
-              <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground space-y-1">
-                <div className="flex items-center gap-1.5 font-medium text-foreground">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>What happens next:</span>
-                </div>
-                <p>
-                  All items created during this anonymous session will remain linked to your account.
-                </p>
+              <div className="flex items-start gap-2.5 rounded-md border border-border bg-well p-3 text-xs leading-relaxed text-muted-foreground">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                <p>Everything created during this anonymous session stays linked to your account.</p>
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setUpgradeOpen(false)}
-                className="cursor-pointer"
+                className="cursor-pointer text-muted-foreground hover:text-white"
               >
                 Cancel
               </Button>
@@ -218,8 +219,10 @@ export default function AppLayout({
                 disabled={upgrading || !upgradeEmail.trim()}
                 className="cursor-pointer gap-1.5"
               >
-                {upgrading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Upgrade Account
+                {upgrading && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                )}
+                Upgrade account
               </Button>
             </DialogFooter>
           </form>
@@ -228,4 +231,3 @@ export default function AppLayout({
     </div>
   );
 }
-

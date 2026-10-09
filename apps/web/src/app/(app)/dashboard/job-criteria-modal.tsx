@@ -46,16 +46,22 @@ export interface ActiveCriteria {
   isActive: boolean;
 }
 
-const INPUT_CLASS =
-  "border-input bg-well text-zinc-50 placeholder:text-zinc-500";
+const INPUT_CLASS = "border-input bg-well text-zinc-50 placeholder:text-zinc-500";
 
-type Tone = "emerald" | "blue" | "rose" | "slate";
+type Tone = "emerald" | "amber" | "rose" | "blue";
 
 const TONE_CLASS: Record<Tone, string> = {
   emerald: "text-emerald-400",
-  blue: "text-blue-400",
+  amber: "text-amber-400",
   rose: "text-rose-400",
-  slate: "text-zinc-300",
+  blue: "text-blue-400",
+};
+
+const MARKER_CLASS: Record<Tone, string> = {
+  emerald: "marker:text-emerald-500/70",
+  amber: "marker:text-amber-500/70",
+  rose: "marker:text-rose-500/70",
+  blue: "marker:text-blue-400/80",
 };
 
 function RubricList({
@@ -74,13 +80,16 @@ function RubricList({
   if (!items || items.length === 0) return null;
   const ListTag = ordered ? "ol" : "ul";
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <h4 className={`flex items-center gap-1.5 text-xs font-semibold ${TONE_CLASS[tone]}`}>
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         {title}
+        <span className="font-mono text-[11px] font-normal text-zinc-500 tabular-nums">
+          {items.length}
+        </span>
       </h4>
       <ListTag
-        className={`space-y-1 pl-5 text-xs leading-relaxed text-zinc-300 ${
+        className={`space-y-1.5 pl-5 text-xs leading-relaxed text-zinc-300 ${MARKER_CLASS[tone]} ${
           ordered ? "list-decimal" : "list-disc"
         }`}
       >
@@ -222,6 +231,7 @@ export function JobCriteriaModal({
   };
 
   const busy = isGenerating || isSaving || isRescoring;
+  const mustHaveCount = activeCriteria?.rubric?.mustHave?.length ?? 0;
 
   return (
     <>
@@ -232,16 +242,16 @@ export function JobCriteriaModal({
       >
         <Target className="h-4 w-4 text-emerald-400 transition-transform group-hover:scale-110" aria-hidden="true" />
         <span>Job criteria</span>
-        {activeCriteria?.rubric?.mustHave && activeCriteria.rubric.mustHave.length > 0 && (
-          <span className="ml-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
-            {activeCriteria.rubric.mustHave.length}
+        {mustHaveCount > 0 && (
+          <span className="ml-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-300 tabular-nums">
+            {mustHaveCount}
           </span>
         )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-[720px]">
-          <DialogHeader className="space-y-1 text-left">
+          <DialogHeader className="space-y-1.5 text-left">
             <div className="flex flex-wrap items-center gap-2">
               {hasUnsavedDraft ? (
                 <Badge
@@ -266,10 +276,10 @@ export function JobCriteriaModal({
                 </Badge>
               )}
             </div>
-            <DialogTitle className="text-lg font-semibold tracking-tight text-white">
+            <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
               Job criteria
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
               Describe the role in rough notes. AI expands them into a scoring rubric that every
               candidate is evaluated against.
             </DialogDescription>
@@ -287,7 +297,7 @@ export function JobCriteriaModal({
                 value={roleTitle}
                 onChange={(e) => setRoleTitle(e.target.value)}
                 disabled={busy}
-                className={`h-9 ${INPUT_CLASS}`}
+                className={`h-9 text-sm ${INPUT_CLASS}`}
               />
             </div>
 
@@ -302,7 +312,7 @@ export function JobCriteriaModal({
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
                 disabled={busy}
-                className={`min-h-[100px] resize-y text-sm ${INPUT_CLASS}`}
+                className={`min-h-[100px] resize-y text-sm leading-relaxed ${INPUT_CLASS}`}
               />
             </div>
 
@@ -315,12 +325,12 @@ export function JobCriteriaModal({
                 {isGenerating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                    Generating rubric...
+                    Expanding criteria...
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    Generate rubric
+                    AI Expand Criteria
                   </>
                 )}
               </Button>
@@ -328,16 +338,16 @@ export function JobCriteriaModal({
           </form>
 
           {rubric && (
-            <div className="mt-6 space-y-4 rounded-md border border-border bg-well p-5">
+            <div className="mt-6 space-y-5 rounded-lg border border-border bg-well p-5">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-                <h3 className="text-sm font-medium text-zinc-100">
+                <h3 className="font-serif text-lg font-normal tracking-tight text-white">
                   {hasUnsavedDraft ? "Generated rubric" : "Active rubric"}
                 </h3>
-                <span className="font-mono text-[11px] text-muted-foreground">Scored 0 to 100</span>
+                <span className="font-mono text-[11px] text-zinc-500">Scored 0 to 100</span>
               </div>
 
               {rubric.roleSummary && (
-                <p className="text-sm leading-relaxed text-zinc-300">{rubric.roleSummary}</p>
+                <p className="text-sm leading-relaxed text-pretty text-zinc-300">{rubric.roleSummary}</p>
               )}
 
               <RubricList
@@ -349,7 +359,7 @@ export function JobCriteriaModal({
               <RubricList
                 title="Nice-to-have (bonus)"
                 items={rubric.niceToHave}
-                tone="blue"
+                tone="amber"
                 icon={Sparkles}
               />
               <RubricList
@@ -360,27 +370,27 @@ export function JobCriteriaModal({
               />
 
               {rubric.scoringGuidelines && (
-                <div className="rounded-md border border-border bg-card p-3 text-xs">
+                <div className="rounded-md border border-border bg-card p-3.5 text-xs">
                   <h4 className="font-semibold text-zinc-200">Scoring guidelines</h4>
-                  <p className="mt-1 leading-relaxed whitespace-pre-line text-zinc-400">
+                  <p className="mt-1.5 leading-relaxed whitespace-pre-line text-zinc-400">
                     {rubric.scoringGuidelines}
                   </p>
                 </div>
               )}
 
               <RubricList
-                title="Screening interview questions"
+                title="Screening questions"
                 items={rubric.interviewQuestions}
-                tone="slate"
+                tone="blue"
                 icon={HelpCircle}
                 ordered
               />
 
               <details className="group rounded-md border border-border bg-card">
-                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-zinc-300 select-none [&::-webkit-details-marker]:hidden">
+                <summary className="cursor-pointer list-none px-3.5 py-2.5 text-xs font-medium text-zinc-300 transition-colors select-none hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
                   Edit the evaluation prompt
                 </summary>
-                <div className="space-y-1.5 border-t border-border p-3">
+                <div className="space-y-1.5 border-t border-border p-3.5">
                   <label htmlFor="criteria-prompt" className="sr-only">
                     Evaluation prompt
                   </label>
@@ -392,14 +402,14 @@ export function JobCriteriaModal({
                     disabled={busy}
                     className={`min-h-[140px] resize-y font-mono text-xs leading-5 ${INPUT_CLASS}`}
                   />
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[11px] text-zinc-500">
                     This text is injected into every candidate evaluation. Changes take effect when you
                     apply the criteria.
                   </p>
                 </div>
               </details>
 
-              <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1.5">
                   <Button
                     type="button"
@@ -413,9 +423,9 @@ export function JobCriteriaModal({
                     ) : (
                       <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                     )}
-                    {isRescoring ? "Re-scoring pipeline..." : "Re-score pipeline"}
+                    {isRescoring ? "Re-scoring pipeline..." : "Re-Score All Pipeline Candidates"}
                   </Button>
-                  <p className="max-w-[300px] text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="max-w-[300px] text-[11px] leading-relaxed text-zinc-500">
                     {hasUnsavedDraft
                       ? "Apply the new criteria first, then re-score existing candidates."
                       : "Re-scores every candidate one at a time. This can take a few minutes."}
@@ -433,7 +443,7 @@ export function JobCriteriaModal({
                   ) : (
                     <Save className="h-3.5 w-3.5" aria-hidden="true" />
                   )}
-                  Apply as active criteria
+                  Apply as Active Criteria
                 </Button>
               </div>
             </div>

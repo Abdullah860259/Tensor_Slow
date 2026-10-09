@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileCheck,
@@ -8,8 +8,8 @@ import {
   Info,
   Link as LinkIcon,
   Loader2,
+  Plus,
   UploadCloud,
-  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const INPUT_CLASS =
   "h-9 border-input bg-well text-sm text-zinc-50 placeholder:text-zinc-500";
 const TAB_TRIGGER_CLASS =
-  "gap-1.5 text-xs font-medium text-muted-foreground data-[state=active]:bg-secondary data-[state=active]:text-white";
+  "gap-1.5 text-xs font-medium text-muted-foreground transition-colors data-[state=active]:bg-secondary data-[state=active]:text-white";
 
 /* -------------------------------------------------------------------------- */
 /* Shared field blocks (module level so inputs keep focus between renders)     */
@@ -52,7 +52,7 @@ function NameField({
   return (
     <div className="space-y-1.5">
       <label htmlFor={id} className="text-xs font-medium text-zinc-300">
-        Candidate name <span className="text-muted-foreground">(optional)</span>
+        Candidate name <span className="text-zinc-500">(optional)</span>
       </label>
       <Input
         id={id}
@@ -110,24 +110,41 @@ function FormFooter({
 export function ImportCandidateButton() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<ImportTab>("paste");
-  const [name, setName] = useState("");
+
+  // Paste state machine
+  const [pasteName, setPasteName] = useState("");
   const [pasteText, setPasteText] = useState("");
-  const [url, setUrl] = useState("");
+
+  // Upload state machine (never shares fields with paste)
+  const [fileName, setFileName] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fileText, setFileText] = useState("");
   const [filePdf, setFilePdf] = useState("");
   const [dragging, setDragging] = useState(false);
+
+  // URL state
+  const [url, setUrl] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const resetForm = () => {
-    setName("");
-    setPasteText("");
-    setUrl("");
+  // Guards against a slow read finishing after the person picked a different file.
+  const readToken = useRef(0);
+
+  const clearFile = () => {
+    readToken.current += 1;
     setFile(null);
     setFileText("");
     setFilePdf("");
     setDragging(false);
+  };
+
+  const resetForm = () => {
+    setPasteName("");
+    setPasteText("");
+    setFileName("");
+    clearFile();
+    setUrl("");
     setTab("paste");
   };
 
@@ -154,23 +171,31 @@ export function ImportCandidateButton() {
       return;
     }
 
+    readToken.current += 1;
+    const token = readToken.current;
+
     setFile(picked);
     setFileText("");
     setFilePdf("");
-    if (!name.trim()) {
-      setName(picked.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " "));
+    if (!fileName.trim()) {
+      setFileName(picked.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " "));
     }
 
     const reader = new FileReader();
     reader.onerror = () => {
+      if (token !== readToken.current) return;
       setFile(null);
       toast.error("Could not read that file. Try another one.");
     };
     if (isPdf) {
-      reader.onload = () => setFilePdf(String(reader.result));
+      reader.onload = () => {
+        if (token === readToken.current) setFilePdf(String(reader.result));
+      };
       reader.readAsDataURL(picked);
     } else {
-      reader.onload = () => setFileText(String(reader.result));
+      reader.onload = () => {
+        if (token === readToken.current) setFileText(String(reader.result));
+      };
       reader.readAsText(picked);
     }
   };
@@ -212,7 +237,7 @@ export function ImportCandidateButton() {
       return;
     }
     void submit(
-      { rawText: pasteText.trim(), name: name.trim() || undefined },
+      { rawText: pasteText.trim(), name: pasteName.trim() || undefined },
       "Failed to import candidate.",
     );
   };
@@ -223,10 +248,11 @@ export function ImportCandidateButton() {
       toast.error("Choose a PDF or TXT resume first.");
       return;
     }
+    const name = fileName.trim() || undefined;
     if (filePdf) {
-      void submit({ pdfBase64: filePdf, name: name.trim() || undefined }, "Failed to process resume.");
+      void submit({ pdfBase64: filePdf, name }, "Failed to process resume.");
     } else if (fileText.trim()) {
-      void submit({ rawText: fileText.trim(), name: name.trim() || undefined }, "Failed to process resume.");
+      void submit({ rawText: fileText.trim(), name }, "Failed to process resume.");
     } else {
       toast.error("The file is still loading or contains no text.");
     }
@@ -249,22 +275,22 @@ export function ImportCandidateButton() {
   return (
     <>
       <Button onClick={() => setOpen(true)} className="h-9 cursor-pointer gap-2">
-        <UserPlus className="h-4 w-4" aria-hidden="true" />
+        <Plus className="h-4 w-4" aria-hidden="true" />
         Import candidate
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-[560px]">
-          <DialogHeader className="space-y-1 text-left">
-            <DialogTitle className="text-lg font-semibold tracking-tight text-white">
+          <DialogHeader className="space-y-1.5 text-left">
+            <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
               Import candidate
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
               Add a profile and score it against your active job criteria.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as ImportTab)} className="mt-4">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as ImportTab)} className="mt-5">
             <TabsList className="grid w-full grid-cols-3 rounded-md bg-well p-1">
               <TabsTrigger value="paste" className={TAB_TRIGGER_CLASS}>
                 <FileText className="h-3.5 w-3.5" aria-hidden="true" />
@@ -282,8 +308,13 @@ export function ImportCandidateButton() {
 
             {/* Tab 1: paste text (default) */}
             <TabsContent value="paste">
-              <form onSubmit={handlePasteSubmit} className="space-y-4 pt-3">
-                <NameField id="paste-candidate-name" value={name} onChange={setName} disabled={isLoading} />
+              <form onSubmit={handlePasteSubmit} className="space-y-4 pt-4">
+                <NameField
+                  id="paste-candidate-name"
+                  value={pasteName}
+                  onChange={setPasteName}
+                  disabled={isLoading}
+                />
 
                 <div className="space-y-1.5">
                   <label htmlFor="paste-raw-text" className="text-xs font-medium text-zinc-300">
@@ -296,7 +327,7 @@ export function ImportCandidateButton() {
                     value={pasteText}
                     onChange={(e) => setPasteText(e.target.value)}
                     disabled={isLoading}
-                    className="min-h-[160px] resize-y border-input bg-well text-sm text-zinc-50 placeholder:text-zinc-500"
+                    className="min-h-[160px] resize-y border-input bg-well text-sm leading-relaxed text-zinc-50 placeholder:text-zinc-500"
                   />
                 </div>
 
@@ -311,8 +342,8 @@ export function ImportCandidateButton() {
 
             {/* Tab 2: PDF or TXT resume, including LinkedIn "Save to PDF" exports */}
             <TabsContent value="upload">
-              <form onSubmit={handleUploadSubmit} className="space-y-4 pt-3">
-                <div className="flex items-start gap-2.5 rounded-md border border-border bg-well p-3 text-xs leading-relaxed text-muted-foreground">
+              <form onSubmit={handleUploadSubmit} className="space-y-4 pt-4">
+                <div className="flex items-start gap-2.5 rounded-md border border-border bg-well p-3 text-xs leading-relaxed text-zinc-400">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-steel" aria-hidden="true" />
                   <p>
                     For the most complete data, open a LinkedIn profile and choose{" "}
@@ -321,7 +352,12 @@ export function ImportCandidateButton() {
                   </p>
                 </div>
 
-                <NameField id="file-candidate-name" value={name} onChange={setName} disabled={isLoading} />
+                <NameField
+                  id="file-candidate-name"
+                  value={fileName}
+                  onChange={setFileName}
+                  disabled={isLoading}
+                />
 
                 <div className="space-y-1.5">
                   <span className="text-xs font-medium text-zinc-300">
@@ -341,13 +377,18 @@ export function ImportCandidateButton() {
                       const dropped = e.dataTransfer.files?.[0];
                       if (dropped) loadFile(dropped);
                     }}
-                    className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed p-7 text-center transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500/40 ${
+                    className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed p-7 text-center transition-all duration-200 motion-reduce:transition-none focus-within:ring-2 focus-within:ring-blue-500/40 ${
                       dragging
-                        ? "border-blue-500 bg-blue-500/10 shadow-[0_0_24px_rgba(59,130,246,0.18)]"
+                        ? "border-blue-500/80 bg-blue-950/20 shadow-[0_0_20px_rgba(59,130,246,0.12)]"
                         : "border-zinc-700 bg-well hover:border-blue-500/80 hover:bg-blue-950/20 hover:shadow-[0_0_20px_rgba(59,130,246,0.12)]"
                     }`}
                   >
-                    <UploadCloud className="mb-2 h-8 w-8 text-zinc-400 transition-colors duration-200 group-hover:text-blue-400" aria-hidden="true" />
+                    <UploadCloud
+                      className={`mb-2 h-8 w-8 transition-colors duration-200 group-hover:text-blue-400 ${
+                        dragging ? "text-blue-400" : "text-zinc-400"
+                      }`}
+                      aria-hidden="true"
+                    />
                     {file ? (
                       <span className="flex items-center gap-2 text-xs font-medium text-emerald-400">
                         <FileCheck className="h-4 w-4" aria-hidden="true" />
@@ -358,7 +399,9 @@ export function ImportCandidateButton() {
                         <span className="text-xs font-medium text-zinc-300 transition-colors duration-200 group-hover:text-white">
                           Click to browse or drop a file here
                         </span>
-                        <span className="mt-1 text-[11px] text-zinc-500 transition-colors duration-200 group-hover:text-zinc-400">PDF or TXT, up to 8 MB</span>
+                        <span className="mt-1 text-[11px] text-zinc-500 transition-colors duration-200 group-hover:text-zinc-400">
+                          PDF or TXT, up to 8 MB
+                        </span>
                       </>
                     )}
                     <input
@@ -370,6 +413,16 @@ export function ImportCandidateButton() {
                       className="sr-only"
                     />
                   </label>
+                  {file && (
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      disabled={isLoading}
+                      className="cursor-pointer text-[11px] font-medium text-zinc-500 underline underline-offset-2 transition-colors hover:text-white disabled:cursor-not-allowed"
+                    >
+                      Remove file
+                    </button>
+                  )}
                 </div>
 
                 <FormFooter
@@ -383,7 +436,7 @@ export function ImportCandidateButton() {
 
             {/* Tab 3: automated LinkedIn scrape */}
             <TabsContent value="url">
-              <form onSubmit={handleUrlSubmit} className="space-y-4 pt-3">
+              <form onSubmit={handleUrlSubmit} className="space-y-4 pt-4">
                 <div className="space-y-1.5">
                   <label htmlFor="url-input" className="text-xs font-medium text-zinc-300">
                     LinkedIn profile URL <span className="text-rose-400">*</span>

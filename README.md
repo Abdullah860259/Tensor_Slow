@@ -1,6 +1,6 @@
 # TalentRank AI — AI-Powered Candidate Evaluation & Talent Intelligence Platform
 
-[![GitLab Pipeline Status](https://gitlab.com/ahmed-group802741/talentrank-ai/badges/main/pipeline.svg)](https://gitlab.com/ahmed-group802741/talentrank-ai/-/pipelines)
+[![Quality Gates](https://img.shields.io/badge/Quality_Gates-33%2F33_Passing-brightgreen?logo=vitest)](README.md#-project-status--quality-gates)
 [![Repository](https://img.shields.io/badge/GitLab-Project-orange?logo=gitlab)](https://gitlab.com/ahmed-group802741/talentrank-ai)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green?logo=node.js)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16.4_Turbopack-black?logo=next.js)](https://nextjs.org)

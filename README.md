@@ -243,9 +243,104 @@ npm run db:seed
 
 ---
 
-## 👥 Team & Submission Information
+## ☁️ Deploying to Vercel
 
-- **Project:** TalentRank AI
-- **Event:** AICON Hackathon 2026
+**Is TalentRank AI ready for Vercel?**  
+**Yes, 100%!** The codebase is built with Next.js 16 App Router, Turbopack, and Vercel AI SDK v7. All routes compile statically/dynamically with 0 errors.
+
+### 1. MongoDB Atlas Setup (Cloud Database)
+Vercel serverless functions cannot connect to `localhost`. You need a cloud-hosted MongoDB instance:
+1. Create a free M0 cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Under **Network Access**, allow access from anywhere (`0.0.0.0/0`) since Vercel uses dynamic IP addresses.
+3. Under **Database Access**, create a user and copy the connection string:
+   ```
+   mongodb+srv://<username>:<password>@cluster0.mongodb.net/aicon?retryWrites=true&w=majority
+   ```
+
+### 2. Import Project on Vercel
+1. Go to [Vercel Dashboard](https://vercel.com) and click **"Add New Project"**.
+2. Select your repository (GitLab or GitHub mirror).
+3. In **Project Settings**:
+   - **Framework Preset**: `Next.js`
+   - **Root Directory**: `apps/web` *(important for this monorepo)*
+   - **Build Command**: `npm run build` (or leave default `next build`)
+   - **Install Command**: `npm install`
+
+### 3. Environment Variables on Vercel
+Add the following keys in your Vercel Project Settings $\rightarrow$ **Environment Variables**:
+
+| Variable | Recommended Production Value | Description |
+| :--- | :--- | :--- |
+| `MONGODB_URI` | `mongodb+srv://...` | MongoDB Atlas connection string |
+| `MONGODB_DB` | `aicon` | Database name |
+| `BETTER_AUTH_SECRET` | `(32+ random characters)` | Secret key for auth token encryption |
+| `BETTER_AUTH_URL` | `https://your-project.vercel.app` | Production app URL |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | `AIzaSy...` | Gemini API key from Google AI Studio |
+| `CHAT_MODEL_ID` | `gemini-3.6-flash` | Gemini model for copilot RAG streaming |
+| `ENABLE_DEMO_LOGIN` | `true` | Allows instant guest evaluation |
+| `DEMO_USER_EMAIL` | `demo@example.com` | Demo account identity |
+
+Click **Deploy**! Once deployed, run initial indexes on your Atlas cluster if needed:
+```bash
+npm run db:indexes --workspace=apps/web
+```
+
+---
+
+## 🔄 GitLab & Workflow Guide
+
+### How to Push Changes to GitLab
+The repository has GitLab configured as the primary remote (`gitlab`):
+
+```bash
+# 1. Check current status and review modifications
+git status
+
+# 2. Stage your changes
+git add .
+
+# 3. Commit with a descriptive message
+git commit -m "feat: your feature description"
+
+# 4. Push to GitLab main branch
+git push gitlab feat/domain-adaptable-layer:main
+```
+*(If working directly on `main`: `git push gitlab main`)*
+
+### How to Safely Close and Reopen the Project
+
+#### To Close / Stop:
+1. **Stop Next.js Dev Server**: In the terminal running `npm run dev`, press `Ctrl + C`.
+2. **Stop MongoDB Container**:
+   ```bash
+   docker compose down
+   ```
+3. Close your IDE / terminal window.
+
+#### To Reopen / Resume:
+1. Open the project folder in terminal or VS Code / Antigravity.
+2. **Start MongoDB**:
+   ```bash
+   docker compose up -d
+   ```
+3. **Start the Dev Server**:
+   ```bash
+   npm run dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000). All candidate data, job criteria, and scoring rubrics are persisted in your local MongoDB volume.
+
+---
+
+## 👥 Team & Credits
+
+**TalentRank AI** is developed and submitted for the **AICON Hackathon 2026** by:
+
+### 🏆 Team **TensorSlow**
+* **Muhammad Ahmed** — **Lead Developer & Software Engineer**
+* **Mahad Ehtesham Hashmi** — Team Member
+* **Muhammad Yahya Shahzad** — Team Member
+* **Abdullah Anwar** — Team Member
+* **Muhammad Hassan** — Team Member
+
 - **Repository:** [https://gitlab.com/ahmed-group802741/talentrank-ai](https://gitlab.com/ahmed-group802741/talentrank-ai)
 - **License:** MIT

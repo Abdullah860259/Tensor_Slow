@@ -89,3 +89,7 @@ claudes ui files/
 "claudes ui files"/
 fav/
 *.zip
+.gemini/
+.claude/
+*.log
+scratch/

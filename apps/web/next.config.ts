@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     "all-the-cities",
     "pdf-parse",
     "pdfjs-dist",
+    "@napi-rs/canvas",
   ],
 };
 

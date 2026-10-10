@@ -151,15 +151,22 @@ export async function POST(req: NextRequest) {
     // 1. If PDF base64 was supplied (e.g. from Resume or LinkedIn "Save to PDF" export), parse it
     if (pdfBase64 && typeof pdfBase64 === "string") {
       try {
+        // Must load before pdf-parse: polyfills DOMMatrix/ImageData/Path2D (via @napi-rs/canvas),
+        // which pdfjs-dist needs and serverless Node runtimes like Vercel don't provide.
+        const { CanvasFactory } = await import("pdf-parse/worker");
         const pdfModule: any = await import("pdf-parse");
         const rawBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
-        
+
         let extractedText = "";
         // pdf-parse v2 (modern class API with Uint8Array binary input)
         if (typeof pdfModule.PDFParse === "function") {
-          const parser = new pdfModule.PDFParse(new Uint8Array(rawBuffer));
-          const result = await parser.getText();
-          extractedText = result?.text || "";
+          const parser = new pdfModule.PDFParse({ data: new Uint8Array(rawBuffer), CanvasFactory });
+          try {
+            const result = await parser.getText();
+            extractedText = result?.text || "";
+          } finally {
+            await parser.destroy();
+          }
         } else {
           // pdf-parse v1 (legacy function-based API)
           const pdfFn = pdfModule.default || pdfModule;

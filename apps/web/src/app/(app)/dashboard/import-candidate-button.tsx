@@ -274,9 +274,12 @@ export function ImportCandidateButton() {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="h-9 cursor-pointer gap-2">
-        <Plus className="h-4 w-4" aria-hidden="true" />
-        Import candidate
+      <Button
+        onClick={() => setOpen(true)}
+        className="h-9 cursor-pointer gap-2 rounded-full border border-white/20 bg-white px-4 text-xs font-sans font-medium text-zinc-950 shadow-sm transition-all hover:bg-zinc-200"
+      >
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        <span>Import candidate</span>
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>

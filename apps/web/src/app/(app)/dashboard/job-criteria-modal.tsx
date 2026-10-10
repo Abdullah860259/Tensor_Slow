@@ -238,9 +238,9 @@ export function JobCriteriaModal({
       <Button
         onClick={() => setOpen(true)}
         variant="outline"
-        className="group h-9 cursor-pointer gap-2 border-input bg-card/60 px-3.5 text-xs font-medium text-zinc-200 shadow-xs transition-all hover:border-emerald-500/50 hover:bg-zinc-800 hover:text-white"
+        className="group h-9 cursor-pointer gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-sans font-medium text-zinc-200 shadow-xs transition-all hover:border-emerald-500/40 hover:bg-white/[0.08] hover:text-white"
       >
-        <Target className="h-4 w-4 text-emerald-400 transition-transform group-hover:scale-110" aria-hidden="true" />
+        <Target className="h-3.5 w-3.5 text-emerald-400 transition-transform group-hover:scale-110" aria-hidden="true" />
         <span>Job criteria</span>
         {mustHaveCount > 0 && (
           <span className="ml-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-sans font-semibold text-emerald-300 tabular-nums">

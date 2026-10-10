@@ -1,5 +1,6 @@
 import React from "react";
 import { ExternalLink } from "lucide-react";
+import { linkedinSectionLinks } from "@/lib/candidate-profile";
 
 /** LinkedIn's "in" mark, drawn as text (lucide no longer ships brand icons). */
 function InMark({ className = "" }: { className?: string }): React.JSX.Element {
@@ -56,5 +57,27 @@ export function LinkedInLink({
     >
       <InMark className="h-4 w-4 text-[9px]" />
     </a>
+  );
+}
+
+/** Direct links to individual sections of a LinkedIn profile (LinkedIn may ask the viewer to sign in). */
+export function LinkedInSections({ href, name }: { href: string; name: string }): React.JSX.Element {
+  return (
+    <nav aria-label={`${name} on LinkedIn`} className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+      <span className="mr-1 text-[11px] text-zinc-500">Open on LinkedIn:</span>
+      {linkedinSectionLinks(href).map((section) => (
+        <a
+          key={section.label}
+          href={section.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${section.label} on LinkedIn (opens in a new tab)`}
+          className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] px-2.5 py-0.5 text-[11px] font-medium text-zinc-400 transition-colors hover:border-[#0A66C2]/60 hover:bg-[#0A66C2]/10 hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          {section.label}
+          <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
+        </a>
+      ))}
+    </nav>
   );
 }

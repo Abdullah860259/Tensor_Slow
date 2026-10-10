@@ -53,6 +53,7 @@ export function Tabs({
 export function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      role="tablist"
       className={cn(
         "inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
         className
@@ -74,6 +75,8 @@ export function TabsTrigger({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={isActive}
       data-value={value}
       data-state={isActive ? "active" : "inactive"}
       onClick={(e) => {
@@ -100,6 +103,7 @@ export function TabsContent({
 
   return (
     <div
+      role="tabpanel"
       data-value={value}
       data-state="active"
       className={cn(

@@ -1,5 +1,5 @@
 import { SYSTEM_PROMPT_VERSION } from "@/lib/contracts";
-import { domain } from "@/lib/domain";
+import { ASPECTS_INSTRUCTION, domain } from "@/lib/domain";
 
 export const PROMPT_VERSION = SYSTEM_PROMPT_VERSION;
 
@@ -25,6 +25,7 @@ Analyze the provided content and extract:
 5. score (${domain.labels.scoreLabel!.toLowerCase()}): an integer from 0 to 100.
 6. An optional list of concrete action items.
 7. The domain-specific fields.
+8. ${ASPECTS_INSTRUCTION}
 ${domain.extractionHint}
 Version: ${PROMPT_VERSION}`;
 

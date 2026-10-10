@@ -53,6 +53,18 @@ describe("extractStructuredData with new fields", () => {
     const r = await extractStructuredData("x", mock({ summary: "s", tags: ["a"], fields: validFields }));
     expect(r.fields).toEqual(validFields);
   });
+  it("keeps a valid aspect breakdown", async () => {
+    const aspects = [{ aspect: "Technical skills", score: 82, evidence: "React in production", assessed: true }];
+    const fields = { strengths: ["p1"], weaknesses: [], verdict: "Interview", aspects };
+    const r = await extractStructuredData("x", mock({ summary: "s", tags: ["a"], fields }));
+    expect((r.fields as { aspects?: unknown }).aspects).toEqual(aspects);
+  });
+  it("a malformed aspect breakdown is dropped without losing the other fields", async () => {
+    const fields = { strengths: ["p1"], weaknesses: [], verdict: "Interview", aspects: [{ aspect: "Charisma", score: "high" }] };
+    const r = await extractStructuredData("x", mock({ summary: "s", tags: ["a"], fields }));
+    expect(r.fields).toMatchObject({ strengths: ["p1"], verdict: "Interview" });
+    expect((r.fields as { aspects?: unknown }).aspects).toBeUndefined();
+  });
   it("malformed fields fall back to undefined instead of failing", async () => {
     const r = await extractStructuredData("x", mock({ summary: "s", tags: ["a"], fields: { keyPoints: "not-an-array" } }));
     expect(r.fields).toBeUndefined();

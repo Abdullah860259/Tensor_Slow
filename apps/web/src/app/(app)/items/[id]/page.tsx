@@ -3,7 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import mongoose from "mongoose";
-import { ArrowLeft, FileText, HelpCircle, MessageSquareText, ShieldAlert, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Gauge, HelpCircle, MessageSquareText, ShieldAlert, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectMongoose } from "@/lib/db";
 import { ItemModel, JobCriteriaModel } from "@/lib/models";
@@ -17,10 +17,13 @@ import {
 } from "@/lib/candidate-ui";
 import { FitBadge, Panel, ScoreRing, StatusBadge } from "@/components/ui/foundry";
 import { Chat } from "@/components/ai/chat";
-import { LinkedInLink } from "@/components/ui/linkedin-link";
+import { LinkedInLink, LinkedInSections } from "@/components/ui/linkedin-link";
+import { parseProfileText } from "@/lib/candidate-profile";
 import { normalizeLinkedinUrl } from "@/lib/sourcing/profiles";
 import { ReevaluateButton } from "./reevaluate-button";
 import { DeleteCandidateButton } from "./delete-candidate-button";
+import { AspectBreakdown, readAspects, type AspectScore } from "./aspect-breakdown";
+import { ProfileTabs } from "./profile-tabs";
 
 type DossierFields = {
   strengths: string[];
@@ -29,6 +32,7 @@ type DossierFields = {
   interviewQuestions: string[];
   verdict?: string;
   yearsOfExperience?: number;
+  aspects: AspectScore[];
 };
 
 function stringList(value: unknown): string[] {
@@ -39,7 +43,7 @@ function stringList(value: unknown): string[] {
 
 function getDossierFields(value: unknown): DossierFields {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return { strengths: [], weaknesses: [], redFlags: [], interviewQuestions: [] };
+    return { strengths: [], weaknesses: [], redFlags: [], interviewQuestions: [], aspects: [] };
   }
   const fields = value as Record<string, unknown>;
   return {
@@ -52,6 +56,7 @@ function getDossierFields(value: unknown): DossierFields {
       typeof fields.yearsOfExperience === "number" && Number.isFinite(fields.yearsOfExperience)
         ? fields.yearsOfExperience
         : undefined,
+    aspects: readAspects(fields.aspects),
   };
 }
 
@@ -109,6 +114,8 @@ export default async function CandidateDossierPage({
   const verdict = fields.verdict || item.aiSummary || "";
   const rawText = typeof item.content === "string" ? item.content : "";
   const linkedinUrl = normalizeLinkedinUrl(item.sourceUrl);
+  const profile = parseProfileText(rawText);
+  const displayText = cleanCandidateProfileText(rawText) || rawText;
 
   // Prefer questions stored on the candidate; otherwise use the active role's rubric.
   const rubricQuestions = stringList(
@@ -144,8 +151,9 @@ export default async function CandidateDossierPage({
               </p>
             )}
             {linkedinUrl && (
-              <div className="mt-4">
+              <div className="mt-4 space-y-3">
                 <LinkedInLink href={linkedinUrl} name={name} variant="button" />
+                <LinkedInSections href={linkedinUrl} name={name} />
               </div>
             )}
           </div>
@@ -225,6 +233,28 @@ export default async function CandidateDossierPage({
         </div>
       </section>
 
+      {/* Per-aspect scores */}
+      <div style={delay(100)} className="tr-rise">
+        <Panel
+          title="Aspect breakdown"
+          icon={Gauge}
+          aside={fields.aspects.length ? `${fields.aspects.length} aspects` : undefined}
+          bodyClassName="p-5 sm:p-6"
+        >
+          {fields.aspects.length > 0 ? (
+            <AspectBreakdown aspects={fields.aspects} />
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-relaxed text-zinc-400">
+                This candidate was evaluated before aspect scoring existed. Re-evaluate to rate technical skills,
+                experience, domain fit, leadership, stability and logistics separately.
+              </p>
+              <ReevaluateButton itemId={String(item._id)} />
+            </div>
+          )}
+        </Panel>
+      </div>
+
       {/* Executive Candidate Summary */}
       {item.aiSummary && (
         <section
@@ -299,31 +329,15 @@ export default async function CandidateDossierPage({
         </section>
       )}
 
-      {/* Source drawer */}
-      <section aria-label="Source text" style={delay(280)} className="tr-rise">
-        <details className="group overflow-hidden rounded-lg border border-border bg-card">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5 text-sm font-medium text-zinc-200 transition-colors select-none hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-zinc-500" aria-hidden="true" />
-              Source text
-            </span>
-            <span className="font-mono text-[11px] text-zinc-500 tabular-nums">
-              {(cleanCandidateProfileText(rawText) || rawText).length.toLocaleString("en-US")} chars
-              <span className="ml-2 inline-block transition-transform group-open:rotate-90 motion-reduce:transition-none">
-                ›
-              </span>
-            </span>
-          </summary>
-          <div className="border-t border-border bg-well p-5">
-            {rawText ? (
-              <pre className="max-h-[480px] overflow-auto font-mono text-xs leading-6 whitespace-pre-wrap text-zinc-400">
-                {cleanCandidateProfileText(rawText) || rawText}
-              </pre>
-            ) : (
-              <p className="text-sm text-zinc-500">No extracted text is stored for this candidate.</p>
-            )}
-          </div>
-        </details>
+      {/* Profile, split into sections */}
+      <section aria-labelledby="profile-heading" style={delay(280)} className="tr-rise space-y-4">
+        <div className="flex items-center gap-2.5">
+          <UserRound className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+          <h2 id="profile-heading" className="font-serif text-2xl font-normal tracking-tight text-white">
+            Profile
+          </h2>
+        </div>
+        <ProfileTabs profile={profile} rawText={displayText} />
       </section>
 
       {/* RAG copilot */}

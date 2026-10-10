@@ -25,11 +25,42 @@ export interface DomainConfig {
   preview: any;
 }
 
+/** Fixed aspects every candidate is rated on, so breakdowns are comparable across candidates. */
+export const EVALUATION_ASPECTS = [
+  { label: "Technical skills", hint: "depth in the required stack, tools and practices" },
+  { label: "Relevant experience", hint: "years and depth of directly relevant work" },
+  { label: "Domain & industry fit", hint: "experience in the target product domain or industry" },
+  { label: "Leadership & ownership", hint: "mentoring, leading, owning projects end to end" },
+  { label: "Career stability & growth", hint: "tenure patterns and upward trajectory" },
+  { label: "Logistics fit", hint: "location, work arrangement, availability and budget, when the requirements state them" },
+] as const;
+
+export const ASPECT_LABELS = EVALUATION_ASPECTS.map((a) => a.label) as [string, ...string[]];
+
+/** Prompt lines describing the aspect breakdown, shared by both extraction prompts. */
+export const ASPECTS_INSTRUCTION = `Aspect breakdown (fields.aspects): rate the candidate on EACH of these aspects, one entry per aspect:
+${EVALUATION_ASPECTS.map((a) => `- ${a.label}: ${a.hint}`).join("\n")}
+For each: score 0-100, and one sentence of evidence taken from the profile. If neither the profile nor the
+requirements give enough information to judge an aspect, set assessed to false, score to 50, and say what is missing.`;
+
+const AspectScoreSchema = z.object({
+  aspect: z.enum(ASPECT_LABELS),
+  score: z.number().describe("0-100"),
+  evidence: z.string().describe("One sentence citing the profile, or what information is missing."),
+  assessed: z.boolean().describe("false when there is not enough information to judge this aspect"),
+});
+
 export const RecruitmentFieldsSchema = z.object({
   strengths: z.array(z.string()).describe("Evidence-backed reasons this candidate is a good fit."),
   weaknesses: z.array(z.string()).describe("Missing skills, risks, or gaps to discuss."),
   verdict: z.string().describe("A concise hiring recommendation for this candidate."),
   yearsOfExperience: z.number().nonnegative().optional().describe("Estimated total years of relevant experience."),
+  // Own fallback so a malformed breakdown never discards the strengths, weaknesses and verdict
+  aspects: z
+    .array(AspectScoreSchema)
+    .optional()
+    .catch(undefined)
+    .describe("One rating per evaluation aspect, in the listed order."),
 });
 
 export const workforce_recruiting: DomainConfig = {

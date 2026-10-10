@@ -313,7 +313,7 @@ export default function AboutPage(): React.JSX.Element {
             {/* Diagram Container: External Cards on Left/Right + Unobstructed Image in Center */}
             <div
               ref={diagramContainerRef}
-              className="relative mt-12 sm:mt-16 mx-auto w-full max-w-6xl animate-fade-in-scale animation-delay-100"
+              className="relative mt-12 sm:mt-16 mx-auto w-full max-w-7xl animate-fade-in-scale animation-delay-100"
             >
               {/* Dynamic SVG Connecting Lines Layer (Active on lg+ desktop) */}
               <svg
@@ -345,7 +345,7 @@ export default function AboutPage(): React.JSX.Element {
                       <circle
                         cx={pts.x2}
                         cy={pts.y2}
-                        r="3"
+                        r="2.5"
                         className="fill-blue-500"
                       />
                     </g>
@@ -354,51 +354,51 @@ export default function AboutPage(): React.JSX.Element {
               </svg>
 
               {/* Responsive Layout: 3 Columns on desktop, Stack on tablet/mobile */}
-              <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_280px] xl:grid-cols-[310px_minmax(0,1fr)_310px] items-center gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-[230px_minmax(0,1fr)_230px] xl:grid-cols-[250px_minmax(0,1fr)_250px] items-center gap-5 lg:gap-7">
                 {/* ── Left Column: Ahmed (Top) & Abdullah (Bottom) ── */}
-                <div className="hidden lg:flex flex-col justify-around gap-8 h-full py-2 z-30 animate-fade-in-up animation-delay-150">
+                <div className="hidden lg:flex flex-col justify-around gap-6 h-full py-2 z-30 animate-fade-in-up animation-delay-150">
                   {TEAM_MEMBERS.filter((m) => m.side === "left").map((member) => (
                     <div
                       key={member.id}
-                      className="group relative rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-shadow duration-200 hover:shadow-md"
+                      className="group relative rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs transition-shadow duration-200 hover:shadow-md"
                     >
                       {/* Anchor Node 2 on right edge facing the center image (Simple Blue) */}
                       <div
                         ref={(el) => {
                           cardNodeRefs.current[member.id] = el;
                         }}
-                        className="absolute -right-2 top-1/2 -translate-y-1/2 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-background bg-blue-500 shadow-xs"
+                        className="absolute -right-1.5 top-1/2 -translate-y-1/2 flex h-3 w-3 items-center justify-center rounded-full border-2 border-background bg-blue-500 shadow-xs"
                       />
 
                       <div className="flex items-center justify-between gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-secondary font-sans text-xs font-bold text-foreground">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-secondary font-sans text-[11px] font-bold text-foreground">
                           {member.initials}
                         </span>
-                        <span className="rounded-full border border-border bg-secondary/80 px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                        <span className="rounded-full border border-border bg-secondary/80 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">
                           {member.badge}
                         </span>
                       </div>
 
-                      <h3 className="mt-3 font-sans text-base font-bold text-foreground">
+                      <h3 className="mt-2.5 font-sans text-sm font-bold text-foreground">
                         {member.name}
                       </h3>
-                      <p className="font-sans text-xs font-medium text-muted-foreground">
+                      <p className="font-sans text-[11px] font-medium text-muted-foreground">
                         {member.role}
                       </p>
-                      <p className="mt-1.5 font-sans text-xs leading-relaxed text-muted-foreground">
+                      <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-foreground">
                         {member.description}
                       </p>
 
-                      <div className="mt-4 border-t border-border/80 pt-3">
+                      <div className="mt-3 border-t border-border/80 pt-2.5">
                         <a
                           href={member.profileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-secondary/70 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-secondary/70 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary transition-colors"
                         >
-                          <LinkedInIcon className="h-3.5 w-3.5 text-[#0A66C2]" />
+                          <LinkedInIcon className="h-3 w-3 text-[#0A66C2]" />
                           <span>LinkedIn Profile</span>
-                          <ExternalLink className="h-3 w-3 opacity-60" />
+                          <ExternalLink className="h-2.5 w-2.5 opacity-60" />
                         </a>
                       </div>
                     </div>
@@ -447,58 +447,58 @@ export default function AboutPage(): React.JSX.Element {
                 </div>
 
                 {/* ── Right Column: Yahya (Top) & Mahad (Bottom) ── */}
-                <div className="hidden lg:flex flex-col justify-around gap-8 h-full py-2 z-30 animate-fade-in-up animation-delay-150">
+                <div className="hidden lg:flex flex-col justify-around gap-6 h-full py-2 z-30 animate-fade-in-up animation-delay-150">
                   {TEAM_MEMBERS.filter((m) => m.side === "right").map((member) => (
                     <div
                       key={member.id}
-                      className="group relative rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-shadow duration-200 hover:shadow-md"
+                      className="group relative rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs transition-shadow duration-200 hover:shadow-md"
                     >
                       {/* Anchor Node 2 on left edge facing the center image (Simple Blue) */}
                       <div
                         ref={(el) => {
                           cardNodeRefs.current[member.id] = el;
                         }}
-                        className="absolute -left-2 top-1/2 -translate-y-1/2 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-background bg-blue-500 shadow-xs"
+                        className="absolute -left-1.5 top-1/2 -translate-y-1/2 flex h-3 w-3 items-center justify-center rounded-full border-2 border-background bg-blue-500 shadow-xs"
                       />
 
                       <div className="flex items-center justify-between gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-secondary font-sans text-xs font-bold text-foreground">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-secondary font-sans text-[11px] font-bold text-foreground">
                           {member.initials}
                         </span>
-                        <span className="rounded-full border border-border bg-secondary/80 px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                        <span className="rounded-full border border-border bg-secondary/80 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">
                           {member.badge}
                         </span>
                       </div>
 
-                      <h3 className="mt-3 font-sans text-base font-bold text-foreground">
+                      <h3 className="mt-2.5 font-sans text-sm font-bold text-foreground">
                         {member.name}
                       </h3>
-                      <p className="font-sans text-xs font-medium text-muted-foreground">
+                      <p className="font-sans text-[11px] font-medium text-muted-foreground">
                         {member.role}
                       </p>
-                      <p className="mt-1.5 font-sans text-xs leading-relaxed text-muted-foreground">
+                      <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-foreground">
                         {member.description}
                       </p>
 
-                      <div className="mt-4 border-t border-border/80 pt-3">
+                      <div className="mt-3 border-t border-border/80 pt-2.5">
                         <a
                           href={member.profileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-secondary/70 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-secondary/70 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary transition-colors"
                         >
                           {member.type === "linkedin" ? (
                             <>
-                              <LinkedInIcon className="h-3.5 w-3.5 text-[#0A66C2]" />
+                              <LinkedInIcon className="h-3 w-3 text-[#0A66C2]" />
                               <span>LinkedIn Profile</span>
                             </>
                           ) : (
                             <>
-                              <GitHubIcon className="h-3.5 w-3.5 text-foreground" />
+                              <GitHubIcon className="h-3 w-3 text-foreground" />
                               <span>GitHub Profile</span>
                             </>
                           )}
-                          <ExternalLink className="h-3 w-3 opacity-60" />
+                          <ExternalLink className="h-2.5 w-2.5 opacity-60" />
                         </a>
                       </div>
                     </div>
@@ -512,46 +512,46 @@ export default function AboutPage(): React.JSX.Element {
               {TEAM_MEMBERS.map((member) => (
                 <div
                   key={`mobile-grid-${member.id}`}
-                  className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs"
+                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary font-sans text-xs font-bold text-foreground">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-secondary font-sans text-[11px] font-bold text-foreground">
                       {member.initials}
                     </span>
-                    <span className="rounded-full border border-border bg-secondary/60 px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    <span className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">
                       {member.badge}
                     </span>
                   </div>
 
-                  <h3 className="mt-3 font-sans text-base font-bold text-foreground">
+                  <h3 className="mt-2.5 font-sans text-sm font-bold text-foreground">
                     {member.name}
                   </h3>
-                  <p className="font-sans text-xs font-medium text-muted-foreground">
+                  <p className="font-sans text-[11px] font-medium text-muted-foreground">
                     {member.role}
                   </p>
-                  <p className="mt-1.5 font-sans text-xs leading-relaxed text-muted-foreground">
+                  <p className="mt-1 font-sans text-[11px] leading-relaxed text-muted-foreground">
                     {member.description}
                   </p>
 
-                  <div className="mt-4 border-t border-border pt-3">
+                  <div className="mt-3 border-t border-border/80 pt-2.5">
                     <a
                       href={member.profileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-secondary/70 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-secondary/70 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary transition-colors"
                     >
                       {member.type === "linkedin" ? (
                         <>
-                          <LinkedInIcon className="h-3.5 w-3.5 text-[#0A66C2]" />
+                          <LinkedInIcon className="h-3 w-3 text-[#0A66C2]" />
                           <span>LinkedIn Profile</span>
                         </>
                       ) : (
                         <>
-                          <GitHubIcon className="h-3.5 w-3.5 text-foreground" />
+                          <GitHubIcon className="h-3 w-3 text-foreground" />
                           <span>GitHub Profile</span>
                         </>
                       )}
-                      <ExternalLink className="h-3 w-3 opacity-60" />
+                      <ExternalLink className="h-2.5 w-2.5 opacity-60" />
                     </a>
                   </div>
                 </div>

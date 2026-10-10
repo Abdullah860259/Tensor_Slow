@@ -4,6 +4,7 @@ import { anonymous } from "better-auth/plugins/anonymous";
 import { magicLink } from "better-auth/plugins/magic-link";
 import { nextCookies } from "better-auth/next-js";
 import { getRawDb } from "@/lib/db";
+import {dash} from "@better-auth/infra"
 
 /**
  * On Vercel, BETTER_AUTH_URL can be left unset: fall back to the hostnames Vercel injects
@@ -41,7 +42,9 @@ export const auth = betterAuth({
       sendMagicLink: async () => {
         // Wired to transactional email delivery in production
       },
+      
     }),
+    dash(),
     // Required for Server Actions and Route Handlers to persist session cookies in Next.js App Router
     nextCookies(),
   ],

@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { HeroScene } from "@/components/marketing/hero-scene";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
@@ -533,47 +534,52 @@ export default function MarketingPage(): React.JSX.Element {
       </header>
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="mx-auto max-w-5xl px-4 pb-28 pt-24 sm:px-8 sm:pb-40 sm:pt-36">
-          <Reveal>
-            <span className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1 text-xs text-zinc-300">
-              Precision candidate evaluation and matching
-            </span>
-          </Reveal>
-          <h1 className="mt-8 max-w-4xl font-serif text-balance text-5xl font-normal tracking-tight text-white sm:text-7xl sm:leading-[1.02] md:text-8xl">
-            <Words text="Candidate intelligence engineered for technical hiring." step={70} delay={150} />
-          </h1>
-          <Reveal delay={900}>
-            <p className="mt-10 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl">
-              Evaluate engineering talent against deterministic, custom job criteria. Ingest LinkedIn profiles and
-              resumes, uncover hidden red flags, and score candidates 0–100 with zero hallucination.
-            </p>
-          </Reveal>
-          <Reveal delay={1150}>
-            <div className="mt-10">
-              <CtaPair
-                onAnonymous={handleStartAnonymous}
-                onDemo={handleDemoLogin}
-                loading={loading}
-                demoLoading={demoLoading}
-                primaryLabel="Launch Live Demo"
-                secondaryLabel="Sign In as Demo User"
-              />
+        {/* Hero: copy on the left, interactive Spline robot on the right (lg+) */}
+        <div className="overflow-x-clip">
+          <section className="relative mx-auto max-w-5xl px-4 pb-28 pt-24 sm:px-8 sm:pb-40 sm:pt-36 lg:pt-28">
+            <HeroScene className="absolute -right-4 top-1/2 hidden h-[560px] w-[500px] -translate-y-1/2 lg:block xl:-right-48 xl:h-[680px] xl:w-[620px]" />
+            <div className="relative z-10 lg:max-w-[32rem]">
+              <Reveal>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1 text-xs text-zinc-300">
+                  Precision candidate evaluation and matching
+                </span>
+              </Reveal>
+              <h1 className="mt-8 max-w-4xl font-serif text-balance text-5xl font-normal tracking-tight text-white sm:text-7xl sm:leading-[1.02] md:text-8xl lg:text-7xl">
+                <Words text="Candidate intelligence engineered for technical hiring." step={70} delay={150} />
+              </h1>
+              <Reveal delay={900}>
+                <p className="mt-10 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl">
+                  Evaluate engineering talent against deterministic, custom job criteria. Ingest LinkedIn profiles and
+                  resumes, uncover hidden red flags, and score candidates 0–100 with zero hallucination.
+                </p>
+              </Reveal>
+              <Reveal delay={1150}>
+                <div className="mt-10">
+                  <CtaPair
+                    onAnonymous={handleStartAnonymous}
+                    onDemo={handleDemoLogin}
+                    loading={loading}
+                    demoLoading={demoLoading}
+                    primaryLabel="Launch Live Demo"
+                    secondaryLabel="Sign In as Demo User"
+                  />
+                </div>
+                <p className="mt-4 text-sm text-zinc-500">
+                  Zero sign-up required. Powered by MongoDB Atlas Vector Search and Google Gemini.
+                </p>
+                {error && (
+                  <div
+                    role="alert"
+                    className="mt-6 flex max-w-md items-center gap-2 rounded-md border border-rose-900/60 bg-rose-950/40 p-3 text-xs text-rose-300"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </Reveal>
             </div>
-            <p className="mt-4 text-sm text-zinc-500">
-              Zero sign-up required. Powered by MongoDB Atlas Vector Search and Google Gemini.
-            </p>
-            {error && (
-              <div
-                role="alert"
-                className="mt-6 flex max-w-md items-center gap-2 rounded-md border border-rose-900/60 bg-rose-950/40 p-3 text-xs text-rose-300"
-              >
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
-                <span>{error}</span>
-              </div>
-            )}
-          </Reveal>
-        </section>
+          </section>
+        </div>
 
         {/* Manifesto: words brighten as you scroll */}
         <section aria-label="What TalentRank does" className="border-t border-border">

@@ -200,17 +200,17 @@ export default async function DashboardPage({
               </div>
             </div>
             <dl className="flex flex-wrap items-center gap-2 text-xs">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-800/60 bg-emerald-950/60 px-2.5 py-1">
-                <dd className="font-mono font-semibold text-emerald-300 tabular-nums">{mustHaveCount}</dd>
-                <dt className="text-emerald-300/80">must-have</dt>
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1">
+                <dd className="font-semibold text-emerald-300 tabular-nums">{mustHaveCount}</dd>
+                <dt className="text-emerald-400/80">must-have</dt>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-800/60 bg-amber-950/60 px-2.5 py-1">
-                <dd className="font-mono font-semibold text-amber-300 tabular-nums">{niceToHaveCount}</dd>
-                <dt className="text-amber-300/80">nice-to-have</dt>
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1">
+                <dd className="font-semibold text-amber-300 tabular-nums">{niceToHaveCount}</dd>
+                <dt className="text-amber-400/80">nice-to-have</dt>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-rose-800/60 bg-rose-950/60 px-2.5 py-1">
-                <dd className="font-mono font-semibold text-rose-300 tabular-nums">{redFlagCount}</dd>
-                <dt className="text-rose-300/80">red flags</dt>
+              <div className="inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1">
+                <dd className="font-semibold text-rose-300 tabular-nums">{redFlagCount}</dd>
+                <dt className="text-rose-400/80">red flags</dt>
               </div>
             </dl>
           </>

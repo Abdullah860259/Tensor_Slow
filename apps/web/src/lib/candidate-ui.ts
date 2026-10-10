@@ -12,6 +12,8 @@ export type ScoreStyle = {
   text: string;
   /** Tinted pill: background, text and border. */
   badge: string;
+  /** Accent dot color. */
+  dot: string;
   /** Solid fill for bars. */
   bar: string;
 };
@@ -22,7 +24,8 @@ export function getScoreStyle(score: number | null | undefined): ScoreStyle {
     return {
       label: "Unscored",
       text: "text-zinc-500",
-      badge: "bg-zinc-800 text-zinc-400 border-zinc-700",
+      badge: "bg-zinc-800/50 text-zinc-400 border-zinc-700/50",
+      dot: "bg-zinc-500",
       bar: "bg-zinc-700",
     };
   }
@@ -30,7 +33,8 @@ export function getScoreStyle(score: number | null | undefined): ScoreStyle {
     return {
       label: "Strong Fit",
       text: "text-emerald-400",
-      badge: "bg-emerald-950/60 text-emerald-300 border-emerald-800/60",
+      badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
+      dot: "bg-emerald-400",
       bar: "bg-emerald-500",
     };
   }
@@ -38,14 +42,16 @@ export function getScoreStyle(score: number | null | undefined): ScoreStyle {
     return {
       label: "Potential",
       text: "text-amber-400",
-      badge: "bg-amber-950/60 text-amber-300 border-amber-800/60",
+      badge: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+      dot: "bg-amber-400",
       bar: "bg-amber-500",
     };
   }
   return {
     label: "Unqualified",
     text: "text-rose-400",
-    badge: "bg-rose-950/60 text-rose-300 border-rose-800/60",
+    badge: "bg-rose-500/10 text-rose-300 border-rose-500/20",
+    dot: "bg-rose-400",
     bar: "bg-rose-500",
   };
 }

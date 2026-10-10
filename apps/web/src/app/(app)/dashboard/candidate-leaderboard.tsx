@@ -44,7 +44,7 @@ function RankBadge({ rank }: { rank: number }): React.JSX.Element {
     return (
       <span
         title="Rank 1 · Top Match"
-        className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-amber-500/35 bg-gradient-to-b from-amber-500/20 to-amber-500/5 px-2 font-mono text-xs font-semibold text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+        className="inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 px-1.5 font-sans text-[11px] font-semibold text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.12)]"
       >
         1
       </span>
@@ -54,7 +54,7 @@ function RankBadge({ rank }: { rank: number }): React.JSX.Element {
     return (
       <span
         title="Rank 2"
-        className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-slate-300/35 bg-gradient-to-b from-slate-300/20 to-slate-400/5 px-2 font-mono text-xs font-semibold text-slate-200"
+        className="inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full border border-slate-300/25 bg-slate-300/10 px-1.5 font-sans text-[11px] font-semibold text-slate-200"
       >
         2
       </span>
@@ -64,14 +64,14 @@ function RankBadge({ rank }: { rank: number }): React.JSX.Element {
     return (
       <span
         title="Rank 3"
-        className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-amber-700/35 bg-gradient-to-b from-amber-700/20 to-amber-800/5 px-2 font-mono text-xs font-semibold text-amber-500"
+        className="inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full border border-amber-700/30 bg-amber-700/15 px-1.5 font-sans text-[11px] font-semibold text-amber-400/90"
       >
         3
       </span>
     );
   }
   return (
-    <span className="inline-flex h-6 min-w-6 items-center justify-center px-1.5 font-mono text-xs text-zinc-500 tabular-nums">
+    <span className="inline-flex h-5.5 min-w-5.5 items-center justify-center px-1 font-sans text-[11px] font-medium text-zinc-500 tabular-nums">
       {rank}
     </span>
   );
@@ -286,18 +286,18 @@ export function CandidateLeaderboard({
                             {candidate.title}
                           </Link>
                           {isRescoring ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-medium text-amber-300">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-sans text-[11px] font-medium text-amber-300">
                               <Loader2 className="h-2.5 w-2.5 animate-spin" />
                               Re-evaluating...
                             </span>
                           ) : candidate.status === "pending" ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-medium text-amber-300">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-sans text-[11px] font-medium text-amber-300">
                               <Loader2 className="h-2.5 w-2.5 animate-spin" />
                               Evaluating...
                             </span>
                           ) : candidate.status !== "processed" ? (
                             <span
-                              className={`inline-flex items-center gap-1 font-mono text-[10px] font-medium ${status.text}`}
+                              className={`inline-flex items-center gap-1 font-sans text-[11px] font-medium ${status.text}`}
                             >
                               <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden="true" />
                               {status.label}
@@ -332,10 +332,17 @@ export function CandidateLeaderboard({
                       </div>
                     </td>
 
-                    <td className="px-2 py-3.5 align-middle font-mono text-sm text-zinc-200 tabular-nums">
-                      {candidate.yearsOfExperience === undefined
-                        ? "--"
-                        : `${formatYears(candidate.yearsOfExperience)} yrs`}
+                    <td className="px-2 py-3.5 align-middle">
+                      {candidate.yearsOfExperience === undefined ? (
+                        <span className="text-xs text-zinc-600">--</span>
+                      ) : (
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-semibold text-zinc-100 text-[13px] tracking-tight tabular-nums">
+                            {formatYears(candidate.yearsOfExperience)}
+                          </span>
+                          <span className="text-[11px] font-medium text-zinc-500">yrs</span>
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-2 py-3.5 align-middle">
@@ -344,23 +351,23 @@ export function CandidateLeaderboard({
 
                     <td className="px-2 py-3.5 align-middle">
                       {tags.length > 0 ? (
-                        <span className="flex flex-wrap gap-1">
+                        <span className="flex flex-wrap gap-1.5">
                           {tags.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className="inline-flex items-center rounded border border-border bg-well px-1.5 py-0.5 font-mono text-[10px] text-zinc-300"
+                              className="inline-flex items-center rounded-md border border-zinc-800/80 bg-zinc-850/40 px-2 py-0.5 text-[11px] font-sans font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
                             >
                               {tag}
                             </span>
                           ))}
                           {tags.length > 3 && (
-                            <span className="self-center font-mono text-[10px] text-zinc-500">
+                            <span className="self-center px-1 text-[11px] font-sans font-medium text-zinc-500">
                               +{tags.length - 3}
                             </span>
                           )}
                         </span>
                       ) : (
-                        <span className="font-mono text-xs text-zinc-700">--</span>
+                        <span className="text-xs text-zinc-600">--</span>
                       )}
                     </td>
 
@@ -369,7 +376,7 @@ export function CandidateLeaderboard({
                         <Link
                           href={`/items/${candidate.id}`}
                           aria-label={`Inspect profile: ${candidate.title}`}
-                          className="group inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card/60 px-3 text-xs font-medium text-zinc-200 transition-all hover:border-zinc-500 hover:bg-secondary hover:text-white focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
+                          className="group inline-flex h-7 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 text-[12px] font-sans font-medium text-zinc-200 shadow-xs transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
                         >
                           <span>Inspect</span>
                           <ArrowRight
@@ -399,10 +406,10 @@ export function CandidateLeaderboard({
                               });
                             }
                           }}
-                          className={`flex h-8 w-8 items-center justify-center rounded-md border transition-colors cursor-pointer ${
+                          className={`flex h-7 w-7 items-center justify-center rounded-full border transition-all cursor-pointer ${
                             activeDropdown?.id === candidate.id
-                              ? "border-zinc-500 bg-secondary text-white"
-                              : "border-input bg-card/60 text-zinc-400 hover:border-zinc-500 hover:bg-secondary hover:text-white"
+                              ? "border-white/25 bg-white/[0.12] text-white shadow-xs"
+                              : "border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
                           }`}
                           title="More options (or right-click row)"
                         >
@@ -425,13 +432,13 @@ export function CandidateLeaderboard({
           <div
             style={{ top: `${activeDropdown.top}px`, left: `${activeDropdown.left}px` }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed z-50 w-48 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
+            className="fixed z-50 w-48 rounded-xl border border-white/10 bg-zinc-900/90 p-1.5 text-left text-white shadow-[0_16px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95"
           >
             <button
               type="button"
               onClick={() => handleReevaluate(activeDropdown.candidate)}
               disabled={rescoringIds.has(activeDropdown.candidate.id)}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer disabled:opacity-40"
             >
               <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
               <span>Re-evaluate criteria</span>
@@ -439,12 +446,12 @@ export function CandidateLeaderboard({
             <Link
               href={`/items/${activeDropdown.candidate.id}`}
               onClick={() => setActiveDropdown(null)}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
               <span>Inspect dossier</span>
             </Link>
-            <div className="my-1 border-t border-border/70" />
+            <div className="my-1 border-t border-white/10" />
             <button
               type="button"
               onClick={() => {
@@ -452,7 +459,7 @@ export function CandidateLeaderboard({
                 setActiveDropdown(null);
                 setDeleteCandidate(toDelete);
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span>Delete candidate</span>
@@ -468,33 +475,33 @@ export function CandidateLeaderboard({
           <div
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed z-50 w-52 rounded-xl border border-border bg-[#11141a] p-1.5 text-left text-white shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-md"
+            className="fixed z-50 w-52 rounded-xl border border-white/10 bg-zinc-900/90 p-1.5 text-left text-white shadow-[0_16px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95"
           >
-            <div className="px-2.5 py-1.5 border-b border-border/70 mb-1">
+            <div className="px-2.5 py-1.5 border-b border-white/10 mb-1">
               <p className="truncate text-xs font-semibold text-white">{contextMenu.candidate.title}</p>
-              <p className="text-[10px] text-zinc-500 font-mono">Right-click actions</p>
+              <p className="text-[10px] text-zinc-500 font-sans">Quick actions</p>
             </div>
 
             <button
               type="button"
               onClick={() => handleReevaluate(contextMenu.candidate)}
               disabled={rescoringIds.has(contextMenu.candidate.id)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer disabled:opacity-40"
             >
               <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Re-evaluate against criteria</span>
+              <span>Re-evaluate criteria</span>
             </button>
 
             <Link
               href={`/items/${contextMenu.candidate.id}`}
               onClick={() => setContextMenu(null)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
               <span>Inspect full dossier</span>
             </Link>
 
-            <div className="my-1 border-t border-border/70" />
+            <div className="my-1 border-t border-white/10" />
 
             <button
               type="button"
@@ -503,7 +510,7 @@ export function CandidateLeaderboard({
                 setContextMenu(null);
                 setDeleteCandidate(cand);
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5 text-rose-400" />
               <span>Delete candidate</span>

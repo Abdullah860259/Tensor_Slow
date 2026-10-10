@@ -153,9 +153,10 @@ export function FitBadge({
   const style = getScoreStyle(score);
   return (
     <span
-      className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[11px] font-medium ${style.badge} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-sans font-medium tracking-tight ${style.badge} ${className}`}
     >
-      {style.label}
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden="true" />
+      <span>{style.label}</span>
     </span>
   );
 }
@@ -169,7 +170,7 @@ export function Tag({
 }): React.JSX.Element {
   return (
     <span
-      className={`inline-flex items-center rounded border border-border bg-well px-1.5 py-0.5 font-mono text-[11px] text-zinc-300 ${className}`}
+      className={`inline-flex items-center rounded-md border border-zinc-800/80 bg-zinc-850/40 px-2 py-0.5 font-sans text-[11px] font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-white ${className}`}
     >
       {children}
     </span>

@@ -243,7 +243,7 @@ export function JobCriteriaModal({
         <Target className="h-4 w-4 text-emerald-400 transition-transform group-hover:scale-110" aria-hidden="true" />
         <span>Job criteria</span>
         {mustHaveCount > 0 && (
-          <span className="ml-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-300 tabular-nums">
+          <span className="ml-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-sans font-semibold text-emerald-300 tabular-nums">
             {mustHaveCount}
           </span>
         )}
@@ -254,26 +254,17 @@ export function JobCriteriaModal({
           <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
             <div className="flex flex-wrap items-center gap-2">
               {hasUnsavedDraft ? (
-                <Badge
-                  variant="outline"
-                  className="border-amber-800/60 bg-amber-950/60 text-[11px] font-medium text-amber-300"
-                >
+                <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-sans font-medium text-amber-300">
                   Draft, not applied
-                </Badge>
+                </span>
               ) : activeCriteria ? (
-                <Badge
-                  variant="outline"
-                  className="border-emerald-800/60 bg-emerald-950/60 text-[11px] font-medium text-emerald-300"
-                >
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-sans font-medium text-emerald-300">
                   Active: {activeCriteria.roleTitle}
-                </Badge>
+                </span>
               ) : (
-                <Badge
-                  variant="outline"
-                  className="border-zinc-700 bg-zinc-800 text-[11px] font-medium text-zinc-400"
-                >
+                <span className="inline-flex items-center rounded-full border border-zinc-700/50 bg-zinc-800/40 px-2.5 py-0.5 text-[11px] font-sans font-medium text-zinc-400">
                   No active role
-                </Badge>
+                </span>
               )}
             </div>
             <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">

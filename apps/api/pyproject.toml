@@ -13,6 +13,10 @@ dependencies = [
 [project.scripts]
 aicon-hackathon = "aicon_hackathon.main:run"
 
+[tool.uv.build-backend]
+# The package lives in src/aicon_hackathon, not src/aicon_api as the project name implies.
+module-name = "aicon_hackathon"
+
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
 build-backend = "uv_build"

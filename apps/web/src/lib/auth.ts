@@ -5,8 +5,28 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { nextCookies } from "better-auth/next-js";
 import { getRawDb } from "@/lib/db";
 
+/**
+ * On Vercel, BETTER_AUTH_URL can be left unset: fall back to the hostnames Vercel injects
+ * (the production domain for production deploys, the deployment URL for previews).
+ */
+const vercelHost =
+  process.env.VERCEL_ENV === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_URL;
+
+/** Every hostname a Vercel deployment is reachable on, so sign-in works from any of them. */
+const vercelOrigins = [
+  process.env.VERCEL_URL,
+  process.env.VERCEL_BRANCH_URL,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL,
+]
+  .filter((host): host is string => Boolean(host))
+  .map((host) => `https://${host}`);
+
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (vercelHost ? `https://${vercelHost}` : "http://localhost:3000"),
+  trustedOrigins: vercelOrigins,
   secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || "temporary-stub-secret-32-characters-minimum",
   database: mongodbAdapter(getRawDb()),
   emailAndPassword: {

@@ -93,3 +93,5 @@ fav/
 .claude/
 *.log
 scratch/
+*.pdf
+

@@ -77,6 +77,42 @@ React, Next.js, TypeScript, Tailwind CSS, GraphQL, State Management, Cloud Archi
   return { fullName: cleanName, cleanText };
 }
 
+function extractNameFromPdfText(text: string): string {
+  const lines = text.split("\n").map((l) => l.trim()).filter((l): l is string => Boolean(l));
+  const isLinkedInPdf = lines.slice(0, 10).some((l) => /linkedin\.com|top skills|contact/i.test(l));
+  if (isLinkedInPdf) {
+    let pastHeader = false;
+    for (let i = 0; i < Math.min(lines.length, 25); i++) {
+      const line = lines[i];
+      if (!line) continue;
+      if (/top skills/i.test(line) || /contact/i.test(line) || /linkedin\.com/i.test(line) || line.includes("(LinkedIn)")) {
+        pastHeader = true;
+        continue;
+      }
+      if (
+        pastHeader &&
+        !line.includes("@") &&
+        !line.includes("http") &&
+        !/experience|education|summary|languages|certifications|publications/i.test(line) &&
+        line.length > 2 &&
+        line.length < 50
+      ) {
+        const nextLine = lines[i + 1] || "";
+        if (
+          nextLine &&
+          (/engineer|developer|manager|designer|lead|architect|specialist|analyst|intern|officer|consultant/i.test(nextLine) ||
+            nextLine.includes("|"))
+        ) {
+          return line;
+        }
+      }
+    }
+  }
+
+  const fallback = lines[0];
+  return fallback || "Imported Candidate";
+}
+
 import fs from "fs";
 
 export async function POST(req: NextRequest) {
@@ -116,13 +152,28 @@ export async function POST(req: NextRequest) {
     if (pdfBase64 && typeof pdfBase64 === "string") {
       try {
         const pdfModule: any = await import("pdf-parse");
-        const pdf = pdfModule.default || pdfModule;
-        const buffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
-        const parsed = await pdf(buffer);
-        cleanText = parsed.text.trim();
+        const rawBuffer = Buffer.from(pdfBase64.replace(/^data:application\/pdf;base64,/, ""), "base64");
+        
+        let extractedText = "";
+        // pdf-parse v2 (modern class API with Uint8Array binary input)
+        if (typeof pdfModule.PDFParse === "function") {
+          const parser = new pdfModule.PDFParse(new Uint8Array(rawBuffer));
+          const result = await parser.getText();
+          extractedText = result?.text || "";
+        } else {
+          // pdf-parse v1 (legacy function-based API)
+          const pdfFn = pdfModule.default || pdfModule;
+          const result = await pdfFn(rawBuffer);
+          extractedText = result?.text || "";
+        }
+
+        cleanText = extractedText.trim();
+        if (!cleanText) {
+          throw new Error("No readable text could be extracted from this PDF.");
+        }
+
         if (!candidateName) {
-          const lines = cleanText.split("\n").map((l) => l.trim()).filter(Boolean);
-          candidateName = lines[0] || "Imported Candidate";
+          candidateName = extractNameFromPdfText(cleanText);
         }
       } catch (pdfErr: any) {
         logger.error("[scrape] Failed to parse PDF resume", pdfErr);

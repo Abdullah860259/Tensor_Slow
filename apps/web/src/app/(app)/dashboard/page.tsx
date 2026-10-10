@@ -16,6 +16,7 @@ import { connectMongoose } from "@/lib/db";
 import { ItemModel, JobCriteriaModel, StarModel } from "@/lib/models";
 import { domain } from "@/lib/domain";
 import { candidateDisplayName, extractHeadline } from "@/lib/candidate-ui";
+import { normalizeLinkedinUrl } from "@/lib/sourcing/profiles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImportCandidateButton } from "./import-candidate-button";
@@ -400,6 +401,7 @@ export default async function DashboardPage({
                     aiTags: item.aiTags,
                     yearsOfExperience: fields.yearsOfExperience,
                     starred: starred.has(String(item._id)),
+                    linkedinUrl: normalizeLinkedinUrl(item.sourceUrl) ?? undefined,
                   };
                 })}
               />

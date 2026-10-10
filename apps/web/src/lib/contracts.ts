@@ -13,7 +13,7 @@ import { z } from "zod";
 /** Gemini text-embedding-004 produces 768-dimensional vectors; the Atlas index must match. */
 export const EMBEDDING_DIMENSIONS = 768;
 
-export const SYSTEM_PROMPT_VERSION = "2026-09-28.v1";
+export const SYSTEM_PROMPT_VERSION = "2026-10-10.v2";
 
 export const SEVERITY_LEVELS = ["low", "medium", "high", "critical"] as const;
 export const SeveritySchema = z.enum(SEVERITY_LEVELS);

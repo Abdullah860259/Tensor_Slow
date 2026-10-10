@@ -2,7 +2,7 @@ import { generateObject, type LanguageModel } from "ai";
 import { ExtractResultSchema, type ExtractResult } from "@/lib/contracts";
 import { fastModel } from "@/lib/ai/models";
 import { EXTRACTION_PROMPT } from "@/lib/ai/prompts/system";
-import { domain } from "@/lib/domain";
+import { ASPECTS_INSTRUCTION, domain } from "@/lib/domain";
 
 export type ExtractOutput = ExtractResult & { fields?: Record<string, unknown> };
 
@@ -37,6 +37,7 @@ Analyze the provided profile/resume text and evaluate the candidate strictly aga
 4. severity: 'critical' or 'high' for strong fits to interview immediately, 'medium' for potential fits, 'low' for unqualified candidates.
 5. score: an integer from 0 to 100 based strictly on the scoring rubric below.
 6. The domain fields: strengths (evidence-backed points matching criteria), weaknesses (missing requirements, red flags, or gaps), verdict (clear hiring recommendation), yearsOfExperience (estimated total years of relevant experience).
+7. ${ASPECTS_INSTRUCTION}
 
 TARGET JOB ROLE CRITERIA & SCORING RUBRIC:
 ${criteriaOverride}

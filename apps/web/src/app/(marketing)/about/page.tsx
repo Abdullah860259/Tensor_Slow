@@ -87,7 +87,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     initials: "MY",
     badge: "Frontend & UI/UX",
     side: "right",
-    cardOffsetClass: "lg:-translate-x-12 xl:-translate-x-16 lg:translate-y-3 lg:-rotate-2.5 z-40 shadow-md backdrop-blur-xs hover:rotate-0 hover:scale-[1.02] transition-transform duration-300",
+    cardOffsetClass: "lg:-translate-x-10 xl:-translate-x-14 lg:-translate-y-6 lg:rotate-2 z-40 shadow-md backdrop-blur-xs hover:rotate-0 hover:scale-[1.02] transition-transform duration-300",
   },
   {
     id: "mahad",

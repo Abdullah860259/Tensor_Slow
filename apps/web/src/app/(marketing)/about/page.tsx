@@ -683,13 +683,13 @@ export default function AboutPage(): React.JSX.Element {
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <a
-                    href="https://gitlab.com/ahmed-group802741/talentrank-ai"
+                    href="https://github.com/Abdullah860259/Tensor_Slow"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-none border border-border bg-secondary px-5 py-2.5 font-sans text-sm font-semibold text-foreground hover:bg-secondary/80 transition-colors"
                   >
                     <GitHubIcon className="h-4 w-4" />
-                    <span>GitLab Repo</span>
+                    <span>GitHub Repo</span>
                   </a>
                 </div>
               </div>

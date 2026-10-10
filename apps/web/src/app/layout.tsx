@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TalentScout AI — Candidate Evaluation & Leaderboard",
-  description: "AI-powered workforce recruitment ATS and candidate ranking for technical roles.",
+  title: "TalentRank AI — Autonomous Candidate Intelligence & Leaderboard",
+  description: "Autonomous multi-agent technical recruitment and candidate ranking against deterministic rubrics.",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -25,7 +25,15 @@ export default function RootLayout({
 }): React.JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap"
+        />
+      </head>
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans" suppressHydrationWarning>
         {children}
       </body>
     </html>

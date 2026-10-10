@@ -5,17 +5,25 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Compass,
+  Database,
   EyeOff,
+  FileText,
   Loader2,
   Scale,
+  Search,
+  ShieldCheck,
+  Sparkles,
   User,
+  Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { HeroScene } from "@/components/marketing/hero-scene";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import { SmoothScroll } from "@/components/smooth-scroll";
 
 /* ================================================================== */
 /* Motion primitives. Everything respects prefers-reduced-motion.      */
@@ -83,7 +91,7 @@ function Reveal({
   );
 }
 
-/** Headline text that resolves word by word (fade, lift, un-blur). */
+/** Headline text that resolves word by word. */
 function Words({
   text,
   step = 55,
@@ -112,129 +120,26 @@ function Words({
   );
 }
 
-/** Paragraph whose words brighten one by one as it scrolls through the viewport. */
-function ScrollText({ text, className = "" }: { text: string; className?: string }): React.JSX.Element {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const [progress, setProgress] = useState(0);
-  const reduced = useReducedMotion();
-
-  useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const el = ref.current;
-      if (!el) return;
-      const { top, height } = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const value = (vh * 0.85 - top) / (height + vh * 0.45);
-      setProgress(Math.min(1, Math.max(0, value)));
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const words = text.split(" ");
-  return (
-    <p ref={ref} className={className}>
-      {words.map((word, i) => {
-        const lit = reduced ? 1 : Math.min(1, Math.max(0, (progress * (words.length + 4) - i) / 4));
-        return (
-          <React.Fragment key={`${word}-${i}`}>
-            <span className="transition-opacity duration-300" style={{ opacity: 0.16 + 0.84 * lit }}>
-              {word}
-            </span>{" "}
-          </React.Fragment>
-        );
-      })}
-    </p>
-  );
-}
-
 /* ================================================================== */
-/* Typography + shared UI                                              */
+/* Typography + shared UI (Archon standard: Inter headings, Caslon figures) */
 /* ================================================================== */
 
 function Kicker({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return <p className="text-sm text-zinc-500">{children}</p>;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/80 px-3 py-1 font-sans text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+      {children}
+    </span>
+  );
 }
 
 function H2({ id, text, className = "" }: { id?: string; text: string; className?: string }): React.JSX.Element {
   return (
     <h2
       id={id}
-      className={`font-serif text-balance text-4xl font-normal tracking-tight text-white sm:text-6xl sm:leading-[1.05] ${className}`}
+      className={`font-sans text-balance text-4xl font-medium tracking-[-0.03em] text-foreground sm:text-5xl sm:leading-[1.12] ${className}`}
     >
       <Words text={text} />
     </h2>
-  );
-}
-
-function CtaPair({
-  onAnonymous,
-  onDemo,
-  loading,
-  demoLoading,
-  primaryLabel,
-  secondaryLabel,
-  center = false,
-}: {
-  onAnonymous: () => void;
-  onDemo: () => void;
-  loading: boolean;
-  demoLoading: boolean;
-  primaryLabel: string;
-  secondaryLabel: string;
-  center?: boolean;
-}): React.JSX.Element {
-  return (
-    <div className={`flex flex-col gap-3 sm:flex-row ${center ? "items-center justify-center" : "items-start"}`}>
-      <Button
-        size="lg"
-        onClick={onAnonymous}
-        disabled={loading || demoLoading}
-        className="h-11 gap-2 bg-white px-7 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="animate-spin" aria-hidden="true" />
-            <span>Starting session…</span>
-          </>
-        ) : (
-          <>
-            <span>{primaryLabel}</span>
-            <ArrowRight aria-hidden="true" />
-          </>
-        )}
-      </Button>
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={onDemo}
-        disabled={loading || demoLoading}
-        className="h-11 gap-2 border-zinc-800 bg-transparent px-6 text-sm font-medium text-zinc-200 hover:bg-zinc-900 hover:text-white"
-      >
-        {demoLoading ? (
-          <>
-            <Loader2 className="animate-spin" aria-hidden="true" />
-            <span>Signing in…</span>
-          </>
-        ) : (
-          <>
-            <User className="text-zinc-400" aria-hidden="true" />
-            <span>{secondaryLabel}</span>
-          </>
-        )}
-      </Button>
-    </div>
   );
 }
 
@@ -242,97 +147,436 @@ function CtaPair({
 /* Content                                                             */
 /* ================================================================== */
 
-const MANIFESTO =
-  "Hiring engineers means reading hundreds of profiles and trusting your gut. TalentRank reads every one against the same criteria, scores it from zero to one hundred, and shows you exactly where each answer came from.";
+const HERO_TAGS = [
+  { label: "Scraping senior candidates via Apify actor", status: "Done", type: "done" },
+  { label: "Ingesting alex_rivera_resume.pdf via OCR", status: "Done", type: "done" },
+  { label: "Generating 768-D Gemini vector embedding", status: "Done", type: "done" },
+  { label: "Evaluating Staff Engineer rubric criteria", status: "Active", type: "active" },
+  { label: "Flagging overlapping tenure anomaly (-12 pts)", status: "Active", type: "active" },
+  { label: "Verifying cited Next.js & AWS production claims", status: "Active", type: "active" },
+  { label: "Computing deterministic 0–100 match score", status: "Queued", type: "queued" },
+  { label: "Publishing candidate to live leaderboard", status: "Queued", type: "queued" },
+] as const;
 
-const PROBLEMS = [
+const cardContents = [
   {
-    icon: EyeOff,
-    title: "The resume black box",
-    body: "Keyword filters reward buzzword stuffing. Qualified builders get rejected while unqualified resume gamers pass through.",
+    title: "Deterministic Rubric Scoring",
+    description:
+      "Compile plain-English job specs into calibrated 0–100 evaluations across Must-Haves, Nice-to-Haves, and Red Flags with zero scoring hallucinations or model drift.",
+    span: "lg:col-span-3 lg:row-span-2",
   },
   {
-    icon: Clock,
-    title: "The time sink",
-    body: "Engineering managers spend 15+ hours a week scanning 10-page PDFs instead of talking to the best people.",
+    title: "Verifiable Grounded Citations",
+    description:
+      "Every assessment claim anchors directly to an exact, quoted text span in the candidate's resume or repository. If an accomplishment cannot be verified, it is never credited.",
+    span: "lg:col-span-3 lg:row-span-2",
   },
   {
-    icon: Scale,
-    title: "Subjective blind spots",
-    body: "Unstructured interviews and manual scoring bring inconsistent criteria and missed tenure red flags.",
+    title: "Blind Anti-Bias Screening",
+    description:
+      "Design an objective, equitable technical hiring pipeline. TalentRank strips candidate names, demographic markers, graduation dates, and university prestige bias before evaluation begins. Our multi-agent evaluator measures candidates strictly against demonstrated architecture decisions, open-source execution, and verified engineering competencies. With verifiable audit trails, hiring teams ensure equitable standards across every candidate cohort without sacrificing technical rigor.",
+    span: "lg:col-span-4 lg:row-span-1",
+  },
+  {
+    title: "Sub-Second Multimodal Ingestion",
+    description:
+      "Ingest complex multi-page PDFs, LinkedIn URLs, and GitHub repos into 768-D Gemini vector embeddings in MongoDB Atlas in under 850ms.",
+    span: "lg:col-span-2 lg:row-span-1",
+  },
+  {
+    title: "Tenure & Risk Anomaly Detection",
+    description:
+      "Automatically detect frequent short-tenure hops, unexplained career timeline gaps, and inflated seniority claims before scheduling initial screens.",
+    span: "lg:col-span-2 lg:row-span-1",
   },
 ];
 
-const QUESTIONS = [
-  {
-    q: "Does Alex have Next.js App Router experience?",
-    a: "Yes. Alex migrated Coursera's learner dashboard from the Pages Router to the App Router and owned the server component rollout across two teams.",
-    cite: "Coursera Experience § 2022–2024",
-    match: 98,
-    tone: "text-emerald-300 border-emerald-800/60 bg-emerald-950/60",
-  },
-  {
-    q: "Were any red flags detected?",
-    a: "One minor flag: a seven-month tenure in 2019. Every role since has run longer than two years, and no unexplained gaps appear.",
-    cite: "Career Timeline § 2018–2020",
-    match: 91,
-    tone: "text-amber-300 border-amber-800/60 bg-amber-950/60",
-  },
-  {
-    q: "Has Alex designed scalable cloud architecture?",
-    a: "Yes. The profile states Alex led a move to autoscaling services on AWS that handled 4× traffic during enrollment peaks.",
-    cite: "Coursera Experience § 2023",
-    match: 94,
-    tone: "text-emerald-300 border-emerald-800/60 bg-emerald-950/60",
-  },
-];
+const CornerPlusIcons = () => (
+  <>
+    <PlusIcon className="absolute -top-3 -left-3" />
+    <PlusIcon className="absolute -top-3 -right-3" />
+    <PlusIcon className="absolute -bottom-3 -left-3" />
+    <PlusIcon className="absolute -bottom-3 -right-3" />
+  </>
+);
+
+const PlusIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    width={24}
+    height={24}
+    strokeWidth="1.25"
+    stroke="currentColor"
+    className={cn("size-6 text-zinc-600 transition-colors group-hover:text-zinc-300", className)}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+  </svg>
+);
+
+const PlusCard: React.FC<{
+  className?: string;
+  title: string;
+  description: string;
+}> = ({
+  className = "",
+  title,
+  description,
+}) => {
+  return (
+    <div
+      className={cn(
+        "group relative border border-dashed border-[#262626] bg-[#141414] p-6 min-h-[200px] rounded-none",
+        "flex flex-col justify-between transition-colors hover:border-[#3a3a3a]",
+        className
+      )}
+    >
+      <CornerPlusIcons />
+      <div className="relative z-10 space-y-2">
+        <h3 className="font-sans text-xl font-medium tracking-tight text-white">
+          {title}
+        </h3>
+        <p className="font-sans text-sm leading-relaxed text-zinc-400">{description}</p>
+      </div>
+    </div>
+  );
+};
+
+
 
 const METRICS = [
   { value: "< 850ms", label: "Parsing and ingestion latency" },
   { value: "768-D", label: "Multimodal vector embeddings in MongoDB Atlas" },
   { value: "100%", label: "Deterministic rubric scoring" },
-  { value: "33 / 33", label: "Automated quality gates passed" },
+  { value: "0%", label: "Unconscious screening bias" },
+];
+
+const FAQS = [
+  {
+    q: "How does TalentRank eliminate hallucinations in candidate scoring?",
+    a: "Unlike standard LLMs that generate arbitrary ratings, TalentRank uses a deterministic two-phase pipeline. First, candidates are indexed into a 768-D vector space in MongoDB Atlas. Second, our rubric evaluator requires every score factor to cite an exact, verifiable sentence in the source resume or profile. If an answer cannot be grounded in source text, it is flagged as unverified.",
+  },
+  {
+    q: "Can I customize the evaluation criteria and red flags?",
+    a: "Yes. You can define custom job roles using plain English or structured criteria. The engine automatically partitions requirements into Must-Haves, Nice-to-Haves, and critical Red Flags (such as frequent short tenures or missing core competencies).",
+  },
+  {
+    q: "How does the anonymous demo session work?",
+    a: "Clicking 'Launch Live Demo' creates an instant, anonymous session backed by Better Auth with zero sign-up friction. You can explore the candidate leaderboard, upload test profiles, and chat with candidate dossiers immediately.",
+  },
+  {
+    q: "What file formats and data sources are supported?",
+    a: "TalentRank accepts PDF resumes, DOCX documents, raw markdown/text profiles, and direct LinkedIn profile data URLs. Ingestion and semantic indexing complete in under 850ms.",
+  },
+  {
+    q: "How does TalentRank prevent demographic bias?",
+    a: "Our blind evaluation mode decouples identity markers (names, gender, age, photos, educational pedigree) from technical skill and execution evidence, ensuring candidates are ranked solely on verified engineering competency.",
+  },
 ];
 
 /* Tutorial visuals ------------------------------------------------- */
 
 function IngestVisual(): React.JSX.Element {
-  const rows = [
-    ["alex_rivera_resume.pdf", "212 KB", "text-zinc-500"],
-    ["Text extracted", "4,812 chars", "text-emerald-400"],
-    ["Gemini embedding · 768-D", "412 ms", "text-emerald-400"],
-  ];
   return (
-    <div className="space-y-2.5 font-mono text-xs">
-      {rows.map(([left, right, tone]) => (
-        <div key={left} className="flex items-center justify-between rounded-md border border-border bg-well px-3 py-2.5">
-          <span className="text-zinc-300">{left}</span>
-          <span className={tone}>{right}</span>
+    <div className="space-y-4 font-sans">
+      {/* File Header Bar */}
+      <div className="flex items-center justify-between rounded-lg border border-border/80 bg-secondary/40 p-3 sm:p-3.5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground">
+            <FileText className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate font-sans text-sm font-semibold text-foreground">
+                alex_rivera_resume.pdf
+              </span>
+              <span className="shrink-0 rounded-xs bg-muted px-1.5 py-0.5 font-sans text-xs text-muted-foreground">
+                212 KB
+              </span>
+            </div>
+            <p className="mt-0.5 truncate font-sans text-xs text-muted-foreground">
+              Staff Distributed Systems & Next.js Architect
+            </p>
+          </div>
         </div>
-      ))}
+        <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 font-sans text-xs font-medium text-success">
+          <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+          Parsed
+        </span>
+      </div>
+
+      {/* Processing Stages */}
+      <div className="space-y-2 font-sans text-sm">
+        <div className="flex items-center justify-between rounded-md border border-border/70 bg-card/60 px-3 py-2 transition-colors hover:border-foreground/30">
+          <div className="flex items-center gap-2.5 text-foreground">
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-sans text-sm">High-precision text OCR</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-sans text-xs text-muted-foreground">4,812 chars</span>
+            <span className="rounded-xs bg-primary/10 px-1.5 py-0.5 font-sans text-xs text-primary font-medium">38 ms</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border border-border/70 bg-card/60 px-3 py-2 transition-colors hover:border-foreground/30">
+          <div className="flex items-center gap-2.5 text-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="font-sans text-sm">Gemini text-embedding-004</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-sans text-xs text-primary font-medium">768 dimensions</span>
+            <span className="rounded-xs bg-primary/10 px-1.5 py-0.5 font-sans text-xs text-primary font-medium">412 ms</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border border-border/70 bg-card/60 px-3 py-2 transition-colors hover:border-foreground/30">
+          <div className="flex items-center gap-2.5 text-foreground">
+            <Database className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-sans text-sm">MongoDB Atlas Vector Search</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-sans text-xs text-muted-foreground">candidates_idx</span>
+            <span className="rounded-xs bg-success/15 px-1.5 py-0.5 font-sans text-xs text-success font-medium">Indexed</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Extracted competency tokens */}
+      <div className="pt-1">
+        <div className="mb-2 flex items-center justify-between font-sans text-xs text-muted-foreground">
+          <span>Identified competencies</span>
+          <span className="font-sans text-xs text-success font-medium">100% vector fidelity</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["Next.js App Router", "MongoDB Vector", "Distributed Architecture", "AWS ECS", "Go & Python"].map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center rounded-md border border-border bg-secondary/60 px-2.5 py-1 font-sans text-xs font-medium text-foreground"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
+const CRITERIA_PROMPTS = [
+  {
+    role: "Senior Backend Engineer",
+    notes:
+      "Need a backend Engineer with 3+ expereince and expereince in mongoDB, PostgreSql etc. Distributed systems architecture is a strong plus. Avoid candidates with repeated tenures under a year.",
+    rubric: [
+      { type: "Must have", text: "3+ years experience with MongoDB and PostgreSQL", dot: "bg-primary" },
+      { type: "Must have", text: "Distributed systems architecture & API scalability", dot: "bg-primary" },
+      { type: "Nice to have", text: "Microservices design & Docker containerization", dot: "bg-muted-foreground" },
+      { type: "Red flag", text: "Repeated tenures under one year / high churn", dot: "bg-destructive" },
+    ],
+  },
+  {
+    role: "Senior React / Next.js Engineer",
+    notes:
+      "3+ years with React and Next.js App Router. Scalable cloud architecture. EdTech background is a strong plus. Avoid candidates with repeated tenures under a year.",
+    rubric: [
+      { type: "Must have", text: "3+ years of React and Next.js App Router", dot: "bg-primary" },
+      { type: "Must have", text: "Scalable cloud architecture on AWS", dot: "bg-primary" },
+      { type: "Nice to have", text: "EdTech or education background", dot: "bg-muted-foreground" },
+      { type: "Red flag", text: "Multiple tenures under one year", dot: "bg-destructive" },
+    ],
+  },
+  {
+    role: "Full-Stack AI Engineer",
+    notes:
+      "Seeking a Full-Stack AI Engineer with Python, FastAPI, and vector embeddings in MongoDB Atlas. Experience evaluating LLM pipelines. Strong TypeScript background required.",
+    rubric: [
+      { type: "Must have", text: "Python, FastAPI, and 768-D vector search in Atlas", dot: "bg-primary" },
+      { type: "Must have", text: "Gemini / OpenAI API orchestration pipelines", dot: "bg-primary" },
+      { type: "Nice to have", text: "Full-stack Next.js App Router capabilities", dot: "bg-muted-foreground" },
+      { type: "Red flag", text: "Theoretical AI only with no production web apps", dot: "bg-destructive" },
+    ],
+  },
+];
+
 function CriteriaVisual(): React.JSX.Element {
-  const rows = [
-    { label: "Must have", dot: "bg-emerald-500", text: "3+ years of React and Next.js" },
-    { label: "Must have", dot: "bg-emerald-500", text: "Scalable cloud architecture" },
-    { label: "Nice to have", dot: "bg-amber-500", text: "EdTech or education experience" },
-    { label: "Red flag", dot: "bg-rose-500", text: "Multiple tenures under one year" },
-  ];
+  const [promptIdx, setPromptIdx] = useState(0);
+  const [typedRole, setTypedRole] = useState("");
+  const [typedNotes, setTypedNotes] = useState("");
+  const [isTypingRole, setIsTypingRole] = useState(true);
+  const [isTypingNotes, setIsTypingNotes] = useState(false);
+  const [isExpanding, setIsExpanding] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const current = CRITERIA_PROMPTS[promptIdx] ?? CRITERIA_PROMPTS[0]!;
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (isTypingRole) {
+      if (typedRole.length < current.role.length) {
+        timeoutId = setTimeout(() => {
+          setTypedRole(current.role.slice(0, typedRole.length + 1));
+        }, 40);
+      } else {
+        timeoutId = setTimeout(() => {
+          setIsTypingRole(false);
+          setIsTypingNotes(true);
+        }, 350);
+      }
+      return () => clearTimeout(timeoutId);
+    }
+
+    if (isTypingNotes) {
+      if (typedNotes.length < current.notes.length) {
+        timeoutId = setTimeout(() => {
+          setTypedNotes(current.notes.slice(0, typedNotes.length + 1));
+        }, 22);
+      } else {
+        timeoutId = setTimeout(() => {
+          setIsTypingNotes(false);
+          setIsExpanding(true);
+        }, 600);
+      }
+      return () => clearTimeout(timeoutId);
+    }
+
+    if (isExpanding) {
+      timeoutId = setTimeout(() => {
+        setIsExpanding(false);
+        setIsExpanded(true);
+      }, 750);
+      return () => clearTimeout(timeoutId);
+    }
+
+    if (isExpanded) {
+      timeoutId = setTimeout(() => {
+        setIsExpanded(false);
+        setTypedRole("");
+        setTypedNotes("");
+        setPromptIdx((prev) => (prev + 1) % CRITERIA_PROMPTS.length);
+        setIsTypingRole(true);
+      }, 4500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [current, typedRole, typedNotes, isTypingRole, isTypingNotes, isExpanding, isExpanded]);
+
+  const handleInstantExpand = () => {
+    setTypedRole(current.role);
+    setTypedNotes(current.notes);
+    setIsTypingRole(false);
+    setIsTypingNotes(false);
+    setIsExpanding(false);
+    setIsExpanded(true);
+  };
+
   return (
-    <ul className="space-y-2.5">
-      {rows.map((r) => (
-        <li key={r.text} className="flex items-start gap-3 text-sm">
-          <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${r.dot}`} aria-hidden="true" />
-          <span className="text-zinc-300">
-            <span className="mr-2 text-xs text-zinc-500">{r.label}</span>
-            {r.text}
+    <div className="-m-6 p-6 space-y-4 bg-white text-zinc-900 rounded-xl">
+      {/* Header with pill badge and close icon */}
+      <div className="flex items-center justify-between">
+        <span className="rounded-full bg-zinc-900 px-2.5 py-0.5 font-sans text-[11px] font-medium text-white">
+          No active role
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setTypedRole("");
+            setTypedNotes("");
+            setIsExpanded(false);
+            setPromptIdx((p) => (p + 1) % CRITERIA_PROMPTS.length);
+            setIsTypingRole(true);
+          }}
+          className="text-zinc-400 hover:text-zinc-700 text-sm font-sans transition-colors cursor-pointer"
+          aria-label="Next sample role"
+        >
+          ✕
+        </button>
+      </div>
+
+      <p className="font-sans text-xs sm:text-[13px] text-zinc-600 leading-relaxed">
+        Describe the role in rough notes. AI expands them into a scoring rubric that every candidate is evaluated against.
+      </p>
+
+      {/* Hairline divider */}
+      <div className="-mx-6 border-b border-zinc-200" />
+
+      {/* Form Fields */}
+      <div className="space-y-3.5 pt-1">
+        <div>
+          <label className="block font-sans text-xs font-medium text-zinc-700 mb-1.5">
+            Role title <span className="text-destructive">*</span>
+          </label>
+          <div className="h-10 w-full rounded-lg border border-black/20 bg-white px-3.5 flex items-center font-sans text-xs sm:text-sm text-black shadow-xs">
+            <span className="text-black font-medium">{typedRole}</span>
+            {isTypingRole && <span className="inline-block w-0.5 h-4 bg-black ml-0.5 animate-pulse" />}
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-sans text-xs font-medium text-zinc-700 mb-1.5">
+            Requirements and notes <span className="text-destructive">*</span>
+          </label>
+          <div className="min-h-[105px] w-full rounded-lg border border-black/20 bg-white p-3.5 font-sans text-xs sm:text-sm text-black leading-relaxed shadow-xs relative">
+            <span className="whitespace-pre-wrap text-black">{typedNotes}</span>
+            {(isTypingNotes || (!isExpanded && !isExpanding && !isTypingRole)) && (
+              <span className="inline-block w-0.5 h-4 bg-black ml-0.5 align-middle animate-pulse" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Action button */}
+      <div className="flex items-center justify-end pt-1">
+        <button
+          type="button"
+          onClick={handleInstantExpand}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 font-sans text-xs font-medium text-white transition-all shadow-xs cursor-pointer",
+            isExpanded
+              ? "bg-primary text-white"
+              : isExpanding
+              ? "bg-zinc-700 animate-pulse text-white"
+              : "bg-zinc-600 hover:bg-zinc-700 text-white"
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>
+            {isExpanding ? "Expanding criteria..." : isExpanded ? "Criteria Expanded" : "AI Expand Criteria"}
           </span>
-        </li>
-      ))}
-    </ul>
+        </button>
+      </div>
+
+      {/* Expanded Rubric Preview */}
+      {isExpanded && (
+        <div className="mt-4 pt-3.5 border-t border-zinc-200 space-y-2 animate-[fadeIn_0.35s_ease-out]">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            Expanded Deterministic Rubric
+          </p>
+          <ul className="space-y-2">
+            {current.rubric.map((r) => (
+              <li key={r.text} className="flex items-start gap-2.5 text-xs font-sans">
+                <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", r.dot)} />
+                <span className="text-zinc-900">
+                  <span className="font-mono text-[10px] text-zinc-500 mr-1.5 font-medium">{r.type}</span>
+                  {r.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Modal footer Close link */}
+      <div className="flex justify-end pt-1">
+        <button
+          type="button"
+          onClick={handleInstantExpand}
+          className="font-sans text-xs text-zinc-500 hover:text-zinc-800 cursor-pointer transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -341,22 +585,24 @@ function RankVisual(): React.JSX.Element {
     <div>
       <div className="flex items-baseline justify-between">
         <div>
-          <p className="text-sm font-medium text-white">Alex Rivera</p>
-          <p className="text-xs text-zinc-500">Senior Frontend Engineer</p>
+          <p className="text-sm font-medium text-foreground">Alex Rivera</p>
+          <p className="text-xs text-muted-foreground">Senior Frontend Engineer</p>
         </div>
         <div className="text-right">
-          <p className="font-mono text-3xl font-semibold tabular-nums text-emerald-400">94</p>
-          <p className="text-xs text-emerald-300">Strong Fit</p>
+          <p className="font-figure text-3xl font-normal tabular-nums text-foreground">94</p>
+          <span className="inline-block rounded-full border border-success/30 bg-success/15 px-2 py-0.5 font-mono text-[10px] font-medium text-success">
+            Strong Fit
+          </span>
         </div>
       </div>
-      <div className="mt-4 flex h-1.5 gap-[2px]" aria-hidden="true">
+      <div className="mt-4 flex h-1.5 gap-[3px]" aria-hidden="true">
         {Array.from({ length: 10 }, (_, i) => (
-          <span key={i} className={`flex-1 ${i < 9 ? "bg-emerald-500" : "bg-zinc-800"}`} />
+          <span key={i} className={`flex-1 rounded-full ${i < 9 ? "bg-primary" : "bg-border"}`} />
         ))}
       </div>
       <div className="mt-4 flex flex-wrap gap-1.5">
         {["react", "nextjs", "edtech", "aws"].map((t) => (
-          <span key={t} className="rounded border border-border bg-well px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">
+          <span key={t} className="rounded-full border border-border bg-secondary px-2 py-0.5 font-mono text-[11px] text-foreground">
             {t}
           </span>
         ))}
@@ -368,12 +614,12 @@ function RankVisual(): React.JSX.Element {
 function CopilotVisual(): React.JSX.Element {
   return (
     <div className="space-y-3 text-sm">
-      <p className="text-zinc-500">Where has Alex worked with Next.js?</p>
-      <p className="leading-relaxed text-zinc-200">
+      <p className="text-muted-foreground">Where has Alex worked with Next.js?</p>
+      <p className="leading-relaxed text-foreground">
         Alex led the App Router migration at Coursera and built the learner dashboard in Next.js.
       </p>
-      <span className="inline-flex items-center gap-1.5 rounded border border-emerald-800/60 bg-emerald-950/60 px-2 py-1 font-mono text-[11px] text-emerald-300">
-        <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 font-mono text-[11px] text-primary">
+        <CheckCircle2 className="h-3 w-3 text-primary" aria-hidden="true" />
         Coursera Experience § 2022–2024
       </span>
     </div>
@@ -385,7 +631,7 @@ const STEPS = [
     n: "01",
     label: "Ingest",
     title: "Bring in a candidate, any way you have one.",
-    body: "Drop a PDF resume, paste text, or scrape a LinkedIn profile. The text is extracted and turned into a 768-dimension Gemini vector in MongoDB Atlas in under a second.",
+    body: "Upload resumes via drag-and-drop PDF, paste raw text, or pull live talent directly from LinkedIn with our Apify integration. Structured OCR extracts full career history, generating 768-dimension Gemini vector embeddings in MongoDB Atlas in under half a second.",
     visual: <IngestVisual />,
   },
   {
@@ -398,14 +644,14 @@ const STEPS = [
   {
     n: "03",
     label: "Rank",
-    title: "Get a score from 0 to 100.",
+    title: "Get a deterministic score from 0 to 100.",
     body: "Every candidate is scored against the same rubric, with a transparent breakdown and a clear band: Strong Fit, Potential, or Unqualified.",
     visual: <RankVisual />,
   },
   {
     n: "04",
     label: "Ask",
-    title: "Ask questions and see the source.",
+    title: "Ask questions and see verifiable evidence.",
     body: "Query a candidate's actual experience. Each answer cites the exact section of the profile it came from, so nothing is taken on trust.",
     visual: <CopilotVisual />,
   },
@@ -420,9 +666,8 @@ export default function MarketingPage(): React.JSX.Element {
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [active, setActive] = useState(0);
   const [step, setStep] = useState(0);
-  const barRef = useRef<HTMLDivElement>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const handleStartAnonymous = async () => {
@@ -460,20 +705,7 @@ export default function MarketingPage(): React.JSX.Element {
     }
   };
 
-  /* Thin reading-progress line under the nav (written straight to the DOM, no re-render). */
-  useEffect(() => {
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (barRef.current) {
-        barRef.current.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`;
-      }
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* Which tutorial step is crossing the middle of the viewport. */
+  /* Which tutorial step is crossing the middle of the viewport */
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
@@ -488,147 +720,241 @@ export default function MarketingPage(): React.JSX.Element {
     return () => io.disconnect();
   }, []);
 
-  const current = QUESTIONS[active] ?? QUESTIONS[0]!;
-
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-blue-500/30">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-[#09090b]/80 px-4 backdrop-blur-md sm:px-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card">
-            <Compass className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <SmoothScroll />
+      {/* Navigation matching Archon */}
+      <header className="sticky top-0 z-50 h-16 border-b border-border bg-card/90 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-6xl items-center justify-between border-x border-border/80 px-6 sm:px-12">
+          {/* Logo with TalentRank brand mark */}
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white shadow-2xs overflow-hidden p-0.5">
+              <img src="/logo.png" alt="TalentRank" className="h-5 w-5 object-contain" />
+            </span>
+            <span className="font-sans text-base font-semibold tracking-tight text-foreground">TalentRank</span>
           </div>
-          <span className="text-sm font-semibold tracking-wide text-white">TalentRank AI</span>
-          <span className="ml-1 hidden items-center gap-1.5 text-xs text-zinc-500 sm:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-            Live demo
-          </span>
+
+          {/* Center nav links */}
+          <nav className="hidden items-center gap-7 md:flex">
+            {[
+              { label: "Process", href: "#process" },
+              { label: "Features", href: "#features" },
+              { label: "FAQs", href: "#faqs" },
+              { label: "About", href: "/about" },
+              { label: "Live Demo", href: "#demo" },
+            ].map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="font-sans text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* CTA Group */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDemoLogin}
+              disabled={demoLoading || loading}
+              className="hidden font-sans text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-flex"
+            >
+              {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="h-4 w-4" aria-hidden="true" />}
+              <span>Sign in</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleStartAnonymous}
+              disabled={loading || demoLoading}
+              className="rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
+            >
+              {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              Get Started
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDemoLogin}
-            disabled={demoLoading || loading}
-            className="text-xs text-zinc-300 hover:text-white"
-          >
-            {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User aria-hidden="true" />}
-            <span>Demo Account</span>
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleStartAnonymous}
-            disabled={loading || demoLoading}
-            className="bg-zinc-100 text-xs font-semibold text-zinc-950 hover:bg-white"
-          >
-            {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
-            <span>Launch Demo</span>
-          </Button>
-        </div>
-        <div
-          ref={barRef}
-          aria-hidden="true"
-          className="absolute inset-x-0 -bottom-px h-px bg-emerald-400/70"
-          style={{ transform: "scaleX(0)", transformOrigin: "left" }}
-        />
       </header>
 
       <main className="flex-1">
-        {/* Hero: copy on the left, interactive Spline robot on the right (lg+) */}
-        <div className="overflow-x-clip">
-          <section className="relative mx-auto max-w-5xl px-4 pb-28 pt-24 sm:px-8 sm:pb-40 sm:pt-36 lg:pt-28">
-            <HeroScene className="absolute -right-4 top-1/2 hidden h-[560px] w-[500px] -translate-y-1/2 lg:block xl:-right-48 xl:h-[680px] xl:w-[620px]" />
-            <div className="relative z-10 lg:max-w-[32rem]">
-              <Reveal>
-                <span className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1 text-xs text-zinc-300">
-                  Precision candidate evaluation and matching
-                </span>
-              </Reveal>
-              <h1 className="mt-8 max-w-4xl font-serif text-balance text-5xl font-normal tracking-tight text-white sm:text-7xl sm:leading-[1.02] md:text-8xl lg:text-7xl">
-                <Words text="Candidate intelligence engineered for technical hiring." step={70} delay={150} />
-              </h1>
-              <Reveal delay={900}>
-                <p className="mt-10 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 sm:text-xl">
-                  Evaluate engineering talent against deterministic, custom job criteria. Ingest LinkedIn profiles and
-                  resumes, uncover hidden red flags, and score candidates 0–100 with zero hallucination.
-                </p>
-              </Reveal>
-              <Reveal delay={1150}>
-                <div className="mt-10">
-                  <CtaPair
-                    onAnonymous={handleStartAnonymous}
-                    onDemo={handleDemoLogin}
-                    loading={loading}
-                    demoLoading={demoLoading}
-                    primaryLabel="Launch Live Demo"
-                    secondaryLabel="Sign In as Demo User"
-                  />
+        {/* Hero Section Framed with Archon Hairlines */}
+        <section className="relative overflow-hidden bg-background">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 pt-16 pb-14 text-center sm:px-12 sm:pt-20">
+            {/* Archon-style sliding task tags */}
+            <Reveal>
+              <div
+                className="relative mx-auto mb-10 h-[216px] w-full max-w-[394px] overflow-hidden"
+                style={{
+                  maskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
+                }}
+              >
+                <div className="flex flex-col gap-2.5 animate-hero-tags hover:[animation-play-state:paused]">
+                  {[...HERO_TAGS, ...HERO_TAGS].map((task, i) => (
+                    <div
+                      key={`${task.label}-${i}`}
+                      className="flex h-[47px] w-full shrink-0 select-none items-center justify-between border border-border bg-card px-3.5 shadow-xs"
+                    >
+                      <span className="truncate mr-3 font-sans text-[15px] text-foreground font-normal">
+                        {task.label}
+                      </span>
+                      <span
+                        className={cn(
+                          "shrink-0 px-2 py-0.5 font-sans text-[13px] font-medium rounded-none border",
+                          task.type === "done" && "border-[#48b76833] bg-[#48b7681f] text-[#48b768]",
+                          task.type === "active" && "border-[#4365fa33] bg-[#4365fa24] text-[#4365fa]",
+                          task.type === "queued" && "border-border/60 bg-black/5 dark:bg-white/5 text-muted-foreground"
+                        )}
+                      >
+                        {task.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <p className="mt-4 text-sm text-zinc-500">
-                  Zero sign-up required. Powered by MongoDB Atlas Vector Search and Google Gemini.
-                </p>
-                {error && (
+              </div>
+            </Reveal>
+
+            {/* Main heading: Arial regular 48px */}
+            <h1 className="mx-auto max-w-4xl font-arial text-balance text-[48px] font-normal leading-[1.15] text-foreground">
+              <Words text="Autonomous AI Recruitment That Discovers Your Best Engineers." step={60} delay={100} />
+            </h1>
+
+            {/* Sub heading: Arial regular 16px */}
+            <Reveal delay={600}>
+              <p className="mx-auto mt-6 max-w-xl font-arial text-[16px] font-normal leading-relaxed text-muted-foreground">
+                We design and deploy multi-agent AI systems for technical recruitment. Replacing manual screening
+                and keyword filters with deterministic, evidence-backed evaluation that operates 24/7.
+              </p>
+            </Reveal>
+
+            {/* CTAs */}
+            <Reveal delay={850}>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button
+                  size="lg"
+                  onClick={handleStartAnonymous}
+                  disabled={loading || demoLoading}
+                  className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
+                >
+                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  Launch Live Demo →
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleDemoLogin}
+                  disabled={loading || demoLoading}
+                  className="h-12 rounded-none border border-border bg-card px-8 font-sans text-base font-medium text-foreground hover:bg-secondary transition-colors"
+                >
+                  {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="mr-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+                  Explore as Demo User
+                </Button>
+              </div>
+
+              {error && (
+                <div
+                  role="alert"
+                  className="mx-auto mt-6 flex max-w-md items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{error}</span>
+                </div>
+              )}
+            </Reveal>
+          </div>
+
+          {/* Core Technologies & Integrations strip */}
+          <div className="border-y border-border bg-card/40 py-8">
+            <div className="mx-auto max-w-6xl border-x border-border/80 px-6 sm:px-12">
+              <p className="mb-6 text-center font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Core Technologies & Integrations
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16">
+                {[
+                  {
+                    name: "Google Gemini",
+                    icon: (
+                      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 0C12 6.627 6.627 12 0 12c6.627 0 12 5.373 12 12 0-6.627 5.373-12 12-12-6.627 0-12-5.373-12-12z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    name: "MongoDB Atlas",
+                    icon: (
+                      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 0a1.86 1.86 0 0 0-.4.1c-.63.27-1.42 1.25-2.13 2.23-2.31 3.17-4.97 8.24-4.97 12.59 0 4.89 3.38 8.53 7.5 9.09.68-.08 1.08-.39 1.23-.69.34-.68.21-1.39.21-2.19V11.46c0-.36.03-.71.1-1.05.62-3.03 2.1-4.62 2.74-5.24.4-.38.77-.66.86-.73a1.86 1.86 0 0 0-.44-.44C15.17 2.7 13.32.74 12 0zm0 2.17c1.19 1.7 2.8 4.2 3.14 7.64.05.51.08 1.03.08 1.57 0 2.65-1.07 4.81-3.07 6.13-.05.03-.1.06-.15.08V2.17zm-.99 2.05v15.93c-3.13-.58-5.51-3.41-5.51-7.24 0-3.66 2.28-7.98 4.29-10.74.45-.63.88-1.2 1.22-1.74v3.79z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    name: "Next.js",
+                    icon: (
+                      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.82 17.51L9.67 6.84h2.24l5.95 8.18c-.68.87-1.38 1.7-2.04 2.49zM7.8 7.02h1.86v9.96H7.8V7.02z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    name: "Apify",
+                    icon: (
+                      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="4" y="9" width="16" height="11" rx="2" />
+                        <circle cx="12" cy="4" r="2" />
+                        <path d="M12 6v3" />
+                        <circle cx="9" cy="14" r="1" fill="currentColor" />
+                        <circle cx="15" cy="14" r="1" fill="currentColor" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    name: "Vercel",
+                    icon: (
+                      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 1L24 22H0L12 1Z" />
+                      </svg>
+                    ),
+                  },
+                ].map((tool) => (
                   <div
-                    role="alert"
-                    className="mt-6 flex max-w-md items-center gap-2 rounded-md border border-rose-900/60 bg-rose-950/40 p-3 text-xs text-rose-300"
+                    key={tool.name}
+                    className="flex items-center gap-2.5 font-sans text-sm font-semibold tracking-tight text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
-                    <span>{error}</span>
+                    {tool.icon}
+                    <span>{tool.name}</span>
                   </div>
-                )}
-              </Reveal>
-            </div>
-          </section>
-        </div>
-
-        {/* Manifesto: words brighten as you scroll */}
-        <section aria-label="What TalentRank does" className="border-t border-border">
-          <div className="mx-auto max-w-4xl px-4 py-32 sm:px-8 sm:py-48">
-            <ScrollText
-              text={MANIFESTO}
-              className="font-serif text-balance text-3xl leading-[1.25] tracking-tight text-white sm:text-5xl sm:leading-[1.2]"
-            />
-          </div>
-        </section>
-
-        {/* Act I: Problem */}
-        <section aria-labelledby="problem-heading" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
-            <Kicker>The problem</Kicker>
-            <H2 id="problem-heading" text="Why technical screening is broken." className="mt-4 max-w-2xl" />
-            <div className="mt-20 grid gap-14 sm:grid-cols-3 sm:gap-10">
-              {PROBLEMS.map((p, i) => (
-                <Reveal key={p.title} delay={i * 150}>
-                  <p.icon className="h-5 w-5 text-rose-400" aria-hidden="true" />
-                  <h3 className="mt-5 font-serif text-2xl font-normal tracking-tight text-white">{p.title}</h3>
-                  <p className="mt-3 text-pretty text-sm leading-relaxed text-zinc-400">{p.body}</p>
-                </Reveal>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Act II: How it works (sticky index, steps light up as they cross the middle) */}
-        <section aria-labelledby="how-heading" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
+        {/* Process Section (How It Works with Archon Sticky Split) */}
+        <section id="process" aria-labelledby="how-heading" className="border-t border-border bg-background">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-24 sm:px-12 sm:py-32">
             <div className="grid gap-16 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-20">
               <div className="md:sticky md:top-32 md:self-start">
                 <Kicker>How it works</Kicker>
-                <H2 id="how-heading" text="From a pile of profiles to a ranked shortlist." className="mt-4 !text-4xl sm:!text-5xl" />
+                <H2 id="how-heading" text="Multi-agent precision scoping candidates to job profiles." className="mt-4 !text-4xl sm:!text-5xl" />
+                <p className="mt-4 font-sans text-sm leading-relaxed text-muted-foreground">
+                  Every stage is transparent, deterministic, and verifiable down to the exact document text.
+                </p>
                 <ul className="mt-12 hidden space-y-3 md:block" aria-hidden="true">
                   {STEPS.map((s, i) => (
                     <li
                       key={s.n}
-                      className={`flex items-center gap-4 text-sm transition-colors duration-500 ${
-                        i === step ? "text-white" : "text-zinc-600"
+                      className={`flex items-center gap-4 text-sm font-sans transition-colors duration-500 ${
+                        i === step ? "text-foreground font-semibold" : "text-muted-foreground"
                       }`}
                     >
                       <span
                         className={`h-px transition-all duration-500 ${
-                          i === step ? "w-10 bg-emerald-400" : "w-5 bg-zinc-700"
+                          i === step ? "w-10 bg-foreground" : "w-5 bg-border"
                         }`}
                       />
-                      <span className="font-mono text-xs">{s.n}</span>
+                      <span className="font-figure text-sm text-foreground">{s.n}</span>
                       <span>{s.label}</span>
                     </li>
                   ))}
@@ -642,16 +968,16 @@ export default function MarketingPage(): React.JSX.Element {
                     ref={(el) => {
                       stepRefs.current[i] = el;
                     }}
-                    className={`flex flex-col justify-center py-10 transition-opacity duration-700 md:min-h-[75vh] ${
-                      i === step ? "opacity-100" : "md:opacity-25"
+                    className={`flex flex-col justify-center py-16 sm:py-20 transition-opacity duration-700 md:min-h-[78vh] ${
+                      i === step ? "opacity-100" : "md:opacity-30"
                     }`}
                   >
-                    <span className="font-mono text-xs text-zinc-500">{s.n}</span>
-                    <h3 className="mt-3 text-balance font-serif text-3xl font-normal tracking-tight text-white sm:text-4xl">
+                    <span className="font-figure text-sm text-muted-foreground">{s.n}</span>
+                    <h3 className="mt-3.5 font-sans text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
                       {s.title}
                     </h3>
-                    <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-zinc-400">{s.body}</p>
-                    <div className="mt-8 rounded-lg border border-border bg-card p-6">{s.visual}</div>
+                    <p className="mt-4.5 max-w-md font-sans text-pretty text-base leading-relaxed text-muted-foreground">{s.body}</p>
+                    <div className="mt-8 rounded-xl border border-border bg-card p-6 sm:p-7 shadow-xs">{s.visual}</div>
                   </li>
                 ))}
               </ol>
@@ -659,106 +985,187 @@ export default function MarketingPage(): React.JSX.Element {
           </div>
         </section>
 
-        {/* Act III: Dossier preview */}
-        <section aria-labelledby="dossier-heading" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
-            <Kicker>See it answer</Kicker>
-            <H2 id="dossier-heading" text="Every answer points back to the source." className="mt-4 max-w-3xl" />
-            <Reveal className="mt-16">
-              <div className="overflow-hidden rounded-lg border border-border bg-card">
-                <div className="flex items-center justify-between border-b border-border px-5 py-3">
-                  <p className="text-sm font-medium text-white">Alex Rivera</p>
-                  <p className="text-xs text-zinc-500">Sample dossier</p>
-                </div>
-                <div className="grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                  <div className="flex flex-col gap-2 border-b border-border p-4 md:border-b-0 md:border-r">
-                    {QUESTIONS.map((item, i) => (
-                      <button
-                        key={item.q}
-                        type="button"
-                        aria-pressed={i === active}
-                        onClick={() => setActive(i)}
-                        className={`cursor-pointer rounded-md border px-3.5 py-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                          i === active
-                            ? "border-zinc-700 bg-accent text-white"
-                            : "border-transparent text-zinc-400 hover:bg-secondary hover:text-zinc-200"
-                        }`}
-                      >
-                        {item.q}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="min-h-[15rem] p-6 sm:p-8" aria-live="polite">
-                    <div key={active} className="animate-[fadeIn_0.45s_ease-out] motion-reduce:animate-none">
-                      <p className="text-pretty font-serif text-2xl leading-snug text-zinc-100">{current.a}</p>
-                      <div className="mt-6 flex flex-wrap items-center gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[11px] ${current.tone}`}
-                        >
-                          <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                          {current.cite}
-                        </span>
-                        <span className="font-mono text-[11px] text-zinc-500">Match {current.match}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* Act IV: Metrics */}
-        <section aria-label="System metrics" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-14 lg:grid-cols-4">
+        {/* Metrics Strip: Compact size */}
+        <section aria-label="System metrics" className="border-t border-border bg-card/30">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-10 sm:px-12 sm:py-14">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-4">
               {METRICS.map((m, i) => (
-                <Reveal key={m.value} delay={i * 120} className="border-l border-border pl-5">
-                  <dt className="font-serif text-4xl font-normal tracking-tight text-white tabular-nums sm:text-5xl">
+                <Reveal key={m.value} delay={i * 100} className="border-l-2 border-primary pl-4">
+                  <dt className="font-figure text-2xl font-normal tracking-tight text-foreground tabular-nums sm:text-3xl">
                     {m.value}
                   </dt>
-                  <dd className="mt-3 text-sm leading-relaxed text-zinc-400">{m.label}</dd>
+                  <dd className="mt-1.5 font-sans text-xs leading-normal text-muted-foreground">{m.label}</dd>
                 </Reveal>
               ))}
             </dl>
           </div>
         </section>
 
-        {/* Act V: Closing CTA */}
-        <section aria-labelledby="cta-heading" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-4 py-24 sm:px-8 sm:py-32">
-            <div className="rounded-xl border border-border bg-gradient-to-b from-card to-well px-6 py-20 text-center sm:px-12 sm:py-28">
-              <H2 id="cta-heading" text="Run the pipeline on a real candidate." className="mx-auto max-w-3xl" />
-              <Reveal delay={500}>
-                <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-zinc-400 sm:text-lg">
-                  Judges and engineering leads: launch the live demo, import a profile, and watch it get scored,
-                  explained, and cited.
+        {/* Core Capabilities (Bento Grid) - Inverted Dark Section */}
+        <section id="features" aria-labelledby="features-heading" className="border-t border-[#222222] bg-[#0A0A0A] text-white">
+          <div className="mx-auto max-w-6xl border-x border-[#222222] px-6 py-20 sm:px-12 sm:py-28">
+            <div className="mb-10 sm:mb-14">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1 font-sans text-[11px] font-medium uppercase tracking-widest text-zinc-300">
+                Core capabilities
+              </span>
+            </div>
+
+            {/* Responsive Bento Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4">
+              {cardContents.map((card) => (
+                <PlusCard
+                  key={card.title}
+                  title={card.title}
+                  description={card.description}
+                  className={card.span}
+                />
+              ))}
+            </div>
+
+            {/* Section Footer Heading */}
+            <div className="max-w-2xl ml-auto text-right px-4 mt-8 lg:-mt-20">
+              <h2 id="features-heading" className="font-sans text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-white mb-4">
+                Built for precision. Engineered for technical truth.
+              </h2>
+              <p className="font-sans text-base sm:text-lg leading-relaxed text-zinc-400">
+                TalentRank gives engineering leaders and hiring teams an objective, hallucination-free evaluation engine. Every candidate is benchmarked against deterministic rubrics with verifiable proof down to the exact source text.
+              </p>
+            </div>
+          </div>
+        </section>
+
+
+
+        {/* FAQ Section */}
+        <section id="faqs" className="border-t border-border bg-card/20">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-24 sm:px-12 sm:py-32">
+            <div className="grid gap-12 md:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
+              <div>
+                <Kicker>FAQs</Kicker>
+                <H2 text="Everything you need to know about TalentRank." className="mt-4 !text-3xl sm:!text-4xl" />
+                <p className="mt-4 font-sans text-sm text-muted-foreground">
+                  Have questions about deterministic evaluation, vector indexing, or how we protect candidate data? We have answers.
                 </p>
-                <div className="mt-10">
-                  <CtaPair
-                    center
-                    onAnonymous={handleStartAnonymous}
-                    onDemo={handleDemoLogin}
-                    loading={loading}
-                    demoLoading={demoLoading}
-                    primaryLabel="Launch Live Demo"
-                    secondaryLabel="Explore as Demo User"
-                  />
-                </div>
-              </Reveal>
+              </div>
+              <div className="space-y-4">
+                {FAQS.map((faq, idx) => (
+                  <div key={faq.q} className="overflow-hidden rounded-xl border border-border bg-card">
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                      className="flex w-full items-center justify-between p-5 text-left font-sans text-base font-medium text-foreground transition-colors hover:bg-secondary/40 cursor-pointer"
+                    >
+                      <span>{faq.q}</span>
+                      <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-xs">
+                        {openFaq === idx ? "−" : "+"}
+                      </span>
+                    </button>
+                    {openFaq === idx && (
+                      <div className="border-t border-border px-5 py-4 font-sans text-sm leading-relaxed text-muted-foreground">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pre-Footer CTA */}
+        <section id="demo" className="border-t border-border bg-background">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-20 sm:px-12 sm:py-28">
+            <div className="rounded-2xl border border-border bg-card p-10 text-center sm:p-16 shadow-xs">
+              <h2 className="mx-auto max-w-2xl font-sans text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+                Ready to identify your highest-yield engineering talent?
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl font-sans text-base text-muted-foreground">
+                Launch an anonymous demo session with a single click. Ingest real resumes, inspect 0–100 rubric scores, and chat with evidence-grounded dossiers.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button
+                  size="lg"
+                  onClick={handleStartAnonymous}
+                  disabled={loading || demoLoading}
+                  className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
+                >
+                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  Launch Live Demo →
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleDemoLogin}
+                  disabled={loading || demoLoading}
+                  className="h-12 rounded-none border border-border bg-card px-8 font-sans text-base font-medium text-foreground hover:bg-secondary"
+                >
+                  {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="mr-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+                  Explore as Demo User
+                </Button>
+              </div>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 text-xs text-zinc-500">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-8">
-          <div className="flex items-center gap-2">
-            <Compass className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-            <span className="font-medium text-zinc-300">TalentRank AI</span>
+      {/* Footer matching Archon's minimal layout */}
+      <footer className="border-t border-border bg-card text-sm text-muted-foreground">
+        <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-16 sm:px-12">
+          <div className="grid gap-12 sm:grid-cols-2 md:grid-cols-5">
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white shadow-2xs overflow-hidden p-0.5">
+                  <img src="/logo.png" alt="TalentRank" className="h-5 w-5 object-contain" />
+                </span>
+                <span className="font-sans text-base font-semibold tracking-tight text-foreground">TalentRank</span>
+              </div>
+              <p className="mt-3 max-w-sm font-sans text-sm leading-relaxed text-muted-foreground">
+                Autonomous multi-agent candidate intelligence engineered for high-signal technical recruitment.
+              </p>
+              <p className="mt-6 font-mono text-[13px] text-muted-foreground">
+                © {new Date().getFullYear()} TalentRank AI. All rights reserved.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-sans text-sm font-semibold uppercase tracking-wider text-foreground">Product</h4>
+              <ul className="mt-4 space-y-3 font-sans text-sm">
+                <li><a href="#process" className="hover:text-foreground transition-colors">How It Works</a></li>
+                <li><a href="#features" className="hover:text-foreground transition-colors">Core Capabilities</a></li>
+                <li><a href="#process" className="hover:text-foreground transition-colors">Deterministic Rubrics</a></li>
+                <li><a href="/about" className="hover:text-foreground transition-colors">About Our Team</a></li>
+                <li><a href="#demo" className="hover:text-foreground transition-colors">Live Evaluation Demo</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-sans text-sm font-semibold uppercase tracking-wider text-foreground">Stack</h4>
+              <ul className="mt-4 space-y-3 font-sans text-sm">
+                <li><span className="text-muted-foreground">Next.js 16.4</span></li>
+                <li><span className="text-muted-foreground">MongoDB Atlas 768-D</span></li>
+                <li><span className="text-muted-foreground">Google Gemini 2.5</span></li>
+                <li><span className="text-muted-foreground">Better Auth</span></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-sans text-sm font-semibold uppercase tracking-wider text-foreground">Resources</h4>
+              <ul className="mt-4 space-y-3 font-sans text-sm">
+                <li><a href="#faqs" className="hover:text-foreground transition-colors">System FAQs</a></li>
+                <li><a href="/dashboard" className="hover:text-foreground transition-colors">Live Dashboard</a></li>
+                <li><a href="#demo" className="hover:text-foreground transition-colors">Interactive Demo</a></li>
+              </ul>
+            </div>
           </div>
-          <p className="text-center">Next.js 16.4 · MongoDB Atlas · Google Gemini · Better Auth</p>
+          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
+              </span>
+              <span className="font-sans text-sm text-foreground font-medium">All systems operational</span>
+            </div>
+            <p className="font-sans text-sm text-muted-foreground">
+              Built for the AICON Hackathon
+            </p>
+          </div>
         </div>
       </footer>
 

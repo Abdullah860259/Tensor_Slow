@@ -23,35 +23,35 @@ export function getScoreStyle(score: number | null | undefined): ScoreStyle {
   if (typeof score !== "number" || !Number.isFinite(score)) {
     return {
       label: "Unscored",
-      text: "text-zinc-500",
-      badge: "bg-zinc-800/50 text-zinc-400 border-zinc-700/50",
-      dot: "bg-zinc-500",
-      bar: "bg-zinc-700",
+      text: "text-muted-foreground",
+      badge: "bg-secondary text-muted-foreground border-border",
+      dot: "bg-muted-foreground",
+      bar: "bg-border",
     };
   }
   if (score >= 80) {
     return {
       label: "Strong Fit",
-      text: "text-emerald-400",
-      badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-      dot: "bg-emerald-400",
+      text: "text-emerald-700",
+      badge: "bg-emerald-500/15 text-emerald-800 border-emerald-500/30",
+      dot: "bg-emerald-500",
       bar: "bg-emerald-500",
     };
   }
   if (score >= 60) {
     return {
       label: "Potential",
-      text: "text-amber-400",
-      badge: "bg-amber-500/10 text-amber-300 border-amber-500/20",
-      dot: "bg-amber-400",
+      text: "text-amber-700",
+      badge: "bg-amber-500/15 text-amber-800 border-amber-500/30",
+      dot: "bg-amber-500",
       bar: "bg-amber-500",
     };
   }
   return {
     label: "Unqualified",
-    text: "text-rose-400",
-    badge: "bg-rose-500/10 text-rose-300 border-rose-500/20",
-    dot: "bg-rose-400",
+    text: "text-rose-700",
+    badge: "bg-rose-500/15 text-rose-800 border-rose-500/30",
+    dot: "bg-rose-500",
     bar: "bg-rose-500",
   };
 }
@@ -70,12 +70,12 @@ export type StatusStyle = {
 /** processed = evaluated (emerald), failed = rose, anything else = pending (amber). */
 export function getStatusStyle(status: string): StatusStyle {
   if (status === "processed") {
-    return { label: "Evaluated", text: "text-emerald-400", dot: "bg-emerald-500" };
+    return { label: "Evaluated", text: "text-emerald-700", dot: "bg-emerald-500" };
   }
   if (status === "failed") {
-    return { label: "Failed", text: "text-rose-400", dot: "bg-rose-500" };
+    return { label: "Failed", text: "text-rose-700", dot: "bg-rose-500" };
   }
-  return { label: "Pending", text: "text-amber-400", dot: "bg-amber-500" };
+  return { label: "Pending", text: "text-amber-700", dot: "bg-amber-500" };
 }
 
 export function getStatusDot(status: string): string {

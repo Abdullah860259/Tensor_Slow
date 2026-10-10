@@ -34,7 +34,7 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
           <Link
             key={`${keyPrefix}-cite-${id}-${matchIndex}`}
             href={`/items/${id}`}
-            className="mx-1 inline-flex max-w-[16rem] items-center truncate rounded border border-emerald-500/30 bg-emerald-950/40 px-1.5 py-0.5 align-baseline font-mono text-[10px] font-medium text-emerald-300 hover:bg-emerald-900/60 transition-colors"
+            className="mx-1 inline-flex max-w-[16rem] items-center truncate rounded-none border border-primary/30 bg-primary/10 px-1.5 py-0.5 align-baseline font-mono text-[12px] font-medium text-primary hover:bg-primary/20 transition-colors"
             title={`Inspect provenance: ${title}`}
           >
             {title}
@@ -44,7 +44,7 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
     } else if (matchStr.startsWith("**") && matchStr.endsWith("**")) {
       const boldText = matchStr.slice(2, -2);
       nodes.push(
-        <strong key={`${keyPrefix}-bold-${matchIndex}`} className="font-semibold text-white">
+        <strong key={`${keyPrefix}-bold-${matchIndex}`} className="font-semibold text-foreground">
           {boldText}
         </strong>
       );
@@ -53,7 +53,7 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
       nodes.push(
         <code
           key={`${keyPrefix}-code-${matchIndex}`}
-          className="rounded border border-border bg-well px-1 py-0.5 font-mono text-[11px] text-emerald-300"
+          className="rounded-none border border-border bg-secondary/50 px-1 py-0.5 font-mono text-[13px] text-foreground"
         >
           {codeText}
         </code>
@@ -88,8 +88,8 @@ export function CitedText({ text }: { text: string }): React.JSX.Element {
       elements.push(
         <ul key={key} className="my-2 space-y-1.5 pl-0.5">
           {currentList.items.map((item, idx) => (
-            <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-200">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" aria-hidden="true" />
+            <li key={idx} className="flex items-start gap-2.5 text-base leading-relaxed text-foreground">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
               <div className="flex-1">{item}</div>
             </li>
           ))}
@@ -99,8 +99,8 @@ export function CitedText({ text }: { text: string }): React.JSX.Element {
       elements.push(
         <ol key={key} className="my-2 space-y-1.5 pl-0.5">
           {currentList.items.map((item, idx) => (
-            <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-200">
-              <span className="mt-0.5 font-mono text-xs font-semibold text-emerald-400 tabular-nums">
+            <li key={idx} className="flex items-start gap-2.5 text-base leading-relaxed text-foreground">
+              <span className="mt-0.5 font-mono text-sm font-semibold text-primary tabular-nums">
                 {idx + 1}.
               </span>
               <div className="flex-1">{item}</div>
@@ -127,7 +127,7 @@ export function CitedText({ text }: { text: string }): React.JSX.Element {
     if (headerMatch && headerMatch[2]) {
       flushList(`flush-${i}`);
       elements.push(
-        <h4 key={`h-${i}`} className="mt-3.5 mb-1.5 font-sans text-sm font-semibold tracking-tight text-white">
+        <h4 key={`h-${i}`} className="mt-3.5 mb-1.5 font-sans text-base font-semibold tracking-tight text-foreground">
           {renderInlineSpans(headerMatch[2], `h-${i}`)}
         </h4>
       );
@@ -163,7 +163,7 @@ export function CitedText({ text }: { text: string }): React.JSX.Element {
     // Standard paragraph line
     flushList(`flush-${i}`);
     elements.push(
-      <p key={`p-${i}`} className="my-1.5 text-sm leading-relaxed text-zinc-200">
+      <p key={`p-${i}`} className="my-1.5 text-base leading-relaxed text-foreground">
         {renderInlineSpans(trimmed, `p-${i}`)}
       </p>
     );

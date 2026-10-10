@@ -46,22 +46,22 @@ export interface ActiveCriteria {
   isActive: boolean;
 }
 
-const INPUT_CLASS = "border-input bg-well text-zinc-50 placeholder:text-zinc-500";
+const INPUT_CLASS = "border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring";
 
 type Tone = "emerald" | "amber" | "rose" | "blue";
 
 const TONE_CLASS: Record<Tone, string> = {
-  emerald: "text-emerald-400",
-  amber: "text-amber-400",
-  rose: "text-rose-400",
-  blue: "text-blue-400",
+  emerald: "text-success",
+  amber: "text-amber-600 dark:text-amber-400",
+  rose: "text-destructive",
+  blue: "text-primary",
 };
 
 const MARKER_CLASS: Record<Tone, string> = {
-  emerald: "marker:text-emerald-500/70",
-  amber: "marker:text-amber-500/70",
-  rose: "marker:text-rose-500/70",
-  blue: "marker:text-blue-400/80",
+  emerald: "marker:text-success",
+  amber: "marker:text-amber-500",
+  rose: "marker:text-destructive",
+  blue: "marker:text-primary",
 };
 
 function RubricList({
@@ -81,15 +81,15 @@ function RubricList({
   const ListTag = ordered ? "ol" : "ul";
   return (
     <div className="space-y-2">
-      <h4 className={`flex items-center gap-1.5 text-xs font-semibold ${TONE_CLASS[tone]}`}>
+      <h4 className={`flex items-center gap-1.5 text-sm font-semibold ${TONE_CLASS[tone]}`}>
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         {title}
-        <span className="font-mono text-[11px] font-normal text-zinc-500 tabular-nums">
+        <span className="font-mono text-[13px] font-normal text-muted-foreground tabular-nums">
           {items.length}
         </span>
       </h4>
       <ListTag
-        className={`space-y-1.5 pl-5 text-xs leading-relaxed text-zinc-300 ${MARKER_CLASS[tone]} ${
+        className={`space-y-1.5 pl-5 text-sm leading-relaxed text-foreground ${MARKER_CLASS[tone]} ${
           ordered ? "list-decimal" : "list-disc"
         }`}
       >
@@ -238,39 +238,39 @@ export function JobCriteriaModal({
       <Button
         onClick={() => setOpen(true)}
         variant="outline"
-        className="group h-9 cursor-pointer gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-sans font-medium text-zinc-200 shadow-xs transition-all hover:border-emerald-500/40 hover:bg-white/[0.08] hover:text-white"
+        className="group h-9 cursor-pointer gap-2 rounded-none border border-border bg-card px-4 text-sm font-sans font-medium text-foreground shadow-xs transition-all hover:bg-secondary hover:border-foreground"
       >
-        <Target className="h-3.5 w-3.5 text-emerald-400 transition-transform group-hover:scale-110" aria-hidden="true" />
+        <Target className="h-3.5 w-3.5 text-primary transition-transform group-hover:scale-110" aria-hidden="true" />
         <span>Job criteria</span>
         {mustHaveCount > 0 && (
-          <span className="ml-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-sans font-semibold text-emerald-300 tabular-nums">
+          <span className="ml-1 rounded-none border border-border bg-secondary px-2 py-0.5 font-figure text-[13px] font-medium text-foreground tabular-nums">
             {mustHaveCount}
           </span>
         )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-white shadow-2xl sm:max-w-[720px]">
+        <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl sm:max-w-[720px]">
           <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
             <div className="flex flex-wrap items-center gap-2">
               {hasUnsavedDraft ? (
-                <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-sans font-medium text-amber-300">
+                <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[13px] font-sans font-medium text-amber-700 dark:text-amber-400">
                   Draft, not applied
                 </span>
               ) : activeCriteria ? (
-                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-sans font-medium text-emerald-300">
+                <span className="inline-flex items-center rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-[13px] font-sans font-medium text-success">
                   Active: {activeCriteria.roleTitle}
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full border border-zinc-700/50 bg-zinc-800/40 px-2.5 py-0.5 text-[11px] font-sans font-medium text-zinc-400">
+                <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[13px] font-sans font-medium text-muted-foreground">
                   No active role
                 </span>
               )}
             </div>
-            <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
+            <DialogTitle className="font-sans text-2xl font-bold tracking-tight text-foreground">
               Job criteria
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
+            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
               Describe the role in rough notes. AI expands them into a scoring rubric that every
               candidate is evaluated against.
             </DialogDescription>
@@ -280,8 +280,8 @@ export function JobCriteriaModal({
 
           <form onSubmit={handleGenerate} className="mt-5 space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="role-title" className="text-xs font-medium text-zinc-300">
-                Role title <span className="text-rose-400">*</span>
+              <label htmlFor="role-title" className="text-sm font-medium text-foreground">
+                Role title <span className="text-destructive">*</span>
               </label>
               <Input
                 id="role-title"
@@ -290,13 +290,13 @@ export function JobCriteriaModal({
                 value={roleTitle}
                 onChange={(e) => setRoleTitle(e.target.value)}
                 disabled={busy}
-                className={`h-9 text-sm ${INPUT_CLASS}`}
+                className={`h-9 text-base ${INPUT_CLASS}`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="role-requirements" className="text-xs font-medium text-zinc-300">
-                Requirements and notes <span className="text-rose-400">*</span>
+              <label htmlFor="role-requirements" className="text-sm font-medium text-foreground">
+                Requirements and notes <span className="text-destructive">*</span>
               </label>
               <Textarea
                 id="role-requirements"
@@ -305,7 +305,7 @@ export function JobCriteriaModal({
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
                 disabled={busy}
-                className={`min-h-[100px] resize-y text-sm leading-relaxed ${INPUT_CLASS}`}
+                className={`min-h-[100px] resize-y text-base leading-relaxed ${INPUT_CLASS}`}
               />
             </div>
 
@@ -313,7 +313,7 @@ export function JobCriteriaModal({
               <Button
                 type="submit"
                 disabled={busy || !roleTitle.trim() || !requirements.trim()}
-                className="cursor-pointer gap-2"
+                className="cursor-pointer gap-2 rounded-none bg-foreground text-background hover:bg-foreground/85 font-medium text-sm"
               >
                 {isGenerating ? (
                   <>
@@ -331,16 +331,16 @@ export function JobCriteriaModal({
           </form>
 
           {rubric && (
-            <div className="mt-6 space-y-5 rounded-lg border border-border bg-well p-5">
+            <div className="mt-6 space-y-5 rounded-lg border border-border bg-secondary/30 p-5">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-                <h3 className="font-serif text-lg font-normal tracking-tight text-white">
+                <h3 className="font-sans text-lg font-semibold tracking-tight text-foreground">
                   {hasUnsavedDraft ? "Generated rubric" : "Active rubric"}
                 </h3>
-                <span className="font-mono text-[11px] text-zinc-500">Scored 0 to 100</span>
+                <span className="font-figure text-[13px] text-muted-foreground">Scored 0 to 100</span>
               </div>
 
               {rubric.roleSummary && (
-                <p className="text-sm leading-relaxed text-pretty text-zinc-300">{rubric.roleSummary}</p>
+                <p className="text-base leading-relaxed text-pretty text-foreground">{rubric.roleSummary}</p>
               )}
 
               <RubricList
@@ -363,9 +363,9 @@ export function JobCriteriaModal({
               />
 
               {rubric.scoringGuidelines && (
-                <div className="rounded-md border border-border bg-card p-3.5 text-xs">
-                  <h4 className="font-semibold text-zinc-200">Scoring guidelines</h4>
-                  <p className="mt-1.5 leading-relaxed whitespace-pre-line text-zinc-400">
+                <div className="rounded-md border border-border bg-card p-3.5 text-sm">
+                  <h4 className="font-semibold text-foreground">Scoring guidelines</h4>
+                  <p className="mt-1.5 leading-relaxed whitespace-pre-line text-muted-foreground text-sm">
                     {rubric.scoringGuidelines}
                   </p>
                 </div>
@@ -380,7 +380,7 @@ export function JobCriteriaModal({
               />
 
               <details className="group rounded-md border border-border bg-card">
-                <summary className="cursor-pointer list-none px-3.5 py-2.5 text-xs font-medium text-zinc-300 transition-colors select-none hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+                <summary className="cursor-pointer list-none px-3.5 py-2.5 text-sm font-medium text-foreground transition-colors select-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
                   Edit the evaluation prompt
                 </summary>
                 <div className="space-y-1.5 border-t border-border p-3.5">
@@ -393,9 +393,9 @@ export function JobCriteriaModal({
                     value={expandedCriteriaText}
                     onChange={(e) => setExpandedCriteriaText(e.target.value)}
                     disabled={busy}
-                    className={`min-h-[140px] resize-y font-mono text-xs leading-5 ${INPUT_CLASS}`}
+                    className={`min-h-[140px] resize-y font-mono text-sm leading-relaxed ${INPUT_CLASS}`}
                   />
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-[13px] text-muted-foreground">
                     This text is injected into every candidate evaluation. Changes take effect when you
                     apply the criteria.
                   </p>
@@ -409,16 +409,16 @@ export function JobCriteriaModal({
                     variant="outline"
                     onClick={handleRescoreAll}
                     disabled={busy || hasUnsavedDraft || !activeCriteria}
-                    className="cursor-pointer gap-2 border-input bg-transparent text-xs text-zinc-200 hover:bg-secondary hover:text-white"
+                    className="cursor-pointer gap-2 border-border bg-card text-sm text-foreground hover:bg-secondary rounded-none"
                   >
                     {isRescoring ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                     ) : (
-                      <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                      <RotateCcw className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
                     )}
                     {isRescoring ? "Re-scoring pipeline..." : "Re-Score All Pipeline Candidates"}
                   </Button>
-                  <p className="max-w-[300px] text-[11px] leading-relaxed text-zinc-500">
+                  <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground">
                     {hasUnsavedDraft
                       ? "Apply the new criteria first, then re-score existing candidates."
                       : "Re-scores every candidate one at a time. This can take a few minutes."}
@@ -429,7 +429,7 @@ export function JobCriteriaModal({
                   type="button"
                   onClick={handleSaveActive}
                   disabled={busy}
-                  className="cursor-pointer gap-2 text-xs"
+                  className="cursor-pointer gap-2 text-sm rounded-none bg-foreground text-background hover:bg-foreground/85 font-medium"
                 >
                   {isSaving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
@@ -443,12 +443,12 @@ export function JobCriteriaModal({
           )}
           </div>
 
-          <DialogFooter className="p-4 border-t border-border shrink-0 bg-well/40 flex justify-end gap-2">
+          <DialogFooter className="p-4 border-t border-border shrink-0 bg-secondary/15 flex justify-end gap-2">
             <Button
               type="button"
               variant="ghost"
               onClick={() => setOpen(false)}
-              className="cursor-pointer text-muted-foreground hover:text-white"
+              className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
             >
               Close
             </Button>

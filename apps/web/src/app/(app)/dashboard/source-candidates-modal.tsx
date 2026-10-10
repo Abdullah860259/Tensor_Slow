@@ -45,9 +45,9 @@ interface RunView {
   pending: number;
 }
 
-const INPUT_CLASS = "border-input bg-well text-zinc-50 placeholder:text-zinc-500";
+const INPUT_CLASS = "border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring";
 const SELECT_CLASS =
-  "h-9 w-full rounded-md border border-input bg-well px-3 text-sm text-zinc-50 transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none cursor-pointer disabled:opacity-50";
+  "h-9 w-full rounded-none border border-border bg-background px-3 text-base text-foreground transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none cursor-pointer disabled:opacity-50";
 const RUN_STORAGE_KEY = "talentrank:sourcing-run";
 const POLL_MS = 4000;
 
@@ -89,10 +89,10 @@ function QuestionField({
   const label = (
     <>
       {question.label}
-      {question.required && <span className="text-rose-400"> *</span>}
+      {question.required && <span className="text-destructive"> *</span>}
     </>
   );
-  const help = question.helpText && <p className="text-[11px] leading-relaxed text-zinc-500">{question.helpText}</p>;
+  const help = question.helpText && <p className="text-[13px] leading-relaxed text-muted-foreground">{question.helpText}</p>;
 
   if (question.type === "multiselect" || question.type === "boolean") {
     const options = question.type === "boolean" ? ["Yes", "No"] : (question.options ?? []);
@@ -106,7 +106,7 @@ function QuestionField({
           : [];
     return (
       <fieldset className="space-y-2 sm:col-span-2">
-        <legend className="mb-2 text-xs font-medium text-zinc-300">{label}</legend>
+        <legend className="mb-2 text-sm font-medium text-foreground">{label}</legend>
         <div className="flex flex-wrap gap-1.5">
           {options.map((opt) => {
             const isOn = selected.includes(opt);
@@ -120,10 +120,10 @@ function QuestionField({
                   if (question.type === "boolean") onChange(opt === "Yes");
                   else onChange(isOn ? selected.filter((s) => s !== opt) : [...selected, opt]);
                 }}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 ${
+                className={`rounded-none border px-3 py-1 text-sm font-medium transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 ${
                   isOn
-                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
-                    : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/20 hover:text-white"
+                    ? "border-primary/40 bg-primary/15 text-primary"
+                    : "border-border bg-secondary/40 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                 }`}
               >
                 {opt}
@@ -141,7 +141,7 @@ function QuestionField({
 
   return (
     <div className={`space-y-1.5 ${wide ? "sm:col-span-2" : ""}`}>
-      <label htmlFor={id} className="text-xs font-medium text-zinc-300">
+      <label htmlFor={id} className="text-sm font-medium text-foreground">
         {label}
       </label>
       {question.type === "select" ? (
@@ -167,7 +167,7 @@ function QuestionField({
           disabled={disabled}
           placeholder={question.placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className={`min-h-[64px] resize-y text-sm leading-relaxed ${INPUT_CLASS}`}
+          className={`min-h-[64px] resize-y text-base leading-relaxed ${INPUT_CLASS}`}
         />
       ) : (
         <Input
@@ -179,7 +179,7 @@ function QuestionField({
           disabled={disabled}
           placeholder={question.placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className={`h-9 text-sm ${INPUT_CLASS}`}
+          className={`h-9 text-base ${INPUT_CLASS}`}
         />
       )}
       {help}
@@ -189,9 +189,9 @@ function QuestionField({
 
 function Stat({ label, value }: { label: string; value: number | undefined }): React.JSX.Element {
   return (
-    <div className="rounded-lg border border-border bg-well px-3 py-2.5">
-      <dt className="text-[11px] text-zinc-500">{label}</dt>
-      <dd className="mt-0.5 font-serif text-xl text-white tabular-nums">{value ?? 0}</dd>
+    <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2.5">
+      <dt className="text-[13px] text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 font-figure text-xl text-foreground tabular-nums">{value ?? 0}</dd>
     </div>
   );
 }
@@ -334,23 +334,23 @@ export function SourceCandidatesModal(): React.JSX.Element {
       <Button
         onClick={() => setOpen(true)}
         variant="outline"
-        className="group h-9 cursor-pointer gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-sans font-medium text-zinc-200 shadow-xs transition-all hover:border-blue-500/40 hover:bg-white/[0.08] hover:text-white"
+        className="group h-9 cursor-pointer gap-2 rounded-none border border-border bg-card px-4 text-sm font-sans font-medium text-foreground shadow-xs transition-all hover:bg-secondary hover:border-foreground"
       >
         {inFlight ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400 motion-reduce:animate-none" aria-hidden="true" />
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
         ) : (
-          <Radar className="h-3.5 w-3.5 text-blue-400 transition-transform group-hover:scale-110" aria-hidden="true" />
+          <Radar className="h-3.5 w-3.5 text-primary transition-transform group-hover:scale-110" aria-hidden="true" />
         )}
         <span>{inFlight ? "Sourcing…" : "Source with AI"}</span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-white shadow-2xl sm:max-w-[760px]">
+        <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl sm:max-w-[760px]">
           <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
-            <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
+            <DialogTitle className="font-sans text-2xl font-bold tracking-tight text-foreground">
               {step === "progress" ? run?.roleTitle || "Sourcing candidates" : "Source candidates with AI"}
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
+            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
               {step === "brief" &&
                 "Describe who you need. AI turns it into an intake questionnaire, searches LinkedIn, and scores every match against your answers."}
               {step === "form" &&
@@ -363,8 +363,8 @@ export function SourceCandidatesModal(): React.JSX.Element {
           <div className="flex-1 overflow-y-auto p-6">
             {step === "brief" && (
               <form id="sourcing-brief" onSubmit={handleGenerate} className="space-y-1.5">
-                <label htmlFor="sourcing-brief-text" className="text-xs font-medium text-zinc-300">
-                  Who are you hiring? <span className="text-rose-400">*</span>
+                <label htmlFor="sourcing-brief-text" className="text-sm font-medium text-foreground">
+                  Who are you hiring? <span className="text-destructive">*</span>
                 </label>
                 <Textarea
                   id="sourcing-brief-text"
@@ -373,9 +373,9 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   disabled={busy}
                   onChange={(e) => setBrief(e.target.value)}
                   placeholder="e.g. A senior React / Next.js engineer for our 30-person fintech startup in Lahore. They'll own the merchant dashboard, work closely with design, and mentor two juniors. Payments or banking experience is a big plus."
-                  className={`min-h-[140px] resize-y text-sm leading-relaxed ${INPUT_CLASS}`}
+                  className={`min-h-[140px] resize-y text-base leading-relaxed ${INPUT_CLASS}`}
                 />
-                <p className="text-[11px] text-zinc-500">
+                <p className="text-[13px] text-muted-foreground">
                   Mention the stack, seniority, team, product and anything unusual. You&apos;ll answer follow-up questions next.
                 </p>
               </form>
@@ -384,15 +384,15 @@ export function SourceCandidatesModal(): React.JSX.Element {
             {step === "form" && (
               <form id="sourcing-form" onSubmit={handleStart} className="space-y-7">
                 <div className="space-y-1.5">
-                  <label htmlFor="sourcing-role-title" className="text-xs font-medium text-zinc-300">
-                    Role title <span className="text-rose-400">*</span>
+                  <label htmlFor="sourcing-role-title" className="text-sm font-medium text-foreground">
+                    Role title <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="sourcing-role-title"
                     value={roleTitle}
                     disabled={busy}
                     onChange={(e) => setRoleTitle(e.target.value)}
-                    className={`h-9 text-sm ${INPUT_CLASS}`}
+                    className={`h-9 text-base ${INPUT_CLASS}`}
                   />
                 </div>
 
@@ -402,11 +402,11 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   return (
                     <section key={section} aria-labelledby={`sourcing-${section}`} className="space-y-4">
                       <div className="border-b border-border pb-2">
-                        <h3 id={`sourcing-${section}`} className="flex items-center gap-1.5 text-sm font-semibold text-white">
-                          {section === "role" && <Sparkles className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />}
+                        <h3 id={`sourcing-${section}`} className="flex items-center gap-1.5 text-base font-semibold text-foreground font-sans">
+                          {section === "role" && <Sparkles className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />}
                           {SECTION_COPY[section].title}
                         </h3>
-                        <p className="mt-0.5 text-[11px] text-zinc-500">{SECTION_COPY[section].hint}</p>
+                        <p className="mt-0.5 text-[13px] text-muted-foreground">{SECTION_COPY[section].hint}</p>
                       </div>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {questions.map((q) => (
@@ -423,7 +423,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   );
                 })}
 
-                <p className="rounded-lg border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5 text-[11px] leading-relaxed text-blue-200/90">
+                <p className="rounded-lg border border-primary/20 bg-primary/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground">
                   Starting runs a paid LinkedIn search through Apify (capped per search, with a daily limit).
                   Profiles already in your pipeline are skipped.
                 </p>
@@ -433,42 +433,42 @@ export function SourceCandidatesModal(): React.JSX.Element {
             {step === "progress" && (
               <div className="space-y-5" aria-live="polite">
                 {!run || run.status === "running" || run.status === "importing" ? (
-                  <div className="flex items-start gap-3 rounded-lg border border-border bg-well p-4">
-                    <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-blue-400 motion-reduce:animate-none" aria-hidden="true" />
+                  <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
+                    <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-base font-medium text-foreground">
                         {run?.status === "importing" ? "Filtering and importing profiles…" : "Searching LinkedIn…"}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-400">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         This usually takes 1 to 3 minutes{run?.apifyStatus ? ` (Apify: ${run.apifyStatus.toLowerCase()})` : ""}.
                       </p>
                     </div>
                   </div>
                 ) : run.status === "failed" ? (
-                  <div className="flex items-start gap-3 rounded-lg border border-rose-500/25 bg-rose-500/[0.06] p-4">
-                    <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-400" aria-hidden="true" />
+                  <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                    <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
                     <div>
-                      <p className="text-sm font-medium text-white">The search didn&apos;t return candidates</p>
-                      <p className="mt-1 text-xs leading-relaxed text-zinc-300">{run.error}</p>
+                      <p className="text-base font-medium text-foreground">The search didn&apos;t return candidates</p>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{run.error}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3 rounded-lg border border-border bg-well p-4">
+                  <div className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4">
                     <div className="flex items-center gap-2">
                       {run.status === "completed" ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+                        <CheckCircle2 className="h-5 w-5 text-success" aria-hidden="true" />
                       ) : (
-                        <Loader2 className="h-5 w-5 animate-spin text-amber-400 motion-reduce:animate-none" aria-hidden="true" />
+                        <Loader2 className="h-5 w-5 animate-spin text-amber-500 motion-reduce:animate-none" aria-hidden="true" />
                       )}
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-base font-medium text-foreground">
                         {run.status === "completed"
                           ? `All ${total} candidates scored`
                           : `Scoring candidates against your answers: ${run.scored} of ${total}`}
                       </p>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden="true">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
                       <div
-                        className="h-full rounded-full bg-emerald-400 transition-[width] duration-500"
+                        className="h-full rounded-full bg-success transition-[width] duration-500"
                         style={{ width: `${total ? Math.round((run.scored / total) * 100) : 0}%` }}
                       />
                     </div>
@@ -488,7 +488,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
             )}
           </div>
 
-          <DialogFooter className="p-4 border-t border-border shrink-0 bg-well/40 flex items-center justify-between gap-2 sm:justify-between">
+          <DialogFooter className="p-4 border-t border-border shrink-0 bg-secondary/15 flex items-center justify-between gap-2 sm:justify-between">
             <div>
               {step === "form" && (
                 <Button
@@ -496,7 +496,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   variant="ghost"
                   onClick={() => setStep("brief")}
                   disabled={busy}
-                  className="cursor-pointer gap-1.5 text-xs text-zinc-400 hover:text-white"
+                  className="cursor-pointer gap-1.5 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
                   Edit description
@@ -507,7 +507,8 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   type="button"
                   variant="ghost"
                   onClick={startOver}
-                  className="cursor-pointer gap-1.5 text-xs text-zinc-400 hover:text-white"
+                  disabled={busy}
+                  className="cursor-pointer gap-1.5 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
                   {run.status === "failed" ? "Adjust answers" : "New search"}
@@ -519,7 +520,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
                 type="button"
                 variant="ghost"
                 onClick={() => setOpen(false)}
-                className="cursor-pointer text-muted-foreground hover:text-white"
+                className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
               >
                 Close
               </Button>
@@ -528,7 +529,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   type="submit"
                   form="sourcing-brief"
                   disabled={busy || brief.trim().length < 15}
-                  className="cursor-pointer gap-2"
+                  className="cursor-pointer gap-2 rounded-none bg-foreground text-background hover:bg-foreground/85 font-medium text-sm"
                 >
                   {isGenerating ? (
                     <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
@@ -543,7 +544,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
                   type="submit"
                   form="sourcing-form"
                   disabled={busy || !roleTitle.trim()}
-                  className="cursor-pointer gap-2"
+                  className="cursor-pointer gap-2 rounded-none bg-foreground text-background hover:bg-foreground/85 font-medium text-sm"
                 >
                   {isStarting ? (
                     <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />

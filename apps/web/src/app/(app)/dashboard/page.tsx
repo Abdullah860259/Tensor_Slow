@@ -26,7 +26,7 @@ import { SourceCandidatesModal } from "./source-candidates-modal";
 const L = domain.labels;
 
 const SELECT_CLASS =
-  "h-9 rounded-full border border-white/10 bg-zinc-900/90 px-3.5 text-xs font-sans text-zinc-200 transition-all hover:border-white/20 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none cursor-pointer";
+  "h-9 rounded-full border border-border bg-card px-3.5 text-sm font-sans text-foreground transition-all hover:border-foreground/30 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none cursor-pointer";
 
 type CandidateFields = {
   strengths: string[];
@@ -167,8 +167,8 @@ export default async function DashboardPage({
       value: topMatches,
       hint: all.length ? `${Math.round((topMatches / all.length) * 100)}% of pipeline` : "No candidates",
       icon: Award,
-      accent: "from-emerald-500/15 via-emerald-500/5 to-transparent",
-      iconColor: "text-emerald-400",
+      accent: "from-success/15 via-success/5 to-transparent",
+      iconColor: "text-success",
     },
     {
       label: "Average match score",
@@ -193,11 +193,11 @@ export default async function DashboardPage({
       {/* Hero and primary actions */}
       <header className="tr-rise flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">{L.product}</p>
-          <h1 className="mt-2.5 font-serif text-3xl font-normal tracking-tight bg-gradient-to-b from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent sm:text-4xl">
+          <p className="text-sm font-semibold tracking-[0.16em] text-muted-foreground uppercase">{L.product}</p>
+          <h1 className="mt-2.5 font-sans text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Talent pipeline
           </h1>
-          <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-pretty text-zinc-400">
+          <p className="mt-2.5 max-w-xl text-base leading-relaxed text-pretty text-muted-foreground">
             {L.tagline}
           </p>
         </div>
@@ -212,43 +212,43 @@ export default async function DashboardPage({
       <section
         aria-label="Active job criteria"
         style={delay(80)}
-        className="tr-rise relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-emerald-500/[0.05] via-white/[0.02] to-transparent p-5 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        className="tr-rise relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-xs flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
       >
         {activeCriteria ? (
           <>
             <div className="flex min-w-0 items-center gap-3.5">
               <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40 motion-reduce:animate-none" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-40 motion-reduce:animate-none" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success shadow-[0_0_8px_rgba(72,183,104,0.4)]" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] font-sans font-medium text-zinc-400 tracking-wide uppercase">Active rubric</p>
-                <p className="truncate text-sm font-semibold tracking-tight text-white">{activeCriteria.roleTitle}</p>
+                <p className="text-[13px] font-sans font-medium text-muted-foreground tracking-wide uppercase">Active rubric</p>
+                <p className="truncate text-base font-semibold tracking-tight text-foreground">{activeCriteria.roleTitle}</p>
               </div>
             </div>
-            <dl className="flex flex-wrap items-center gap-2 text-xs">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 shadow-xs">
-                <dd className="font-semibold text-emerald-300 tabular-nums">{mustHaveCount}</dd>
-                <dt className="text-emerald-400/90 font-medium">must-have</dt>
+            <dl className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/15 px-3 py-1 shadow-xs">
+                <dd className="font-semibold text-success tabular-nums">{mustHaveCount}</dd>
+                <dt className="text-success font-medium">must-have</dt>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 shadow-xs">
-                <dd className="font-semibold text-amber-300 tabular-nums">{niceToHaveCount}</dd>
-                <dt className="text-amber-400/90 font-medium">nice-to-have</dt>
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1 shadow-xs">
+                <dd className="font-semibold text-amber-700 dark:text-amber-400 tabular-nums">{niceToHaveCount}</dd>
+                <dt className="text-amber-700 dark:text-amber-400 font-medium">nice-to-have</dt>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 shadow-xs">
-                <dd className="font-semibold text-rose-300 tabular-nums">{redFlagCount}</dd>
-                <dt className="text-rose-400/90 font-medium">red flags</dt>
+              <div className="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/15 px-3 py-1 shadow-xs">
+                <dd className="font-semibold text-destructive tabular-nums">{redFlagCount}</dd>
+                <dt className="text-destructive font-medium">red flags</dt>
               </div>
             </dl>
           </>
         ) : (
           <div className="flex items-center gap-3.5">
             <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-white">No active role</p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-base font-semibold text-foreground">No active role</p>
+              <p className="text-sm text-muted-foreground">
                 Set job criteria so candidates are scored against your requirements.
               </p>
             </div>
@@ -259,15 +259,15 @@ export default async function DashboardPage({
       {all.length === 0 ? (
         <section
           style={delay(160)}
-          className="tr-rise mx-auto w-full max-w-xl rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]"
+          className="tr-rise mx-auto w-full max-w-xl rounded-xl border border-dashed border-border bg-card p-8 text-center shadow-xs"
         >
-          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-zinc-400">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-secondary text-muted-foreground">
             <BriefcaseBusiness className="h-6 w-6" aria-hidden="true" />
           </div>
-          <h2 className="font-serif text-2xl font-normal tracking-tight text-white">
+          <h2 className="font-sans text-2xl font-bold tracking-tight text-foreground">
             No candidates yet
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-pretty text-zinc-400">
+          <p className="mx-auto mt-3 max-w-md text-base leading-relaxed text-pretty text-muted-foreground">
             Paste a profile, upload a resume or scrape a LinkedIn URL to get a match score, an
             experience estimate and a hiring recommendation.
           </p>
@@ -287,24 +287,18 @@ export default async function DashboardPage({
               {kpis.map(({ label, value, hint, icon: Icon, accent, iconColor }) => (
                 <div
                   key={label}
-                  className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] transition-all duration-300 hover:border-white/[0.16] hover:bg-white/[0.035] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+                  className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-xs transition-all duration-300 hover:shadow-md hover:border-foreground/20"
                 >
-                  {/* Subtle top ambient corner sheen */}
-                  <div
-                    className={`pointer-events-none absolute -top-12 -right-12 h-28 w-28 rounded-full bg-gradient-to-br ${accent} blur-2xl transition-opacity duration-500 group-hover:opacity-100 opacity-60`}
-                    aria-hidden="true"
-                  />
-
-                  <dt className="flex items-center justify-between text-xs font-sans font-medium text-zinc-400">
+                  <dt className="flex items-center justify-between text-sm font-sans font-medium text-muted-foreground">
                     <span>{label}</span>
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/5 bg-white/[0.03] text-zinc-400 transition-colors group-hover:text-white">
-                      <Icon className={`h-3.5 w-3.5 ${iconColor}`} aria-hidden="true" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-secondary text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                   </dt>
-                  <dd className="mt-3 font-serif text-3xl font-normal tracking-tight text-white tabular-nums sm:text-4xl">
+                  <dd className="mt-3 font-figure text-3xl font-normal tracking-tight text-foreground tabular-nums sm:text-4xl">
                     {value}
                   </dd>
-                  <p className="mt-2 text-[11px] font-sans font-medium text-zinc-400/90 tabular-nums">
+                  <p className="mt-2 text-[13px] font-sans font-medium text-muted-foreground tabular-nums">
                     {hint}
                   </p>
                 </div>
@@ -323,15 +317,15 @@ export default async function DashboardPage({
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h2
                     id="leaderboard-heading"
-                    className="font-serif text-2xl font-normal tracking-tight text-white"
+                    className="font-sans text-2xl font-bold tracking-tight text-foreground"
                   >
                     Candidate leaderboard
                   </h2>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 font-sans text-[11px] font-medium text-zinc-300 tabular-nums">
+                  <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 font-sans text-[13px] font-medium text-foreground tabular-nums">
                     {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
                   </span>
                 </div>
-                <p className="mt-1.5 text-xs text-zinc-400">Ranked by match score, highest first</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">Ranked by match score, highest first</p>
               </div>
 
               <form method="get" className="flex flex-wrap items-center gap-2">
@@ -340,7 +334,7 @@ export default async function DashboardPage({
                     Search candidates
                   </label>
                   <Search
-                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-500"
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                     aria-hidden="true"
                   />
                   <Input
@@ -348,7 +342,7 @@ export default async function DashboardPage({
                     name="q"
                     defaultValue={q}
                     placeholder="Search name, summary or tag"
-                    className="h-9 w-64 rounded-full border border-white/10 bg-white/[0.03] pl-9 text-sm text-zinc-100 placeholder:text-zinc-500 transition-all focus-visible:border-white/25 focus-visible:bg-white/[0.06] focus-visible:ring-1 focus-visible:ring-ring"
+                    className="h-9 w-64 rounded-full border border-border bg-card pl-9 text-sm text-foreground placeholder:text-muted-foreground transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring"
                   />
                 </div>
                 <div>
@@ -366,14 +360,14 @@ export default async function DashboardPage({
                   type="submit"
                   variant="outline"
                   size="sm"
-                  className="h-9 cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-sans font-medium text-zinc-200 shadow-xs transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                  className="h-9 cursor-pointer rounded-full border border-border bg-card px-4 text-sm font-sans font-medium text-foreground shadow-xs transition-all hover:bg-secondary"
                 >
                   Filter
                 </Button>
                 {filtering && (
                   <Link
                     href="/dashboard"
-                    className="px-2 text-xs font-sans font-medium text-zinc-400 underline underline-offset-4 transition-colors hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                    className="px-2 text-sm font-sans font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                   >
                     Clear
                   </Link>
@@ -382,12 +376,12 @@ export default async function DashboardPage({
             </div>
 
             {rows.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border bg-card px-6 py-16 text-center">
-                <FileText className="mx-auto h-7 w-7 text-zinc-600" aria-hidden="true" />
-                <p className="mt-4 font-serif text-xl font-normal tracking-tight text-white">
+              <div className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
+                <FileText className="mx-auto h-7 w-7 text-muted-foreground" aria-hidden="true" />
+                <p className="mt-4 font-sans text-xl font-semibold tracking-tight text-foreground">
                   No candidates match these filters
                 </p>
-                <p className="mt-1.5 text-sm text-zinc-400">
+                <p className="mt-1.5 text-base text-muted-foreground">
                   Try a different search or clear the filters.
                 </p>
               </div>
@@ -411,7 +405,7 @@ export default async function DashboardPage({
               />
             )}
 
-            <p className="text-right font-mono text-xs text-zinc-500 tabular-nums">
+            <p className="text-right font-figure text-sm text-muted-foreground tabular-nums">
               Showing {rows.length} of {all.length}
             </p>
           </section>

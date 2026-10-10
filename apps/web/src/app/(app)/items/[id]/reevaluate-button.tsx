@@ -45,16 +45,16 @@ export function ReevaluateButton({ itemId }: { itemId?: string }): React.JSX.Ele
       onClick={run}
       disabled={isRunning}
       title="Re-scores this candidate against the active job criteria"
-      className={`h-9 cursor-pointer gap-2 text-xs font-medium transition-all ${
+      className={`h-9 cursor-pointer gap-2 text-sm font-medium rounded-none border transition-all ${
         isRunning
-          ? "border-amber-500/60 bg-amber-950/40 text-amber-300 ring-1 ring-amber-500/40 animate-pulse"
-          : "border-input bg-card/60 text-zinc-200 hover:border-zinc-500 hover:bg-secondary hover:text-white"
+          ? "border-amber-500/60 bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/40 animate-pulse"
+          : "border-border bg-card text-foreground hover:border-foreground hover:bg-secondary"
       }`}
     >
       {isRunning ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-300" aria-hidden="true" />
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600 dark:text-amber-400" aria-hidden="true" />
       ) : (
-        <RotateCcw className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+        <RotateCcw className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
       )}
       {isRunning ? "Re-evaluating candidate..." : "Re-evaluate"}
     </Button>

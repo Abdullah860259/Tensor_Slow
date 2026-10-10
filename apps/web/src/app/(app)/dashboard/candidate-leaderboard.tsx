@@ -56,7 +56,7 @@ function RankBadge({ rank }: { rank: number }): React.JSX.Element {
     return (
       <span
         title="Rank 1 · Top Match"
-        className="inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 px-1.5 font-sans text-[11px] font-semibold text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.12)]"
+        className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/15 px-1.5 font-sans text-[13px] font-semibold text-amber-800 shadow-xs"
       >
         1
       </span>
@@ -66,7 +66,7 @@ function RankBadge({ rank }: { rank: number }): React.JSX.Element {
     return (
       <span
         title="Rank 2"
-        className="inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full border border-slate-300/25 bg-slate-300/10 px-1.5 font-sans text-[11px] font-semibold text-slate-200"
+        className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-border bg-secondary px-1.5 font-sans text-[13px] font-semibold text-foreground"
       >
         2
       </span>
@@ -76,14 +76,14 @@ function RankBadge({ rank }: { rank: number }): React.JSX.Element {
     return (
       <span
         title="Rank 3"
-        className="inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full border border-amber-700/30 bg-amber-700/15 px-1.5 font-sans text-[11px] font-semibold text-amber-400/90"
+        className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-amber-700/30 bg-amber-700/15 px-1.5 font-sans text-[13px] font-semibold text-amber-900"
       >
         3
       </span>
     );
   }
   return (
-    <span className="inline-flex h-5.5 min-w-5.5 items-center justify-center px-1 font-sans text-[11px] font-medium text-zinc-500 tabular-nums">
+    <span className="inline-flex h-6 min-w-6 items-center justify-center px-1 font-sans text-[13px] font-medium text-muted-foreground tabular-nums">
       {rank}
     </span>
   );
@@ -260,9 +260,9 @@ export function CandidateLeaderboard({
 
   if (ranked.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border px-4 py-14 text-center">
-        <p className="font-serif text-xl font-normal tracking-tight text-white">No candidates yet</p>
-        <p className="mt-1.5 text-sm text-zinc-400">
+      <div className="rounded-xl border border-dashed border-border bg-card px-4 py-14 text-center">
+        <p className="font-sans text-xl font-semibold tracking-tight text-foreground">No candidates yet</p>
+        <p className="mt-1.5 text-base text-muted-foreground">
           Import a profile or resume to score your first candidate.
         </p>
       </div>
@@ -284,16 +284,16 @@ export function CandidateLeaderboard({
 
   return (
     <>
-      {/* Segmented Filter Pills & Candidate Count Toolbar (Stitch / Linear / Apple Design) */}
+      {/* Segmented Filter Pills & Candidate Count Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-md">
+        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-card border border-border shadow-xs">
           <button
             type="button"
             onClick={() => setFitFilter("all")}
-            className={`px-3 py-1 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-sm font-sans font-medium transition-all cursor-pointer ${
               fitFilter === "all"
-                ? "bg-white text-zinc-950 shadow-xs"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-foreground text-background shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             All Candidates <span className="opacity-70 tabular-nums">({ranked.length})</span>
@@ -301,10 +301,10 @@ export function CandidateLeaderboard({
           <button
             type="button"
             onClick={() => setFitFilter("starred")}
-            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-sans font-medium transition-all cursor-pointer ${
               fitFilter === "starred"
-                ? "bg-amber-400/15 text-amber-300 border border-amber-400/30"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Star className={`h-3 w-3 ${fitFilter === "starred" ? "fill-current" : ""}`} aria-hidden="true" />
@@ -313,10 +313,10 @@ export function CandidateLeaderboard({
           <button
             type="button"
             onClick={() => setFitFilter("strong")}
-            className={`px-3 py-1 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-sm font-sans font-medium transition-all cursor-pointer ${
               fitFilter === "strong"
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-success/15 text-success border border-success/30"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Strong Fit <span className="opacity-70 tabular-nums">({strongCount})</span>
@@ -324,10 +324,10 @@ export function CandidateLeaderboard({
           <button
             type="button"
             onClick={() => setFitFilter("potential")}
-            className={`px-3 py-1 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-sm font-sans font-medium transition-all cursor-pointer ${
               fitFilter === "potential"
-                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Potential <span className="opacity-70 tabular-nums">({potentialCount})</span>
@@ -335,26 +335,26 @@ export function CandidateLeaderboard({
           <button
             type="button"
             onClick={() => setFitFilter("unqualified")}
-            className={`px-3 py-1 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-sm font-sans font-medium transition-all cursor-pointer ${
               fitFilter === "unqualified"
-                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-destructive/15 text-rose-800 border border-destructive/30"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Unqualified <span className="opacity-70 tabular-nums">({unqualifiedCount})</span>
           </button>
         </div>
 
-        <span className="text-xs font-sans text-zinc-400">
-          Showing <span className="font-medium text-white">{displayedCandidates.length}</span> of {ranked.length} candidates
+        <span className="text-sm font-sans text-muted-foreground">
+          Showing <span className="font-medium text-foreground">{displayedCandidates.length}</span> of {ranked.length} candidates
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-border/80 text-xs font-sans text-zinc-400">
+              <tr className="border-b border-border bg-secondary/20 text-sm font-sans text-muted-foreground">
                 <th scope="col" className="w-20 px-4 py-3 font-medium">
                   Rank
                 </th>
@@ -405,7 +405,7 @@ export function CandidateLeaderboard({
                       });
                     }}
                     style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}
-                    className={`tr-fade border-b border-white/[0.05] transition-colors last:border-b-0 hover:bg-white/[0.03] select-none ${
+                    className={`tr-fade border-b border-border/70 transition-colors last:border-b-0 hover:bg-secondary/40 select-none ${
                       isRescoring ? "bg-amber-500/[0.04]" : ""
                     }`}
                   >
@@ -413,7 +413,7 @@ export function CandidateLeaderboard({
                       <div className="flex items-center gap-2">
                         <RankBadge rank={index + 1} />
                         {isRescoring ? (
-                          <Loader2 className="h-3 w-3 animate-spin text-amber-400" aria-label="Re-evaluating" />
+                          <Loader2 className="h-3 w-3 animate-spin text-amber-500" aria-label="Re-evaluating" />
                         ) : candidate.status !== "processed" ? (
                           <span
                             className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.dot}`}
@@ -426,35 +426,35 @@ export function CandidateLeaderboard({
 
                     <td className="max-w-[360px] px-2 py-3.5 align-middle">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-sans font-medium text-zinc-300 shadow-xs">
+                        <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-[13px] font-sans font-medium text-foreground shadow-xs">
                           {getInitials(candidate.title)}
                         </div>
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex items-center gap-1.5">
                             <Link
                               href={`/items/${candidate.id}`}
-                              className="truncate text-sm font-semibold text-white transition-colors hover:text-blue-400 hover:underline hover:underline-offset-4 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                              className="truncate text-base font-semibold text-foreground transition-colors hover:text-primary hover:underline hover:underline-offset-4 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                             >
                               {candidate.title}
                             </Link>
                             {hasScore && candidate.score! >= 80 && (
                               <span title="Strong Fit (80%+)">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
+                                <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" aria-hidden="true" />
                               </span>
                             )}
                             {isRescoring ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-sans text-[11px] font-medium text-amber-300">
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-sans text-[13px] font-medium text-amber-800">
                                 <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                 Re-evaluating...
                               </span>
                             ) : candidate.status === "pending" ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-sans text-[11px] font-medium text-amber-300">
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-sans text-[13px] font-medium text-amber-800">
                                 <Loader2 className="h-2.5 w-2.5 animate-spin" />
                                 Evaluating...
                               </span>
                             ) : candidate.status !== "processed" ? (
                               <span
-                                className={`inline-flex items-center gap-1 font-sans text-[11px] font-medium ${status.text}`}
+                                className={`inline-flex items-center gap-1 font-sans text-[13px] font-medium ${status.text}`}
                               >
                                 <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden="true" />
                                 {status.label}
@@ -462,7 +462,7 @@ export function CandidateLeaderboard({
                             ) : null}
                           </div>
                           {displaySummary && (
-                            <p className="line-clamp-2 text-xs leading-relaxed text-zinc-400 font-normal">
+                            <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground font-normal">
                               {displaySummary}
                             </p>
                           )}
@@ -475,7 +475,7 @@ export function CandidateLeaderboard({
                         <div className="relative h-6 w-6 shrink-0">
                           <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
                             <path
-                              className="text-zinc-800"
+                              className="text-secondary"
                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                               fill="none"
                               stroke="currentColor"
@@ -484,11 +484,11 @@ export function CandidateLeaderboard({
                             {hasScore && (
                               <path
                                 className={
-                                  candidate.score! >= 80
-                                    ? "text-emerald-400"
+                                   candidate.score! >= 80
+                                    ? "text-success"
                                     : candidate.score! >= 60
-                                      ? "text-amber-400"
-                                      : "text-rose-400"
+                                      ? "text-amber-500"
+                                      : "text-destructive"
                                 }
                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                 fill="none"
@@ -501,8 +501,8 @@ export function CandidateLeaderboard({
                           </svg>
                         </div>
                         <span
-                          className={`font-sans text-xs font-semibold tabular-nums ${
-                            isRescoring ? "text-amber-400" : scoreStyle.text
+                          className={`font-figure text-base font-normal tabular-nums ${
+                            isRescoring ? "text-amber-700" : scoreStyle.text
                           }`}
                         >
                           {isRescoring ? "..." : hasScore ? `${Math.round(candidate.score as number)}%` : "--"}
@@ -512,13 +512,13 @@ export function CandidateLeaderboard({
 
                     <td className="px-2 py-3.5 align-middle">
                       {candidate.yearsOfExperience === undefined ? (
-                        <span className="text-xs text-zinc-600">--</span>
+                        <span className="text-sm text-muted-foreground">--</span>
                       ) : (
                         <div className="flex items-baseline gap-1">
-                          <span className="font-semibold text-zinc-100 text-[13px] tracking-tight tabular-nums">
+                          <span className="font-figure text-[16px] text-foreground tracking-tight tabular-nums font-normal">
                             {formatYears(candidate.yearsOfExperience)}
                           </span>
-                          <span className="text-[11px] font-medium text-zinc-500">yrs</span>
+                          <span className="text-[13px] font-sans font-medium text-muted-foreground">yrs</span>
                         </div>
                       )}
                     </td>
@@ -533,19 +533,19 @@ export function CandidateLeaderboard({
                           {tags.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className="inline-flex items-center rounded-md border border-zinc-800/80 bg-zinc-850/40 px-2 py-0.5 text-[11px] font-sans font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+                              className="inline-flex items-center rounded-md border border-border bg-secondary px-2 py-0.5 text-[13px] font-sans font-medium text-foreground transition-colors hover:bg-secondary/80"
                             >
                               {tag}
                             </span>
                           ))}
                           {tags.length > 3 && (
-                            <span className="self-center px-1 text-[11px] font-sans font-medium text-zinc-500">
+                            <span className="self-center px-1 text-[13px] font-sans font-medium text-muted-foreground">
                               +{tags.length - 3}
                             </span>
                           )}
                         </span>
                       ) : (
-                        <span className="text-xs text-zinc-600">--</span>
+                        <span className="text-sm text-muted-foreground">--</span>
                       )}
                     </td>
 
@@ -560,8 +560,8 @@ export function CandidateLeaderboard({
                           title={isStarred ? "Unstar candidate" : "Star candidate"}
                           className={`flex h-7 w-7 items-center justify-center rounded-full border transition-all cursor-pointer focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait ${
                             isStarred
-                              ? "border-amber-400/30 bg-amber-400/10 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.12)] hover:bg-amber-400/15"
-                              : "border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                              ? "border-amber-500/30 bg-amber-500/15 text-amber-700 shadow-xs hover:bg-amber-500/25"
+                              : "border-border bg-card text-muted-foreground hover:border-foreground/30 hover:bg-secondary hover:text-foreground"
                           }`}
                         >
                           <Star
@@ -573,11 +573,11 @@ export function CandidateLeaderboard({
                         <Link
                           href={`/items/${candidate.id}`}
                           aria-label={`Inspect profile: ${candidate.title}`}
-                          className="group inline-flex h-7 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 text-[12px] font-sans font-medium text-zinc-200 shadow-xs transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
+                          className="group inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-[14px] font-sans font-medium text-foreground shadow-xs transition-all hover:bg-secondary focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
                         >
                           <span>Inspect</span>
                           <ArrowRight
-                            className="h-3 w-3 text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-white motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                            className="h-3 w-3 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
                             aria-hidden="true"
                           />
                         </Link>
@@ -605,8 +605,8 @@ export function CandidateLeaderboard({
                           }}
                           className={`flex h-7 w-7 items-center justify-center rounded-full border transition-all cursor-pointer ${
                             activeDropdown?.id === candidate.id
-                              ? "border-white/25 bg-white/[0.12] text-white shadow-xs"
-                              : "border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                              ? "border-foreground bg-foreground text-background shadow-xs"
+                              : "border-border bg-card text-muted-foreground hover:border-foreground/30 hover:bg-secondary hover:text-foreground"
                           }`}
                           title="More options (or right-click row)"
                         >
@@ -622,14 +622,14 @@ export function CandidateLeaderboard({
         </div>
       </div>
 
-      {/* Floating Action Dropdown Menu (Portalled to document.body to eliminate containing block & stacking issues) */}
+      {/* Floating Action Dropdown Menu */}
       {mounted &&
         activeDropdown &&
         createPortal(
           <div
             style={{ top: `${activeDropdown.top}px`, left: `${activeDropdown.left}px` }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed z-50 w-48 rounded-xl border border-white/10 bg-zinc-900/90 p-1.5 text-left text-white shadow-[0_16px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95"
+            className="fixed z-50 w-52 rounded-xl border border-border bg-card p-1.5 text-left text-foreground shadow-2xl backdrop-blur-md animate-in fade-in-0 zoom-in-95"
           >
             <button
               type="button"
@@ -638,10 +638,10 @@ export function CandidateLeaderboard({
                 setActiveDropdown(null);
                 void toggleStar(cand);
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-sans text-foreground hover:bg-secondary transition-colors cursor-pointer"
             >
               <Star
-                className={`h-3.5 w-3.5 text-amber-300 ${starredIds.has(activeDropdown.candidate.id) ? "fill-current" : ""}`}
+                className={`h-3.5 w-3.5 text-amber-500 ${starredIds.has(activeDropdown.candidate.id) ? "fill-current" : ""}`}
               />
               <span>{starredIds.has(activeDropdown.candidate.id) ? "Unstar candidate" : "Star candidate"}</span>
             </button>
@@ -649,20 +649,20 @@ export function CandidateLeaderboard({
               type="button"
               onClick={() => handleReevaluate(activeDropdown.candidate)}
               disabled={rescoringIds.has(activeDropdown.candidate.id)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-sans text-foreground hover:bg-secondary transition-colors cursor-pointer disabled:opacity-40"
             >
-              <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+              <RotateCcw className="h-3.5 w-3.5 text-success" />
               <span>Re-evaluate criteria</span>
             </button>
             <Link
               href={`/items/${activeDropdown.candidate.id}`}
               onClick={() => setActiveDropdown(null)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-sans text-foreground hover:bg-secondary transition-colors"
             >
-              <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
+              <ExternalLink className="h-3.5 w-3.5 text-primary" />
               <span>Inspect dossier</span>
             </Link>
-            <div className="my-1 border-t border-white/10" />
+            <div className="my-1 border-t border-border" />
             <button
               type="button"
               onClick={() => {
@@ -670,7 +670,7 @@ export function CandidateLeaderboard({
                 setActiveDropdown(null);
                 setDeleteCandidate(toDelete);
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-sans text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span>Delete candidate</span>
@@ -679,18 +679,18 @@ export function CandidateLeaderboard({
           document.body
         )}
 
-      {/* Floating Right-Click Context Menu (Portalled to document.body) */}
+      {/* Floating Right-Click Context Menu */}
       {mounted &&
         contextMenu &&
         createPortal(
           <div
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed z-50 w-52 rounded-xl border border-white/10 bg-zinc-900/90 p-1.5 text-left text-white shadow-[0_16px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95"
+            className="fixed z-50 w-52 rounded-xl border border-border bg-card p-1.5 text-left text-foreground shadow-2xl backdrop-blur-md animate-in fade-in-0 zoom-in-95"
           >
-            <div className="px-2.5 py-1.5 border-b border-white/10 mb-1">
-              <p className="truncate text-xs font-semibold text-white">{contextMenu.candidate.title}</p>
-              <p className="text-[10px] text-zinc-500 font-sans">Quick actions</p>
+            <div className="px-2.5 py-1.5 border-b border-border mb-1">
+              <p className="truncate text-sm font-semibold text-foreground">{contextMenu.candidate.title}</p>
+              <p className="text-[12px] text-muted-foreground font-sans">Quick actions</p>
             </div>
 
             <button
@@ -700,10 +700,10 @@ export function CandidateLeaderboard({
                 setContextMenu(null);
                 void toggleStar(cand);
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-sans text-foreground hover:bg-secondary transition-colors cursor-pointer"
             >
               <Star
-                className={`h-3.5 w-3.5 text-amber-300 ${starredIds.has(contextMenu.candidate.id) ? "fill-current" : ""}`}
+                className={`h-3.5 w-3.5 text-amber-500 ${starredIds.has(contextMenu.candidate.id) ? "fill-current" : ""}`}
               />
               <span>{starredIds.has(contextMenu.candidate.id) ? "Unstar candidate" : "Star candidate"}</span>
             </button>
@@ -712,22 +712,22 @@ export function CandidateLeaderboard({
               type="button"
               onClick={() => handleReevaluate(contextMenu.candidate)}
               disabled={rescoringIds.has(contextMenu.candidate.id)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-sans text-foreground hover:bg-secondary transition-colors cursor-pointer disabled:opacity-40"
             >
-              <RotateCcw className="h-3.5 w-3.5 text-emerald-400" />
+              <RotateCcw className="h-3.5 w-3.5 text-success" />
               <span>Re-evaluate criteria</span>
             </button>
 
             <Link
               href={`/items/${contextMenu.candidate.id}`}
               onClick={() => setContextMenu(null)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-sans text-foreground hover:bg-secondary transition-colors"
             >
-              <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
+              <ExternalLink className="h-3.5 w-3.5 text-primary" />
               <span>Inspect full dossier</span>
             </Link>
 
-            <div className="my-1 border-t border-white/10" />
+            <div className="my-1 border-t border-border" />
 
             <button
               type="button"
@@ -736,9 +736,9 @@ export function CandidateLeaderboard({
                 setContextMenu(null);
                 setDeleteCandidate(cand);
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-sans text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >
-              <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
               <span>Delete candidate</span>
             </button>
           </div>,
@@ -747,17 +747,17 @@ export function CandidateLeaderboard({
 
       {/* Delete confirmation dialog for leaderboard */}
       <Dialog open={Boolean(deleteCandidate)} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
-        <DialogContent className="max-w-md border border-border bg-[#11141a] text-white shadow-2xl">
+        <DialogContent className="max-w-md border border-border bg-card text-foreground shadow-2xl rounded-xl">
           <DialogHeader className="space-y-2 text-left">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10 text-destructive">
               <Trash2 className="h-5 w-5" aria-hidden="true" />
             </div>
-            <DialogTitle className="font-serif text-xl font-normal tracking-tight text-white">
+            <DialogTitle className="font-sans text-xl font-bold tracking-tight text-foreground">
               Delete Candidate Dossier?
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-400">
+            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
               Are you sure you want to delete{" "}
-              <span className="font-medium text-white">{deleteCandidate?.title}</span>? All match scores,
+              <span className="font-medium text-foreground">{deleteCandidate?.title}</span>? All match scores,
               extracted evidence, screening questions, and evaluation notes will be permanently removed.
             </DialogDescription>
           </DialogHeader>
@@ -765,10 +765,10 @@ export function CandidateLeaderboard({
           <DialogFooter className="mt-5 flex items-center justify-end gap-2.5">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={() => setDeleteCandidate(null)}
               disabled={isDeleting}
-              className="cursor-pointer text-xs text-zinc-400 hover:text-white"
+              className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
             >
               Cancel
             </Button>
@@ -777,7 +777,7 @@ export function CandidateLeaderboard({
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="cursor-pointer gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-4 h-9 shadow-xs"
+              className="cursor-pointer gap-2 bg-destructive hover:bg-destructive/90 text-white text-sm font-semibold px-4 h-9 shadow-xs rounded-none"
             >
               {isDeleting ? (
                 <>

@@ -46,7 +46,7 @@ function ToolCard({
   const isError = state === "output-error" || Boolean(errorText);
 
   return (
-    <div className="my-2 rounded-lg border border-border bg-card p-3 text-xs shadow-xs">
+    <div className="my-2 rounded-lg border border-border bg-card p-3 text-sm shadow-xs">
       <div
         className="flex items-center justify-between cursor-pointer select-none"
         onClick={() => setExpanded(!expanded)}
@@ -57,18 +57,18 @@ function ToolCard({
           {isComplete && (
             <Badge
               variant="secondary"
-              className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+              className="text-[12px] px-1.5 py-0 h-4 bg-success/10 text-success border-success/20 rounded-none"
             >
               Completed
             </Badge>
           )}
           {isError && (
-            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+            <Badge variant="destructive" className="text-[12px] px-1.5 py-0 h-4 rounded-none">
               Failed
             </Badge>
           )}
           {!isComplete && !isError && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 animate-pulse">
+            <Badge variant="outline" className="text-[12px] px-1.5 py-0 h-4 animate-pulse rounded-none">
               Running...
             </Badge>
           )}
@@ -83,7 +83,7 @@ function ToolCard({
           {input !== undefined && (
             <div>
               <div className="font-medium text-muted-foreground mb-0.5">Input:</div>
-              <pre className="overflow-x-auto rounded bg-muted p-2 font-mono text-[11px] text-foreground">
+              <pre className="overflow-x-auto rounded-none bg-muted p-2 font-mono text-[13px] text-foreground">
                 {typeof input === "string" ? input : JSON.stringify(input, null, 2)}
               </pre>
             </div>
@@ -91,7 +91,7 @@ function ToolCard({
           {output !== undefined && (
             <div>
               <div className="font-medium text-muted-foreground mb-0.5">Result:</div>
-              <pre className="overflow-x-auto rounded bg-muted p-2 font-mono text-[11px] text-foreground">
+              <pre className="overflow-x-auto rounded-none bg-muted p-2 font-mono text-[13px] text-foreground">
                 {typeof output === "string" ? output : JSON.stringify(output, null, 2)}
               </pre>
             </div>
@@ -99,7 +99,7 @@ function ToolCard({
           {errorText && (
             <div>
               <div className="font-medium text-destructive mb-0.5">Error:</div>
-              <p className="rounded bg-destructive/10 p-2 text-[11px] text-destructive font-mono">
+              <p className="rounded-none bg-destructive/10 p-2 text-[13px] text-destructive font-mono">
                 {errorText}
               </p>
             </div>
@@ -122,9 +122,9 @@ function renderMessagePart(part: UIMessage["parts"][number], index: number) {
       return (
         <div
           key={index}
-          className="my-2 rounded-md border border-amber-500/20 bg-amber-500/5 p-3 text-xs font-mono text-muted-foreground"
+          className="my-2 rounded-none border border-border bg-secondary/30 p-3 text-sm font-mono text-muted-foreground"
         >
-          <div className="font-semibold text-amber-600 dark:text-amber-400 not-italic mb-1">
+          <div className="font-semibold text-foreground not-italic mb-1 font-sans">
             Reasoning Process
           </div>
           <div className="whitespace-pre-wrap">{part.text}</div>
@@ -132,7 +132,7 @@ function renderMessagePart(part: UIMessage["parts"][number], index: number) {
       );
     case "source-url":
       return (
-        <div key={index} className="my-1 text-xs">
+        <div key={index} className="my-1 text-sm">
           <a
             href={part.url}
             target="_blank"
@@ -147,20 +147,20 @@ function renderMessagePart(part: UIMessage["parts"][number], index: number) {
       return (
         <div
           key={index}
-          className="my-1 rounded border border-border bg-muted/30 p-2 text-xs text-muted-foreground"
+          className="my-1 rounded border border-border bg-muted/30 p-2 text-sm text-muted-foreground"
         >
           Document: <span className="font-medium text-foreground">{part.title}</span> ({part.mediaType})
         </div>
       );
     case "file":
       return (
-        <div key={index} className="my-1 text-xs text-muted-foreground">
+        <div key={index} className="my-1 text-sm text-muted-foreground">
           File: <span className="font-medium text-foreground">{part.filename || part.mediaType}</span>
         </div>
       );
     case "reasoning-file":
       return (
-        <div key={index} className="my-1 text-xs text-muted-foreground font-mono">
+        <div key={index} className="my-1 text-sm text-muted-foreground font-mono">
           Reasoning File: {part.mediaType} ({part.url})
         </div>
       );
@@ -262,25 +262,25 @@ export function Chat({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card/80 px-5 py-3.5 backdrop-blur-xs">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.12)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none border border-border bg-secondary text-primary">
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-sans text-sm font-semibold tracking-tight text-white">
+              <h3 className="font-sans text-base font-semibold tracking-tight text-foreground">
                 Dossier Intelligence Copilot
               </h3>
               {itemId && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                <span className="inline-flex items-center gap-1.5 rounded-none border border-success/30 bg-success/10 px-2 py-0.5 text-[12px] font-medium text-success">
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"></span>
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success"></span>
                   </span>
                   <span>Grounded in Resume</span>
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[13px] text-muted-foreground">
               Interactive RAG verification · Gemini intelligence
             </p>
           </div>
@@ -288,8 +288,8 @@ export function Chat({
 
         {isStreaming && (
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
-              <Loader2 className="h-3 w-3 animate-spin text-emerald-400" />
+            <span className="flex items-center gap-1.5 text-sm text-primary font-mono">
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
               Synthesizing...
             </span>
             <Button
@@ -297,7 +297,7 @@ export function Chat({
               variant="outline"
               size="sm"
               onClick={stop}
-              className="h-7 px-2.5 text-xs border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white cursor-pointer"
+              className="h-7 px-2.5 text-sm rounded-none border-border bg-secondary text-foreground hover:bg-secondary/80 cursor-pointer"
             >
               <Square className="h-3 w-3 mr-1" />
               Stop
@@ -310,13 +310,13 @@ export function Chat({
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-6">
-            <div className="mb-3.5 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-well text-emerald-400 shadow-sm">
+            <div className="mb-3.5 flex h-11 w-11 items-center justify-center rounded-none border border-border bg-secondary text-primary shadow-xs">
               <Sparkles className="h-5 w-5" />
             </div>
-            <h4 className="font-serif text-lg font-normal tracking-tight text-white mb-1.5">
+            <h4 className="font-sans text-lg font-semibold tracking-tight text-foreground mb-1.5">
               Inquire into Candidate Provenance
             </h4>
-            <p className="text-xs text-zinc-400 max-w-sm mb-5 leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-sm mb-5 leading-relaxed">
               Interrogate specific career claims, cross-reference experience against requirements, or generate tailored interview probes.
             </p>
             <div className="flex flex-wrap justify-center gap-2 max-w-lg">
@@ -325,7 +325,7 @@ export function Chat({
                   key={prompt}
                   type="button"
                   onClick={() => handleQuickPrompt(prompt)}
-                  className="rounded-full border border-border bg-well/80 px-3.5 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/40 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer select-none"
+                  className="rounded-none border border-border bg-background px-3.5 py-1.5 font-sans text-sm font-medium text-foreground hover:bg-secondary hover:border-foreground transition-colors cursor-pointer select-none"
                 >
                   {prompt}
                 </button>
@@ -341,15 +341,15 @@ export function Chat({
                 className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
               >
                 {!isUser && (
-                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-950/50 text-emerald-400 mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-none border border-border bg-secondary text-primary mt-0.5">
                     <Sparkles className="h-3.5 w-3.5" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-xs ${
+                  className={`max-w-[85%] px-4 py-3 text-base ${
                     isUser
-                      ? "rounded-tr-xs bg-zinc-800 border border-zinc-700 text-zinc-100"
-                      : "rounded-tl-xs border border-border bg-well text-zinc-200"
+                      ? "rounded-none bg-foreground text-background font-sans shadow-none"
+                      : "rounded-none border border-border bg-card text-foreground font-sans shadow-xs"
                   }`}
                 >
                   <div className="space-y-1.5 leading-relaxed">
@@ -357,7 +357,7 @@ export function Chat({
                   </div>
                 </div>
                 {isUser && (
-                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800 text-zinc-300 mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-none border border-border bg-foreground text-background mt-0.5">
                     <User className="h-3.5 w-3.5" />
                   </div>
                 )}
@@ -368,8 +368,8 @@ export function Chat({
 
         {/* Streaming status indicator inside list */}
         {isStreaming && (
-          <div className="flex items-center gap-2 text-xs text-emerald-400 pl-10 font-mono">
-            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="flex items-center gap-2 text-sm text-primary pl-10 font-mono">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             <span>Formulating grounded response...</span>
           </div>
         )}
@@ -377,7 +377,7 @@ export function Chat({
 
       {/* Error state with retry */}
       {(error || status === "error") && (
-        <div className="border-t border-destructive/20 bg-destructive/5 px-4 py-2 flex items-center justify-between gap-2 text-xs text-destructive">
+        <div className="border-t border-destructive/20 bg-destructive/5 px-4 py-2 flex items-center justify-between gap-2 text-sm text-destructive">
           <div className="flex items-center gap-1.5 overflow-hidden">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span className="truncate">
@@ -389,7 +389,7 @@ export function Chat({
             variant="outline"
             size="sm"
             onClick={() => regenerate()}
-            className="h-7 shrink-0 gap-1 text-xs border-destructive/30 hover:bg-destructive/10 cursor-pointer"
+            className="h-7 shrink-0 gap-1 text-sm border-destructive/30 hover:bg-destructive/10 cursor-pointer rounded-none"
           >
             <RotateCcw className="h-3 w-3" />
             Retry
@@ -398,26 +398,26 @@ export function Chat({
       )}
 
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="border-t border-border bg-well/40 p-3.5 flex gap-2.5 items-center">
+      <form onSubmit={handleSubmit} className="border-t border-border bg-secondary/20 p-3.5 flex gap-2.5 items-center">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={isStreaming ? "Synthesizing answer..." : "Ask copilot about candidate's skills, tenure, or gaps..."}
           disabled={isStreaming}
-          className="flex-1 text-sm bg-well border-input text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-emerald-500/40"
+          className="flex-1 text-base bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-none"
         />
         <Button
           type="submit"
           size="sm"
           disabled={!input.trim() || isStreaming}
-          className="h-9 px-4 cursor-pointer gap-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-medium transition-colors disabled:opacity-40 disabled:hover:bg-emerald-500"
+          className="h-9 px-4 cursor-pointer gap-2 rounded-none bg-foreground text-background hover:bg-foreground/85 font-medium transition-colors disabled:opacity-40"
         >
           {isStreaming ? (
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+            <Loader2 className="h-4 w-4 animate-spin text-background" />
           ) : (
-            <Send className="h-4 w-4 text-zinc-950" />
+            <Send className="h-4 w-4 text-background" />
           )}
-          <span className="text-xs font-semibold">Send</span>
+          <span className="text-sm font-semibold">Send</span>
         </Button>
       </form>
     </div>

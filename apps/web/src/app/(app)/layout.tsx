@@ -32,21 +32,9 @@ import { domain } from "@/lib/domain";
 const SHELL_MOTION_CSS = `
 @keyframes tr-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes tr-fade{from{opacity:0}to{opacity:1}}
-@keyframes ambient-glow{
-  0%, 100% { transform: scale(1) translate3d(0, 0, 0); opacity: 0.65; }
-  50% { transform: scale(1.12) translate3d(24px, -14px, 0); opacity: 0.9; }
-}
-@keyframes ambient-glow-secondary{
-  0%, 100% { transform: scale(1) translate3d(0, 0, 0); opacity: 0.45; }
-  50% { transform: scale(1.08) translate3d(-18px, 12px, 0); opacity: 0.75; }
-}
 .tr-rise{animation:tr-rise .7s cubic-bezier(.22,1,.36,1) both}
 .tr-fade{animation:tr-fade .6s ease-out both}
-.tr-ambient-1{animation: ambient-glow 16s ease-in-out infinite alternate}
-.tr-ambient-2{animation: ambient-glow-secondary 22s ease-in-out infinite alternate}
-@media (prefers-reduced-motion:reduce){
-  .tr-rise,.tr-fade,.tr-ambient-1,.tr-ambient-2{animation:none}
-}
+@media (prefers-reduced-motion:reduce){.tr-rise,.tr-fade{animation:none}}
 `;
 
 export default function AppLayout({
@@ -101,53 +89,34 @@ export default function AppLayout({
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground selection:bg-blue-500/30">
+    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary/20">
       <style>{SHELL_MOTION_CSS}</style>
 
-      {/* Apple-grade Atmospheric Ambient Background */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-        {/* Soft living violet-slate aurora */}
-        <div className="tr-ambient-1 absolute -top-48 left-1/2 h-[640px] w-[960px] -translate-x-1/2 rounded-full bg-gradient-to-b from-indigo-500/12 via-purple-500/6 to-transparent blur-[140px]" />
-        {/* Secondary subtle emerald / teal tint reflecting evaluation intelligence */}
-        <div className="tr-ambient-2 absolute top-12 right-[-8%] h-[520px] w-[620px] rounded-full bg-gradient-to-br from-emerald-500/8 via-teal-500/4 to-transparent blur-[130px]" />
-        {/* Apple subtle micro-dot texture with radial falloff mask */}
-        <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage: `radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 1px, transparent 1px)`,
-            backgroundSize: "28px 28px",
-            maskImage: "radial-gradient(ellipse 75% 65% at 50% 12%, black 35%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 75% 65% at 50% 12%, black 35%, transparent 100%)",
-          }}
-        />
-      </div>
-
       {/* Shell header */}
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border/80 bg-[#09090b]/80 px-4 backdrop-blur-xl sm:px-8">
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-card/90 px-4 backdrop-blur-md sm:px-8">
         <Link
           href="/dashboard"
-          className="group flex items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="group flex items-center rounded-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          title="TalentRank Dashboard"
+          aria-label="TalentRank Dashboard"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card transition-colors group-hover:border-zinc-600">
-            <Compass className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-          </span>
-          <span className="text-[13px] font-semibold tracking-[0.18em] text-white uppercase">
-            {domain.labels.product}
+          <span className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-white shadow-xs overflow-hidden p-1.5 transition-transform group-hover:scale-105">
+            <img src="/logo.png" alt="TalentRank" className="h-6 w-6 object-contain" />
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
           {isPending ? (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               <span>Loading session</span>
             </div>
           ) : session?.user ? (
             <>
-              <span className="inline-flex max-w-[180px] items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-zinc-300">
+              <span className="inline-flex max-w-[200px] items-center gap-2 rounded-none border border-border bg-card px-3 py-1 text-sm text-foreground font-sans">
                 <span
-                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                    isAnonymous ? "bg-amber-500" : "bg-emerald-500"
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    isAnonymous ? "bg-amber-500" : "bg-success"
                   }`}
                   aria-hidden="true"
                 />
@@ -158,10 +127,10 @@ export default function AppLayout({
                 <button
                   type="button"
                   onClick={() => setUpgradeOpen(true)}
-                  className="hidden cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:text-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:inline-flex"
+                  className="hidden cursor-pointer items-center gap-1.5 rounded-none border border-border bg-card px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-secondary focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:inline-flex"
                 >
                   Upgrade account
-                  <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               )}
 
@@ -170,13 +139,13 @@ export default function AppLayout({
                 size="sm"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="h-8 cursor-pointer gap-1.5 text-xs text-zinc-400 transition-colors hover:bg-transparent hover:text-white"
+                className="h-8 cursor-pointer gap-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 title="Sign out"
               >
                 {signingOut ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
                 )}
                 <span className="hidden sm:inline">Sign out</span>
                 <span className="sr-only sm:hidden">Sign out</span>
@@ -184,7 +153,7 @@ export default function AppLayout({
             </>
           ) : (
             <Link href="/">
-              <Button size="sm" variant="default" className="h-8 cursor-pointer text-xs">
+              <Button size="sm" variant="default" className="h-8 cursor-pointer text-sm rounded-none bg-foreground text-background">
                 Sign in
               </Button>
             </Link>
@@ -193,17 +162,17 @@ export default function AppLayout({
       </header>
 
       {/* Main app content */}
-      <main className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12">{children}</main>
 
       {/* Global toaster for notifications */}
       <Toaster />
 
       {/* Upgrade anonymous account dialog */}
       <Dialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
-        <DialogContent className="gap-0 rounded-lg border border-border bg-card p-6 text-white shadow-2xl sm:max-w-md">
+        <DialogContent className="gap-0 rounded-xl border border-border bg-card p-6 text-foreground shadow-2xl sm:max-w-md">
           <form onSubmit={handleUpgradeAccount}>
             <DialogHeader className="space-y-1.5 text-left">
-              <DialogTitle className="font-serif text-2xl font-normal tracking-tight text-white">
+              <DialogTitle className="font-sans text-2xl font-bold tracking-tight text-foreground">
                 Keep your work
               </DialogTitle>
               <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
@@ -214,7 +183,7 @@ export default function AppLayout({
 
             <div className="space-y-4 py-5">
               <div className="space-y-1.5">
-                <label htmlFor="upgrade-email" className="text-xs font-medium text-zinc-300">
+                <label htmlFor="upgrade-email" className="text-sm font-medium text-foreground">
                   Email address
                 </label>
                 <Input
@@ -224,11 +193,11 @@ export default function AppLayout({
                   placeholder="name@example.com"
                   value={upgradeEmail}
                   onChange={(e) => setUpgradeEmail(e.target.value)}
-                  className="h-9 border-input bg-well text-sm text-zinc-50 placeholder:text-zinc-500"
+                  className="h-9 border-input bg-background text-sm text-foreground placeholder:text-muted-foreground"
                 />
               </div>
-              <div className="flex items-start gap-2.5 rounded-md border border-border bg-well p-3 text-xs leading-relaxed text-muted-foreground">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+              <div className="flex items-start gap-2.5 rounded-lg border border-border bg-secondary/50 p-3 text-sm leading-relaxed text-muted-foreground">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
                 <p>Everything created during this anonymous session stays linked to your account.</p>
               </div>
             </div>
@@ -236,10 +205,10 @@ export default function AppLayout({
             <DialogFooter className="gap-2 sm:gap-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setUpgradeOpen(false)}
-                className="cursor-pointer text-muted-foreground hover:text-white"
+                className="cursor-pointer text-muted-foreground hover:text-foreground text-sm"
               >
                 Cancel
               </Button>
@@ -247,10 +216,10 @@ export default function AppLayout({
                 type="submit"
                 size="sm"
                 disabled={upgrading || !upgradeEmail.trim()}
-                className="cursor-pointer gap-1.5"
+                className="cursor-pointer gap-1.5 rounded-none bg-foreground text-background hover:opacity-85 font-medium text-sm"
               >
                 {upgrading && (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 )}
                 Upgrade account
               </Button>

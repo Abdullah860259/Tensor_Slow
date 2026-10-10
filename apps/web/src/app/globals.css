@@ -1,50 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap');
 @import "tailwindcss";
 
-/*
-  Foundry theme: matte carbon canvas, graphite surfaces, hairline borders.
-  Color is functional only: emerald = strong, amber = potential, rose = gap/risk,
-  steel blue = interactive focus. The shadcn tokens are remapped so Button, Input,
-  Dialog, Tabs and Chat inherit the look without per-component overrides.
+:root {
+  --font-inter-tight: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-caslon: 'Libre Caslon Text', 'Times New Roman', Georgia, serif;
+  --font-fragment: 'Fragment Mono', 'SF Mono', Consolas, monospace;
+}
 
-  canvas   #09090b   card #11141a   well (inset) #0c0f14   border #1e2430
+/*
+  Archon Theme:
+  - Text primary: #0a0a0a
+  - Background (page): #f7f7f7
+  - Accent blue: #4365fa
 */
 @theme {
-  --color-background: #09090b;
-  --color-foreground: #fafafa;
-  --color-card: #11141a;
-  --color-card-foreground: #fafafa;
-  --color-popover: #11141a;
-  --color-popover-foreground: #fafafa;
-  --color-primary: #e4e4e7;
-  --color-primary-foreground: #09090b;
-  --color-secondary: #1a1f29;
-  --color-secondary-foreground: #e4e4e7;
-  --color-muted: #151a22;
-  --color-muted-foreground: #94a3b8;
-  --color-accent: #1a1f29;
-  --color-accent-foreground: #fafafa;
-  --color-destructive: #f43f5e;
-  --color-destructive-foreground: #fafafa;
-  --color-border: #1e2430;
-  --color-input: #27272a;
-  --color-ring: #3b82f6;
+  --color-background: #F7F7F7;
+  --color-foreground: #0A0A0A;
+  
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0A0A0A;
+  
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #0A0A0A;
+  
+  --color-primary: #4365FA; /* Archon Blue */
+  --color-primary-foreground: #FFFFFF;
+  
+  --color-secondary: #EBEBEB;
+  --color-secondary-foreground: #0A0A0A;
+  
+  --color-muted: #F2F2F2;
+  --color-muted-foreground: #7A7A7A;
+  
+  --color-accent: #F2F2F2;
+  --color-accent-foreground: #0A0A0A;
+  
+  --color-destructive: #CF4646; /* Archon Error Red */
+  --color-destructive-foreground: #FFFFFF;
+  
+  --color-border: #D9D9D9;
+  --color-input: #D9D9D9;
+  --color-ring: #4365FA;
 
-  /* Extra tokens used by the Foundry components */
-  --color-well: #0c0f14;
-  --color-steel: #3b82f6;
+  /* Extra tokens */
+  --color-well: #EBEBEB;
+  --color-steel: #7A7A7A;
+  --color-success: #48B768; /* Archon Success Green */
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.375rem;
-  --radius-xl: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 
-  /*
-    Load Geist / Geist Mono with next/font and expose them as
-    --font-sans-loaded / --font-mono-loaded on <html>.
-    Without that, the fallbacks below are used.
-  */
-  --font-sans: var(--font-sans-loaded, "Geist"), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: var(--font-mono-loaded, "Geist Mono"), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Font variables are injected at runtime by Next.js on <html>,
+     so they are referenced directly in rules below, not here. */
 }
 
 @layer base {
@@ -55,20 +64,106 @@
   }
 
   html {
-    color-scheme: dark;
-    scrollbar-color: #27272a transparent;
+    color-scheme: light;
+    scrollbar-color: #D9D9D9 transparent;
   }
 
   ::selection {
-    background: rgb(59 130 246 / 0.35);
-    color: #ffffff;
+    background: rgba(67, 101, 250, 0.2); /* Archon Blue tint */
+    color: #0A0A0A;
   }
 }
 
 body {
   color: var(--color-foreground);
   background: var(--color-background);
-  font-family: var(--font-sans);
+  /* injected by Next.js */
+  font-family: var(--font-inter-tight, ui-sans-serif, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-inter-tight, 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+
+/* Tailwind v4 utility class registrations */
+@utility font-sans {
+  font-family: var(--font-inter-tight, 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+@utility font-heading {
+  font-family: var(--font-inter-tight, 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  letter-spacing: -0.03em;
+}
+
+@utility font-display {
+  font-family: var(--font-inter-tight, 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  letter-spacing: -0.03em;
+}
+
+/* Archon Standard: Libre Caslon Text is specifically for numeric figures, stat highlights, and editorial quotes */
+@utility font-figure {
+  font-family: var(--font-caslon, 'Libre Caslon Text', 'Times New Roman', Georgia, serif);
+}
+
+@utility font-caslon {
+  font-family: var(--font-caslon, 'Libre Caslon Text', 'Times New Roman', Georgia, serif);
+}
+
+@utility font-serif {
+  font-family: var(--font-caslon, 'Libre Caslon Text', 'Times New Roman', Georgia, serif);
+}
+
+@utility font-mono {
+  font-family: var(--font-fragment, 'Fragment Mono', 'SF Mono', Consolas, monospace);
+}
+
+@utility font-arial {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Lenis smooth scroll friction */
+html {
+  scroll-behavior: smooth;
+}
+
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Archon Hero tags ticker animation */
+@keyframes heroTagsSlide {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-hero-tags {
+  animation: heroTagsSlide 16s linear infinite;
+}
+
+.animate-hero-tags:hover {
+  animation-play-state: paused;
 }

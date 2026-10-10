@@ -24,14 +24,14 @@ export function Panel({
   bodyClassName?: string;
 }): React.JSX.Element {
   return (
-    <section className={`overflow-hidden rounded-md border border-border bg-card ${className}`}>
-      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-        <h2 className="flex items-center gap-2 text-[13px] font-medium text-zinc-100">
-          {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />}
+    <section className={`overflow-hidden rounded-xl border border-border bg-card shadow-xs ${className}`}>
+      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 bg-secondary/20">
+        <h2 className="flex items-center gap-2 text-[15px] font-sans font-semibold text-foreground">
+          {Icon && <Icon className="h-4 w-4 text-primary" aria-hidden="true" />}
           {title}
         </h2>
         {aside && (
-          <div className="font-mono text-[11px] text-muted-foreground tabular-nums">{aside}</div>
+          <div className="font-mono text-[13px] text-muted-foreground tabular-nums">{aside}</div>
         )}
       </header>
       <div className={bodyClassName}>{children}</div>
@@ -77,7 +77,7 @@ export function ScoreRing({
           r={radius}
           fill="none"
           strokeWidth={stroke}
-          className="stroke-zinc-800"
+          className="stroke-border"
         />
         {has && (
           <circle
@@ -89,11 +89,12 @@ export function ScoreRing({
             strokeWidth={stroke}
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - value / 100)}
+            strokeLinecap="round"
           />
         )}
       </svg>
       <span
-        className="absolute font-mono font-semibold text-white tabular-nums"
+        className="absolute font-figure font-normal text-foreground tabular-nums"
         style={{ fontSize: Math.round(size * 0.3) }}
       >
         {has ? Math.round(value) : "--"}
@@ -120,7 +121,7 @@ export function ScoreBar({
   return (
     <div className={`flex h-1.5 gap-[2px] ${className}`} aria-hidden="true">
       {Array.from({ length: segments }, (_, i) => (
-        <span key={i} className={`flex-1 ${i < filled ? style.bar : "bg-zinc-800"}`} />
+        <span key={i} className={`flex-1 rounded-full ${i < filled ? style.bar : "bg-secondary"}`} />
       ))}
     </div>
   );
@@ -135,7 +136,7 @@ export function StatusBadge({
 }): React.JSX.Element {
   const style = getStatusStyle(status);
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs ${style.text} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 text-sm font-sans font-medium ${style.text} ${className}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden="true" />
       {style.label}
     </span>
@@ -153,7 +154,7 @@ export function FitBadge({
   const style = getScoreStyle(score);
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-sans font-medium tracking-tight ${style.badge} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[13px] font-sans font-medium tracking-tight ${style.badge} ${className}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden="true" />
       <span>{style.label}</span>
@@ -170,7 +171,7 @@ export function Tag({
 }): React.JSX.Element {
   return (
     <span
-      className={`inline-flex items-center rounded-md border border-zinc-800/80 bg-zinc-850/40 px-2 py-0.5 font-sans text-[11px] font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-white ${className}`}
+      className={`inline-flex items-center rounded-md border border-border bg-secondary px-2.5 py-0.5 font-sans text-[13px] font-medium text-foreground transition-colors hover:bg-secondary/80 ${className}`}
     >
       {children}
     </span>

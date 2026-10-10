@@ -195,7 +195,9 @@ export default function AboutPage(): React.JSX.Element {
     };
 
     measure();
-    const timer = setTimeout(measure, 150);
+    const timer1 = setTimeout(measure, 150);
+    const timer2 = setTimeout(measure, 400);
+    const timer3 = setTimeout(measure, 700);
     window.addEventListener("resize", measure);
 
     let ro: ResizeObserver | null = null;
@@ -205,7 +207,9 @@ export default function AboutPage(): React.JSX.Element {
     }
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
       window.removeEventListener("resize", measure);
       if (ro) ro.disconnect();
     };
@@ -285,14 +289,14 @@ export default function AboutPage(): React.JSX.Element {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 animate-fade-in-up">
         {/* ========================================================== */}
         {/* 1. Team Section: Centered Clear Photo + External Cards      */}
         {/* ========================================================== */}
         <section className="relative overflow-hidden border-b border-border bg-background pt-14 pb-20 sm:pt-20 sm:pb-28">
           <div className="mx-auto max-w-7xl border-x border-border/80 px-4 sm:px-8 lg:px-12">
             {/* Section Header */}
-            <div className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto max-w-3xl text-center animate-fade-in-up">
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/80 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <Users className="h-3.5 w-3.5 text-primary" />
                 Meet Team TensorSlow
@@ -309,7 +313,7 @@ export default function AboutPage(): React.JSX.Element {
             {/* Diagram Container: External Cards on Left/Right + Unobstructed Image in Center */}
             <div
               ref={diagramContainerRef}
-              className="relative mt-12 sm:mt-16 mx-auto w-full max-w-6xl"
+              className="relative mt-12 sm:mt-16 mx-auto w-full max-w-6xl animate-fade-in-scale animation-delay-100"
             >
               {/* Dynamic SVG Connecting Lines Layer (Active on lg+ desktop) */}
               <svg
@@ -352,7 +356,7 @@ export default function AboutPage(): React.JSX.Element {
               {/* Responsive Layout: 3 Columns on desktop, Stack on tablet/mobile */}
               <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_280px] xl:grid-cols-[310px_minmax(0,1fr)_310px] items-center gap-6 lg:gap-8">
                 {/* ── Left Column: Ahmed (Top) & Abdullah (Bottom) ── */}
-                <div className="hidden lg:flex flex-col justify-around gap-8 h-full py-2 z-30">
+                <div className="hidden lg:flex flex-col justify-around gap-8 h-full py-2 z-30 animate-fade-in-up animation-delay-150">
                   {TEAM_MEMBERS.filter((m) => m.side === "left").map((member) => (
                     <div
                       key={member.id}
@@ -402,7 +406,7 @@ export default function AboutPage(): React.JSX.Element {
                 </div>
 
                 {/* ── Center Column: Unobstructed Team Photograph ── */}
-                <div className="relative mx-auto w-full z-10">
+                <div className="relative mx-auto w-full z-10 animate-fade-in-scale animation-delay-100">
                   <div className="relative rounded-2xl border border-border bg-card p-2 sm:p-3 shadow-lg overflow-hidden">
                     <div className="relative aspect-[4/3] sm:aspect-[16/11] rounded-xl overflow-hidden bg-black/5 dark:bg-black/30">
                       {/* Crystal clear image with completely visible faces */}
@@ -443,7 +447,7 @@ export default function AboutPage(): React.JSX.Element {
                 </div>
 
                 {/* ── Right Column: Yahya (Top) & Mahad (Bottom) ── */}
-                <div className="hidden lg:flex flex-col justify-around gap-8 h-full py-2 z-30">
+                <div className="hidden lg:flex flex-col justify-around gap-8 h-full py-2 z-30 animate-fade-in-up animation-delay-150">
                   {TEAM_MEMBERS.filter((m) => m.side === "right").map((member) => (
                     <div
                       key={member.id}
@@ -504,7 +508,7 @@ export default function AboutPage(): React.JSX.Element {
             </div>
 
             {/* Mobile & Tablet Card Grid (Shown below on smaller viewports) */}
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:hidden">
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:hidden animate-fade-in-up animation-delay-150">
               {TEAM_MEMBERS.map((member) => (
                 <div
                   key={`mobile-grid-${member.id}`}
@@ -559,7 +563,7 @@ export default function AboutPage(): React.JSX.Element {
         {/* ========================================================== */}
         {/* 2. Product Section: Mission & Technical Pillars            */}
         {/* ========================================================== */}
-        <section className="border-b border-border bg-card/30 py-20 sm:py-28">
+        <section className="border-b border-border bg-card/30 py-20 sm:py-28 animate-fade-in-up animation-delay-200">
           <div className="mx-auto max-w-7xl border-x border-border/80 px-6 sm:px-12">
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/80 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -690,7 +694,7 @@ export default function AboutPage(): React.JSX.Element {
         {/* ========================================================== */}
         {/* 3. Pre-Footer Call to Action                                */}
         {/* ========================================================== */}
-        <section className="bg-background py-20 sm:py-28">
+        <section className="bg-background py-20 sm:py-28 animate-fade-in-up animation-delay-300">
           <div className="mx-auto max-w-7xl border-x border-border/80 px-6 sm:px-12">
             <div className="rounded-2xl border border-border bg-card p-10 text-center sm:p-16 shadow-xs">
               <h2 className="mx-auto max-w-2xl font-sans text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">

@@ -22,7 +22,7 @@ export function isQuotaError(error: unknown): boolean {
   if (!error) return false;
   const err = error as Record<string, unknown>;
   const status = (err.status ?? err.statusCode) as number | undefined;
-  if (status === 429 || status === 503) return true;
+  if (status === 429 || status === 503 || status === 502 || status === 504) return true;
 
   const errStr = (
     String(error) +
@@ -31,18 +31,29 @@ export function isQuotaError(error: unknown): boolean {
     " " +
     (typeof err.responseBody === "string" ? err.responseBody : "") +
     " " +
+    (err.cause ? String(err.cause) : "") +
+    " " +
     JSON.stringify(err.data || {})
   ).toLowerCase();
 
   return (
     errStr.includes("429") ||
     errStr.includes("503") ||
+    errStr.includes("502") ||
+    errStr.includes("504") ||
     errStr.includes("quota") ||
     errStr.includes("resource_exhausted") ||
     errStr.includes("rate limit") ||
     errStr.includes("rate_limit") ||
     errStr.includes("too many requests") ||
-    errStr.includes("unavailable")
+    errStr.includes("unavailable") ||
+    errStr.includes("enotfound") ||
+    errStr.includes("econnrefused") ||
+    errStr.includes("econnreset") ||
+    errStr.includes("etimedout") ||
+    errStr.includes("fetch failed") ||
+    errStr.includes("cannot connect to api") ||
+    errStr.includes("network error")
   );
 }
 

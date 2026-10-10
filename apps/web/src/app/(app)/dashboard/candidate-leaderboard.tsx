@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { clampScore, formatYears, getScoreStyle, getStatusStyle } from "@/lib/candidate-ui";
 import { FitBadge } from "@/components/ui/foundry";
+import { LinkedInLink } from "@/components/ui/linkedin-link";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ export type LeaderboardCandidate = {
   aiTags?: string[];
   yearsOfExperience?: number;
   starred?: boolean;
+  linkedinUrl?: string;
 };
 
 const FIT_LABELS = new Set(["Strong Fit", "Potential", "Unqualified"]);
@@ -437,6 +439,9 @@ export function CandidateLeaderboard({
                             >
                               {candidate.title}
                             </Link>
+                            {candidate.linkedinUrl && (
+                              <LinkedInLink href={candidate.linkedinUrl} name={candidate.title} />
+                            )}
                             {hasScore && candidate.score! >= 80 && (
                               <span title="Strong Fit (80%+)">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-hidden="true" />

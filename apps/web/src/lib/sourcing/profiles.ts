@@ -60,7 +60,13 @@ export function normalizeLinkedinUrl(url: string | undefined | null): string | n
   if (!url) return null;
   const match = url.trim().match(/linkedin\.com\/in\/([^/?#]+)/i);
   if (!match?.[1]) return null;
-  return `https://www.linkedin.com/in/${decodeURIComponent(match[1]).toLowerCase()}`;
+  let slug = match[1];
+  try {
+    slug = decodeURIComponent(slug);
+  } catch {
+    // Malformed %-escape: keep the raw slug rather than failing (this also runs while rendering pages)
+  }
+  return `https://www.linkedin.com/in/${encodeURIComponent(slug.toLowerCase())}`;
 }
 
 export function profileFullName(p: ApifyProfile): string {

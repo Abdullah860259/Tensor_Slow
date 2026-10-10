@@ -17,6 +17,8 @@ import {
 } from "@/lib/candidate-ui";
 import { FitBadge, Panel, ScoreRing, StatusBadge } from "@/components/ui/foundry";
 import { Chat } from "@/components/ai/chat";
+import { LinkedInLink } from "@/components/ui/linkedin-link";
+import { normalizeLinkedinUrl } from "@/lib/sourcing/profiles";
 import { ReevaluateButton } from "./reevaluate-button";
 import { DeleteCandidateButton } from "./delete-candidate-button";
 
@@ -106,6 +108,7 @@ export default async function CandidateDossierPage({
   const tags = item.aiTags ?? [];
   const verdict = fields.verdict || item.aiSummary || "";
   const rawText = typeof item.content === "string" ? item.content : "";
+  const linkedinUrl = normalizeLinkedinUrl(item.sourceUrl);
 
   // Prefer questions stored on the candidate; otherwise use the active role's rubric.
   const rubricQuestions = stringList(
@@ -139,6 +142,11 @@ export default async function CandidateDossierPage({
               <p className="mt-3 max-w-2xl text-base leading-relaxed text-pretty text-zinc-400">
                 {headline}
               </p>
+            )}
+            {linkedinUrl && (
+              <div className="mt-4">
+                <LinkedInLink href={linkedinUrl} name={name} variant="button" />
+              </div>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2.5">

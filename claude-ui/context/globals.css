@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/*
+  Foundry theme: matte carbon canvas, graphite surfaces, hairline borders.
+  Color is functional only: emerald = strong, amber = potential, rose = gap/risk,
+  steel blue = interactive focus. The shadcn tokens are remapped so Button, Input,
+  Dialog, Tabs and Chat inherit the look without per-component overrides.
+
+  canvas   #09090b   card #11141a   well (inset) #0c0f14   border #1e2430
+*/
+@theme {
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-card: #11141a;
+  --color-card-foreground: #fafafa;
+  --color-popover: #11141a;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #e4e4e7;
+  --color-primary-foreground: #09090b;
+  --color-secondary: #1a1f29;
+  --color-secondary-foreground: #e4e4e7;
+  --color-muted: #151a22;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #1a1f29;
+  --color-accent-foreground: #fafafa;
+  --color-destructive: #f43f5e;
+  --color-destructive-foreground: #fafafa;
+  --color-border: #1e2430;
+  --color-input: #27272a;
+  --color-ring: #3b82f6;
+
+  /* Extra tokens used by the Foundry components */
+  --color-well: #0c0f14;
+  --color-steel: #3b82f6;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+
+  /*
+    Load Geist / Geist Mono with next/font and expose them as
+    --font-sans-loaded / --font-mono-loaded on <html>.
+    Without that, the fallbacks below are used.
+  */
+  --font-sans: var(--font-sans-loaded, "Geist"), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-mono-loaded, "Geist Mono"), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: dark;
+    scrollbar-color: #27272a transparent;
+  }
+
+  ::selection {
+    background: rgb(59 130 246 / 0.35);
+    color: #ffffff;
+  }
+}
+
+body {
+  color: var(--color-foreground);
+  background: var(--color-background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

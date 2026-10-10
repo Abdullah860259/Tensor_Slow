@@ -39,6 +39,8 @@ interface TeamMember {
   initials: string;
   badge: string;
   side: "left" | "right";
+  // Organic scrambled offset & subtle tilt
+  cardOffsetClass: string;
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
@@ -55,6 +57,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     initials: "MA",
     badge: "Full-Stack Lead",
     side: "left",
+    cardOffsetClass: "lg:-translate-x-3 lg:-translate-y-4 lg:-rotate-1.5 hover:rotate-0 hover:scale-[1.02] transition-transform duration-300",
   },
   {
     id: "abdullah",
@@ -69,6 +72,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     initials: "AA",
     badge: "Backend & APIs",
     side: "left",
+    cardOffsetClass: "lg:translate-x-4 lg:translate-y-4 lg:rotate-1.5 hover:rotate-0 hover:scale-[1.02] transition-transform duration-300",
   },
   {
     id: "yahya",
@@ -83,6 +87,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     initials: "MY",
     badge: "Frontend & UI/UX",
     side: "right",
+    cardOffsetClass: "lg:-translate-x-12 xl:-translate-x-16 lg:translate-y-3 lg:-rotate-2.5 z-40 shadow-md backdrop-blur-xs hover:rotate-0 hover:scale-[1.02] transition-transform duration-300",
   },
   {
     id: "mahad",
@@ -97,6 +102,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     initials: "MH",
     badge: "Backend Engineer",
     side: "right",
+    cardOffsetClass: "lg:translate-x-4 lg:translate-y-6 lg:rotate-2 hover:rotate-0 hover:scale-[1.02] transition-transform duration-300",
   },
 ];
 
@@ -317,7 +323,7 @@ export default function AboutPage(): React.JSX.Element {
             >
               {/* Dynamic SVG Connecting Lines Layer (Active on lg+ desktop) */}
               <svg
-                className="absolute inset-0 h-full w-full pointer-events-none z-20 hidden lg:block"
+                className="absolute inset-0 h-full w-full pointer-events-none z-30 hidden lg:block"
                 aria-hidden="true"
               >
                 {TEAM_MEMBERS.map((m) => {
@@ -360,7 +366,7 @@ export default function AboutPage(): React.JSX.Element {
                   {TEAM_MEMBERS.filter((m) => m.side === "left").map((member) => (
                     <div
                       key={member.id}
-                      className="group relative rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs transition-shadow duration-200 hover:shadow-md"
+                      className={`group relative rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs transition-all duration-300 hover:shadow-md ${member.cardOffsetClass}`}
                     >
                       {/* Anchor Node 2 on right edge facing the center image (Simple Blue) */}
                       <div
@@ -451,7 +457,7 @@ export default function AboutPage(): React.JSX.Element {
                   {TEAM_MEMBERS.filter((m) => m.side === "right").map((member) => (
                     <div
                       key={member.id}
-                      className="group relative rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs transition-shadow duration-200 hover:shadow-md"
+                      className={`group relative rounded-xl border border-border bg-card p-3.5 sm:p-4 shadow-2xs transition-all duration-300 hover:shadow-md ${member.cardOffsetClass}`}
                     >
                       {/* Anchor Node 2 on left edge facing the center image (Simple Blue) */}
                       <div

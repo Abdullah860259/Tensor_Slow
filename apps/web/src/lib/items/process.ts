@@ -10,20 +10,27 @@ import { logger } from "@/lib/logger";
  * so every path produces an embedding (RAG needs it) and the domain fields.
  * Scoped by ownerId so it can never touch another user's item.
  */
-export async function processItem(itemId: string, ownerId: string): Promise<"processed" | "failed"> {
+export async function processItem(
+  itemId: string,
+  ownerId: string,
+  // Scores against these requirements instead of the owner's active criteria (used by AI sourcing)
+  criteriaOverride?: string,
+): Promise<"processed" | "failed"> {
   await connectMongoose();
   const item = await ItemModel.findOne({ _id: itemId, ownerId });
   if (!item) return "failed";
 
-  // Check if owner has configured active custom job criteria
-  let criteriaPrompt: string | undefined;
-  try {
-    const activeCriteria = await JobCriteriaModel.findOne({ ownerId, isActive: true });
-    if (activeCriteria?.expandedCriteria) {
-      criteriaPrompt = `Target Job Role: ${activeCriteria.roleTitle}\n\n${activeCriteria.expandedCriteria}`;
+  // Otherwise check if owner has configured active custom job criteria
+  let criteriaPrompt: string | undefined = criteriaOverride;
+  if (!criteriaPrompt) {
+    try {
+      const activeCriteria = await JobCriteriaModel.findOne({ ownerId, isActive: true });
+      if (activeCriteria?.expandedCriteria) {
+        criteriaPrompt = `Target Job Role: ${activeCriteria.roleTitle}\n\n${activeCriteria.expandedCriteria}`;
+      }
+    } catch (critErr) {
+      logger.warn("[process] Failed to fetch active job criteria", { error: String(critErr) });
     }
-  } catch (critErr) {
-    logger.warn("[process] Failed to fetch active job criteria", { error: String(critErr) });
   }
 
   const text = (item.content || item.title).trim();

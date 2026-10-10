@@ -11,6 +11,7 @@ import {
   Loader2,
   MoreVertical,
   RotateCcw,
+  Star,
   Trash2,
 } from "lucide-react";
 import { clampScore, formatYears, getScoreStyle, getStatusStyle } from "@/lib/candidate-ui";
@@ -24,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 export type LeaderboardCandidate = {
   id: string;
@@ -36,6 +37,7 @@ export type LeaderboardCandidate = {
   category?: string;
   aiTags?: string[];
   yearsOfExperience?: number;
+  starred?: boolean;
 };
 
 const FIT_LABELS = new Set(["Strong Fit", "Potential", "Unqualified"]);
@@ -117,6 +119,62 @@ export function CandidateLeaderboard({
 
   // Active rescoring candidates
   const [rescoringIds, setRescoringIds] = useState<Set<string>>(new Set());
+
+  // Starred candidates: seeded from the server, updated optimistically, persisted via /api/stars
+  const serverStarredKey = candidates
+    .filter((c) => c.starred)
+    .map((c) => c.id)
+    .join(",");
+  const [starredIds, setStarredIds] = useState<Set<string>>(
+    () => new Set(serverStarredKey ? serverStarredKey.split(",") : []),
+  );
+  const [starPendingIds, setStarPendingIds] = useState<Set<string>>(new Set());
+
+  // Re-sync after router.refresh() delivers fresh server state
+  useEffect(() => {
+    setStarredIds(new Set(serverStarredKey ? serverStarredKey.split(",") : []));
+  }, [serverStarredKey]);
+
+  const setStarLocally = (id: string, starred: boolean) => {
+    setStarredIds((prev) => {
+      const next = new Set(prev);
+      if (starred) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleStar = async (candidate: LeaderboardCandidate) => {
+    const { id } = candidate;
+    if (starPendingIds.has(id)) return;
+    const nextStarred = !starredIds.has(id);
+
+    setStarLocally(id, nextStarred);
+    setStarPendingIds((prev) => new Set(prev).add(id));
+    try {
+      const res = await fetch("/api/stars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: id, starred: nextStarred }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to update star.");
+      }
+    } catch (err) {
+      setStarLocally(id, !nextStarred);
+      toast.error(err instanceof Error ? err.message : "Failed to update star.");
+    } finally {
+      setStarPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  // Declared before the empty-state early return so the hook order never changes between renders
+  const [fitFilter, setFitFilter] = useState<"all" | "starred" | "strong" | "potential" | "unqualified">("all");
 
   // Delete candidate confirmation dialog
   const [deleteCandidate, setDeleteCandidate] = useState<LeaderboardCandidate | null>(null);
@@ -211,12 +269,13 @@ export function CandidateLeaderboard({
     );
   }
 
-  const [fitFilter, setFitFilter] = useState<"all" | "strong" | "potential" | "unqualified">("all");
+  const starredCount = ranked.filter((c) => starredIds.has(c.id)).length;
   const strongCount = ranked.filter((c) => (c.score ?? 0) >= 80).length;
   const potentialCount = ranked.filter((c) => (c.score ?? 0) >= 60 && (c.score ?? 0) < 80).length;
   const unqualifiedCount = ranked.filter((c) => (c.score ?? 0) < 60).length;
 
   const displayedCandidates = ranked.filter((c) => {
+    if (fitFilter === "starred") return starredIds.has(c.id);
     if (fitFilter === "strong") return (c.score ?? 0) >= 80;
     if (fitFilter === "potential") return (c.score ?? 0) >= 60 && (c.score ?? 0) < 80;
     if (fitFilter === "unqualified") return (c.score ?? 0) < 60;
@@ -238,6 +297,18 @@ export function CandidateLeaderboard({
             }`}
           >
             All Candidates <span className="opacity-70 tabular-nums">({ranked.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFitFilter("starred")}
+            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+              fitFilter === "starred"
+                ? "bg-amber-400/15 text-amber-300 border border-amber-400/30"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <Star className={`h-3 w-3 ${fitFilter === "starred" ? "fill-current" : ""}`} aria-hidden="true" />
+            Starred <span className="opacity-70 tabular-nums">({starredCount})</span>
           </button>
           <button
             type="button"
@@ -310,6 +381,7 @@ export function CandidateLeaderboard({
             <tbody>
               {displayedCandidates.map((candidate, index) => {
                 const isRescoring = rescoringIds.has(candidate.id);
+                const isStarred = starredIds.has(candidate.id);
                 const hasScore = typeof candidate.score === "number";
                 const scoreStyle = getScoreStyle(candidate.score);
                 const status = getStatusStyle(candidate.status);
@@ -479,6 +551,25 @@ export function CandidateLeaderboard({
 
                     <td className="px-4 py-3.5 text-right align-middle whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleStar(candidate)}
+                          disabled={starPendingIds.has(candidate.id)}
+                          aria-pressed={isStarred}
+                          aria-label={`${isStarred ? "Unstar" : "Star"} ${candidate.title}`}
+                          title={isStarred ? "Unstar candidate" : "Star candidate"}
+                          className={`flex h-7 w-7 items-center justify-center rounded-full border transition-all cursor-pointer focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait ${
+                            isStarred
+                              ? "border-amber-400/30 bg-amber-400/10 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.12)] hover:bg-amber-400/15"
+                              : "border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                          }`}
+                        >
+                          <Star
+                            className={`h-3.5 w-3.5 transition-transform motion-safe:active:scale-90 ${isStarred ? "fill-current" : ""}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+
                         <Link
                           href={`/items/${candidate.id}`}
                           aria-label={`Inspect profile: ${candidate.title}`}
@@ -542,6 +633,20 @@ export function CandidateLeaderboard({
           >
             <button
               type="button"
+              onClick={() => {
+                const cand = activeDropdown.candidate;
+                setActiveDropdown(null);
+                void toggleStar(cand);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer"
+            >
+              <Star
+                className={`h-3.5 w-3.5 text-amber-300 ${starredIds.has(activeDropdown.candidate.id) ? "fill-current" : ""}`}
+              />
+              <span>{starredIds.has(activeDropdown.candidate.id) ? "Unstar candidate" : "Star candidate"}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => handleReevaluate(activeDropdown.candidate)}
               disabled={rescoringIds.has(activeDropdown.candidate.id)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer disabled:opacity-40"
@@ -587,6 +692,21 @@ export function CandidateLeaderboard({
               <p className="truncate text-xs font-semibold text-white">{contextMenu.candidate.title}</p>
               <p className="text-[10px] text-zinc-500 font-sans">Quick actions</p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const cand = contextMenu.candidate;
+                setContextMenu(null);
+                void toggleStar(cand);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-sans text-zinc-200 hover:bg-white/[0.06] hover:text-white transition-colors cursor-pointer"
+            >
+              <Star
+                className={`h-3.5 w-3.5 text-amber-300 ${starredIds.has(contextMenu.candidate.id) ? "fill-current" : ""}`}
+              />
+              <span>{starredIds.has(contextMenu.candidate.id) ? "Unstar candidate" : "Star candidate"}</span>
+            </button>
 
             <button
               type="button"

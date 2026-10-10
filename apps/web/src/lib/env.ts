@@ -20,6 +20,13 @@ const serverEnvSchema = z.object({
   DEMO_USER_EMAIL: z.string().email().default("demo@example.com"),
   LINKEDIN_SESSION_COOKIE: z.string().optional(),
   CHAT_MODEL_ID: z.string().optional().default("gemini-3.6-flash"),
+  // AI sourcing: LinkedIn search via Apify (harvestapi/linkedin-profile-search). Sourcing is disabled without a token.
+  APIFY_API_TOKEN: z.string().optional(),
+  APIFY_LINKEDIN_ACTOR_ID: z.string().min(1).default("M2FMdjRVeF1HPGFcc"),
+  // Spend guards: Apify runs are billed per search page and per profile
+  SOURCING_MAX_CHARGE_USD: z.coerce.number().positive().default(1),
+  SOURCING_RUNS_PER_USER_PER_DAY: z.coerce.number().int().positive().default(3),
+  SOURCING_RUNS_PER_DAY: z.coerce.number().int().positive().default(20),
 });
 
 const clientEnvSchema = z.object({

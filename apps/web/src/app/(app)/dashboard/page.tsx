@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { connectMongoose } from "@/lib/db";
-import { ItemModel, JobCriteriaModel } from "@/lib/models";
+import { ItemModel, JobCriteriaModel, StarModel } from "@/lib/models";
 import { domain } from "@/lib/domain";
 import { candidateDisplayName, extractHeadline } from "@/lib/candidate-ui";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { ImportCandidateButton } from "./import-candidate-button";
 import { JobCriteriaModal, type ActiveCriteria } from "./job-criteria-modal";
 import { CandidateLeaderboard } from "./candidate-leaderboard";
+import { SourceCandidatesModal } from "./source-candidates-modal";
 
 const L = domain.labels;
 
@@ -101,10 +102,12 @@ export default async function DashboardPage({
   if (!session?.user) redirect("/");
 
   await connectMongoose();
-  const [all, activeDoc] = await Promise.all([
+  const [all, activeDoc, starredIds] = await Promise.all([
     ItemModel.find({ ownerId: session.user.id }).sort({ createdAt: -1 }).limit(500).lean(),
     JobCriteriaModel.findOne({ ownerId: session.user.id, isActive: true }).lean(),
+    StarModel.getStarredItemIds(session.user.id),
   ]);
+  const starred = new Set(starredIds);
 
   // Serialize for the client modal (ObjectIds and Mongoose internals can't cross the boundary).
   const activeCriteria: ActiveCriteria | null = activeDoc
@@ -200,6 +203,7 @@ export default async function DashboardPage({
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <JobCriteriaModal initialCriteria={activeCriteria} />
+          <SourceCandidatesModal />
           <ImportCandidateButton />
         </div>
       </header>
@@ -401,6 +405,7 @@ export default async function DashboardPage({
                     category: item.category,
                     aiTags: item.aiTags,
                     yearsOfExperience: fields.yearsOfExperience,
+                    starred: starred.has(String(item._id)),
                   };
                 })}
               />

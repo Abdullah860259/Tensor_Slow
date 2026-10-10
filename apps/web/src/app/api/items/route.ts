@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { ItemCreateInputSchema } from "@/lib/contracts";
 import { connectMongoose } from "@/lib/db";
-import { ItemModel } from "@/lib/models";
+import { ItemModel, StarModel } from "@/lib/models";
 import { processItem } from "@/lib/items/process";
 import { logger } from "@/lib/logger";
 
@@ -208,6 +208,7 @@ export async function DELETE(req: Request): Promise<Response> {
         headers: { "Content-Type": "application/json" },
       });
     }
+    await StarModel.removeForItem(ownerId, deleted._id);
 
     return Response.json({
       success: true,

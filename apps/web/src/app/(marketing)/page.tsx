@@ -16,7 +16,6 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
-  User,
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -664,7 +663,6 @@ const STEPS = [
 export default function MarketingPage(): React.JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -674,35 +672,39 @@ export default function MarketingPage(): React.JSX.Element {
     try {
       setLoading(true);
       setError(null);
+
+      // Fast check: if session already exists, navigate immediately
+      const session = await authClient.getSession();
+      if (session?.data?.user) {
+        window.location.href = "/dashboard";
+        return;
+      }
+
       const res = await authClient.signIn.anonymous();
       if (res && "error" in res && res.error) {
+        // If Better-Auth reports user is already anonymous, proceed to dashboard
+        const msg = res.error.message?.toLowerCase() || "";
+        if (msg.includes("anonymous") || msg.includes("cannot sign in again")) {
+          window.location.href = "/dashboard";
+          return;
+        }
         setError(res.error.message || "Failed to start anonymous session.");
         setLoading(false);
         return;
       }
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err: unknown) {
+      const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+      if (msg.includes("anonymous") || msg.includes("cannot sign in again")) {
+        window.location.href = "/dashboard";
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to start anonymous session.");
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    try {
-      setDemoLoading(true);
-      setError(null);
-      const res = await authClient.signIn.anonymous();
-      if (res && "error" in res && res.error) {
-        setError(res.error.message || "Failed to start session.");
-        setDemoLoading(false);
-        return;
-      }
-      router.push("/dashboard");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to start session.");
-      setDemoLoading(false);
-    }
-  };
+  const handleDemoLogin = handleStartAnonymous;
 
   /* Which tutorial step is crossing the middle of the viewport */
   useEffect(() => {
@@ -757,10 +759,10 @@ export default function MarketingPage(): React.JSX.Element {
             <Button
               size="sm"
               onClick={handleStartAnonymous}
-              disabled={loading || demoLoading}
+              disabled={loading}
               className="rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
             >
-              {loading || demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
               Get Started
             </Button>
           </div>
@@ -824,21 +826,11 @@ export default function MarketingPage(): React.JSX.Element {
                 <Button
                   size="lg"
                   onClick={handleStartAnonymous}
-                  disabled={loading || demoLoading}
+                  disabled={loading}
                   className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
                 >
-                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  {loading ? <Loader2 className="animate-spin mr-2" aria-hidden="true" /> : null}
                   Launch Live Demo →
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleDemoLogin}
-                  disabled={loading || demoLoading}
-                  className="h-12 rounded-none border border-border bg-card px-8 font-sans text-base font-medium text-foreground hover:bg-secondary transition-colors"
-                >
-                  {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="mr-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
-                  Explore as Demo User
                 </Button>
               </div>
 
@@ -1075,21 +1067,11 @@ export default function MarketingPage(): React.JSX.Element {
                 <Button
                   size="lg"
                   onClick={handleStartAnonymous}
-                  disabled={loading || demoLoading}
+                  disabled={loading}
                   className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
                 >
-                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  {loading ? <Loader2 className="animate-spin mr-2" aria-hidden="true" /> : null}
                   Launch Live Demo →
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleDemoLogin}
-                  disabled={loading || demoLoading}
-                  className="h-12 rounded-none border border-border bg-card px-8 font-sans text-base font-medium text-foreground hover:bg-secondary"
-                >
-                  {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="mr-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
-                  Explore as Demo User
                 </Button>
               </div>
             </div>

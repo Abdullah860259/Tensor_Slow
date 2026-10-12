@@ -14,7 +14,6 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
-  User,
   Users,
   Zap,
 } from "lucide-react";
@@ -135,7 +134,6 @@ export default function AboutPage(): React.JSX.Element {
   const router = useRouter();
   const [activeMember, setActiveMember] = useState<string>("ahmed");
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
 
   // Dynamic measuring of connection line endpoints
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
@@ -148,30 +146,36 @@ export default function AboutPage(): React.JSX.Element {
   const handleStartAnonymous = async () => {
     try {
       setLoading(true);
+
+      const session = await authClient.getSession();
+      if (session?.data?.user) {
+        window.location.href = "/dashboard";
+        return;
+      }
+
       const res = await authClient.signIn.anonymous();
       if (res && "error" in res && res.error) {
+        const msg = res.error.message?.toLowerCase() || "";
+        if (msg.includes("anonymous") || msg.includes("cannot sign in again")) {
+          window.location.href = "/dashboard";
+          return;
+        }
         setLoading(false);
         return;
       }
-      router.push("/dashboard");
-    } catch {
+
+      window.location.href = "/dashboard";
+    } catch (err: unknown) {
+      const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+      if (msg.includes("anonymous") || msg.includes("cannot sign in again")) {
+        window.location.href = "/dashboard";
+        return;
+      }
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    try {
-      setDemoLoading(true);
-      const res = await authClient.signIn.anonymous();
-      if (res && "error" in res && res.error) {
-        setDemoLoading(false);
-        return;
-      }
-      router.push("/dashboard");
-    } catch {
-      setDemoLoading(false);
-    }
-  };
+  const handleDemoLogin = handleStartAnonymous;
 
   // Recalculate line coordinates on mount, resize, and state changes
   useEffect(() => {
@@ -275,10 +279,10 @@ export default function AboutPage(): React.JSX.Element {
             <Button
               size="sm"
               onClick={handleStartAnonymous}
-              disabled={loading || demoLoading}
+              disabled={loading}
               className="rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
             >
-              {loading || demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
               Get Started
             </Button>
           </div>
@@ -703,21 +707,11 @@ export default function AboutPage(): React.JSX.Element {
                 <Button
                   size="lg"
                   onClick={handleStartAnonymous}
-                  disabled={loading || demoLoading}
+                  disabled={loading}
                   className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
                 >
-                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  {loading ? <Loader2 className="animate-spin mr-2" aria-hidden="true" /> : null}
                   Launch Live Demo →
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleDemoLogin}
-                  disabled={loading || demoLoading}
-                  className="h-12 rounded-none border border-border bg-card px-8 font-sans text-base font-medium text-foreground hover:bg-secondary"
-                >
-                  {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="mr-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
-                  Explore as Demo User
                 </Button>
               </div>
             </div>

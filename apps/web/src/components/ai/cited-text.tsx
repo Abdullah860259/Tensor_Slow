@@ -7,8 +7,8 @@ const CITATION_REGEX = /\[\[item:([^|\]]+)\|([^\]]+)\]\]/g;
  * Parses inline formatted spans: citations [[item:id|title]], bold **bold text**, and inline `code`.
  */
 function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[] {
-  // Normalize awkward trailing whitespace before punctuation (e.g. " ] ." -> " ].")
-  const sanitized = rawText.replace(/\s+([.,;:!?])/g, "$1");
+  // Normalize awkward trailing whitespace before punctuation and strip trailing unclosed brackets
+  const sanitized = rawText.replace(/\s+([.,;:!?])/g, "$1").replace(/\[\s*$/, "");
   const nodes: React.ReactNode[] = [];
 
   // Match either citation [[item:...|...]] or bold **...** or code `...`
@@ -22,7 +22,13 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
 
     // Push leading plain text
     if (matchIndex > lastIndex) {
-      nodes.push(sanitized.slice(lastIndex, matchIndex));
+      let textChunk = sanitized.slice(lastIndex, matchIndex);
+      if (lastIndex > 0) {
+        textChunk = textChunk.replace(/^\s+([.,;:!?])/, "$1");
+      }
+      if (textChunk) {
+        nodes.push(textChunk);
+      }
     }
 
     if (matchStr.startsWith("[[item:")) {
@@ -34,7 +40,7 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
           <Link
             key={`${keyPrefix}-cite-${id}-${matchIndex}`}
             href={`/items/${id}`}
-            className="mx-1 inline-flex max-w-[16rem] items-center truncate rounded-none border border-primary/30 bg-primary/10 px-1.5 py-0.5 align-baseline font-mono text-[12px] font-medium text-primary hover:bg-primary/20 transition-colors"
+            className="mx-1 inline-flex max-w-[16rem] items-center truncate rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 align-baseline font-mono text-[12px] font-medium text-primary hover:bg-primary/20 transition-colors"
             title={`Inspect provenance: ${title}`}
           >
             {title}
@@ -53,7 +59,7 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
       nodes.push(
         <code
           key={`${keyPrefix}-code-${matchIndex}`}
-          className="rounded-none border border-border bg-secondary/50 px-1 py-0.5 font-mono text-[13px] text-foreground"
+          className="rounded-md border border-border bg-secondary/60 px-1.5 py-0.5 font-mono text-[13px] text-foreground"
         >
           {codeText}
         </code>
@@ -64,7 +70,13 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
   }
 
   if (lastIndex < sanitized.length) {
-    nodes.push(sanitized.slice(lastIndex));
+    let remaining = sanitized.slice(lastIndex);
+    if (lastIndex > 0) {
+      remaining = remaining.replace(/^\s+([.,;:!?])/, "$1");
+    }
+    if (remaining) {
+      nodes.push(remaining);
+    }
   }
 
   return nodes;
@@ -75,8 +87,8 @@ function renderInlineSpans(rawText: string, keyPrefix: string): React.ReactNode[
  * Formats bullet points, numbered lists, section headers, and inline citations seamlessly.
  */
 export function CitedText({ text }: { text: string }): React.JSX.Element {
-  // Strip trailing partial citation tag during streaming
-  const visible = text.replace(/\[\[[^\]]*$/, "");
+  // Strip trailing unclosed citation tag or dangling bracket during streaming/completion
+  const visible = text.replace(/\[{1,2}[^\]\n]*$/, "").trimEnd();
   const lines = visible.split(/\r?\n/);
 
   const elements: React.JSX.Element[] = [];

@@ -245,7 +245,7 @@ export default async function CandidateDossierPage({
             <AspectBreakdown aspects={fields.aspects} />
           ) : (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-relaxed text-zinc-400">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 This candidate was evaluated before aspect scoring existed. Re-evaluate to rate technical skills,
                 experience, domain fit, leadership, stability and logistics separately.
               </p>

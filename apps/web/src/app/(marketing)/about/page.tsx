@@ -162,8 +162,8 @@ export default function AboutPage(): React.JSX.Element {
   const handleDemoLogin = async () => {
     try {
       setDemoLoading(true);
-      const res = await fetch("/api/auth/demo", { method: "POST" });
-      if (!res.ok) {
+      const res = await authClient.signIn.anonymous();
+      if (res && "error" in res && res.error) {
         setDemoLoading(false);
         return;
       }
@@ -273,22 +273,12 @@ export default function AboutPage(): React.JSX.Element {
           {/* CTA Group */}
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDemoLogin}
-              disabled={demoLoading || loading}
-              className="hidden font-sans text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-flex"
-            >
-              {demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <User className="h-4 w-4" aria-hidden="true" />}
-              <span>Sign in</span>
-            </Button>
-            <Button
               size="sm"
               onClick={handleStartAnonymous}
               disabled={loading || demoLoading}
               className="rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
             >
-              {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+              {loading || demoLoading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
               Get Started
             </Button>
           </div>

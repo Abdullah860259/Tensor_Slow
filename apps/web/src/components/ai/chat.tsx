@@ -341,23 +341,34 @@ export function Chat({
                 className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
               >
                 {!isUser && (
-                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-none border border-border bg-secondary text-primary mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-lg border border-border bg-secondary text-primary mt-0.5">
                     <Sparkles className="h-3.5 w-3.5" />
                   </div>
                 )}
                 <div
                   className={`max-w-[85%] px-4 py-3 text-base ${
                     isUser
-                      ? "rounded-none bg-foreground text-background font-sans shadow-none"
-                      : "rounded-none border border-border bg-card text-foreground font-sans shadow-xs"
+                      ? "rounded-xl border border-border bg-secondary/80 text-foreground font-sans shadow-2xs"
+                      : "rounded-xl border border-border bg-card text-foreground font-sans shadow-xs"
                   }`}
                 >
                   <div className="space-y-1.5 leading-relaxed">
-                    {message.parts.map((part, index) => renderMessagePart(part, index))}
+                    {isUser ? (
+                      <p className="whitespace-pre-wrap font-sans text-[15px] leading-relaxed text-foreground">
+                        {message.parts
+                          .filter((p) => p.type === "text")
+                          .map((p) => (p as { type: "text"; text: string }).text)
+                          .join("") ||
+                          (message as { content?: string }).content ||
+                          ""}
+                      </p>
+                    ) : (
+                      message.parts.map((part, index) => renderMessagePart(part, index))
+                    )}
                   </div>
                 </div>
                 {isUser && (
-                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-none border border-border bg-foreground text-background mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-lg border border-border bg-secondary text-foreground mt-0.5">
                     <User className="h-3.5 w-3.5" />
                   </div>
                 )}

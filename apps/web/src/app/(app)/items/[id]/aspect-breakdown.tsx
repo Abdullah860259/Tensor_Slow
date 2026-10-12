@@ -38,14 +38,14 @@ export function AspectBreakdown({ aspects }: { aspects: AspectScore[] }): React.
           <li key={aspect} className="grid gap-x-6 gap-y-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
             <div className="space-y-2">
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-sm font-medium text-zinc-100">{aspect}</h3>
-                <span className={`font-mono text-sm font-semibold tabular-nums ${assessed ? style.text : "text-zinc-500"}`}>
+                <h3 className="text-sm font-semibold text-foreground">{aspect}</h3>
+                <span className={`font-mono text-sm font-semibold tabular-nums ${assessed ? style.text : "text-muted-foreground"}`}>
                   {assessed ? Math.round(score) : "--"}
                 </span>
               </div>
               <ScoreBar score={assessed ? score : undefined} />
             </div>
-            <p className={`text-sm leading-relaxed ${assessed ? "text-zinc-300" : "text-zinc-500 italic"}`}>
+            <p className={`text-sm leading-relaxed ${assessed ? "text-muted-foreground" : "text-muted-foreground/70 italic"}`}>
               {assessed ? evidence : evidence || "Not enough information to judge."}
             </p>
           </li>

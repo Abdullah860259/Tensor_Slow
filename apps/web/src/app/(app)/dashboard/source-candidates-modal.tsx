@@ -346,11 +346,11 @@ export function SourceCandidatesModal(): React.JSX.Element {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl sm:max-w-[760px]">
-          <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
-            <DialogTitle className="font-sans text-2xl font-bold tracking-tight text-foreground">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
+            <DialogTitle className="font-sans text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {step === "progress" ? run?.roleTitle || "Sourcing candidates" : "Source candidates with AI"}
             </DialogTitle>
-            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+            <DialogDescription className="text-sm sm:text-base leading-relaxed text-muted-foreground">
               {step === "brief" &&
                 "Describe who you need. AI turns it into an intake questionnaire, searches LinkedIn, and scores every match against your answers."}
               {step === "form" &&
@@ -360,7 +360,7 @@ export function SourceCandidatesModal(): React.JSX.Element {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             {step === "brief" && (
               <form id="sourcing-brief" onSubmit={handleGenerate} className="space-y-1.5">
                 <label htmlFor="sourcing-brief-text" className="text-sm font-medium text-foreground">

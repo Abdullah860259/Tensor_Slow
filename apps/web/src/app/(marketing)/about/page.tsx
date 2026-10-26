@@ -11,10 +11,12 @@ import {
   ExternalLink,
   Layers,
   Loader2,
+  Menu,
   Search,
   ShieldCheck,
   Sparkles,
   Users,
+  X,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -134,6 +136,7 @@ export default function AboutPage(): React.JSX.Element {
   const router = useRouter();
   const [activeMember, setActiveMember] = useState<string>("ahmed");
   const [loading, setLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dynamic measuring of connection line endpoints
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
@@ -230,14 +233,14 @@ export default function AboutPage(): React.JSX.Element {
       <SmoothScroll />
 
       {/* Header matching landing page */}
-      <header className="sticky top-0 z-50 h-16 border-b border-border bg-card/90 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-7xl items-center justify-between border-x border-border/80 px-6 sm:px-12">
+      <header className="sticky top-0 z-50 h-14 sm:h-16 border-b border-border bg-card/90 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-7xl items-center justify-between border-x border-border/80 px-4 sm:px-6 md:px-12">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white shadow-2xs overflow-hidden p-0.5 transition-transform group-hover:scale-105">
               <img src="/logo.png" alt="TalentRank" className="h-5 w-5 object-contain" />
             </span>
-            <span className="font-sans text-base font-semibold tracking-tight text-foreground">TalentRank</span>
+            <span className="font-sans text-sm sm:text-base font-semibold tracking-tight text-foreground">TalentRank</span>
           </Link>
 
           {/* Nav links */}
@@ -274,19 +277,62 @@ export default function AboutPage(): React.JSX.Element {
             </Link>
           </nav>
 
-          {/* CTA Group */}
+          {/* CTA Group + Mobile hamburger */}
           <div className="flex items-center gap-2">
             <Button
               size="sm"
               onClick={handleStartAnonymous}
               disabled={loading}
-              className="rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
+              className="hidden sm:inline-flex rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
             >
               {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
               Get Started
             </Button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="inline-flex md:hidden h-9 w-9 items-center justify-center rounded-md border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-border bg-card/95 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
+            <nav className="mx-auto max-w-7xl border-x border-border/80 px-4 py-4 flex flex-col gap-1">
+              {[
+                { label: "Process", href: "/#process" },
+                { label: "Features", href: "/#features" },
+                { label: "FAQs", href: "/#faqs" },
+                { label: "About", href: "/about" },
+                { label: "Live Demo", href: "/#demo" },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg px-3 py-2.5 font-sans text-sm font-medium text-foreground transition-colors hover:bg-secondary/60"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="mt-2 pt-2 border-t border-border">
+                <Button
+                  size="sm"
+                  onClick={() => { setMobileMenuOpen(false); handleStartAnonymous(); }}
+                  disabled={loading}
+                  className="w-full rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
+                >
+                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  Get Started
+                </Button>
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 animate-fade-in-up">
@@ -721,9 +767,9 @@ export default function AboutPage(): React.JSX.Element {
 
       {/* Footer matching standard minimal layout */}
       <footer className="border-t border-border bg-card text-sm text-muted-foreground">
-        <div className="mx-auto max-w-7xl border-x border-border/80 px-6 py-16 sm:px-12">
-          <div className="grid gap-12 sm:grid-cols-2 md:grid-cols-5">
-            <div className="md:col-span-2">
+        <div className="mx-auto max-w-7xl border-x border-border/80 px-4 py-10 sm:px-6 sm:py-16 md:px-12">
+          <div className="grid gap-8 grid-cols-2 sm:gap-12 md:grid-cols-5">
+            <div className="col-span-2 md:col-span-2">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white shadow-2xs overflow-hidden p-0.5">
                   <img src="/logo.png" alt="TalentRank" className="h-5 w-5 object-contain" />

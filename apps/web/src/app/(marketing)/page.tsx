@@ -12,10 +12,12 @@ import {
   EyeOff,
   FileText,
   Loader2,
+  Menu,
   Scale,
   Search,
   ShieldCheck,
   Sparkles,
+  X,
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -135,7 +137,7 @@ function H2({ id, text, className = "" }: { id?: string; text: string; className
   return (
     <h2
       id={id}
-      className={`font-sans text-balance text-4xl font-medium tracking-[-0.03em] text-foreground sm:text-5xl sm:leading-[1.12] ${className}`}
+      className={`font-sans text-balance text-2xl font-medium tracking-[-0.03em] text-foreground sm:text-4xl md:text-5xl sm:leading-[1.12] ${className}`}
     >
       <Words text={text} />
     </h2>
@@ -162,31 +164,31 @@ const cardContents = [
     title: "Deterministic Rubric Scoring",
     description:
       "Compile plain-English job specs into calibrated 0–100 evaluations across Must-Haves, Nice-to-Haves, and Red Flags with zero scoring hallucinations or model drift.",
-    span: "lg:col-span-3 lg:row-span-2",
+    span: "col-span-1 sm:col-span-1 lg:col-span-3 lg:row-span-2",
   },
   {
     title: "Verifiable Grounded Citations",
     description:
       "Every assessment claim anchors directly to an exact, quoted text span in the candidate's resume or repository. If an accomplishment cannot be verified, it is never credited.",
-    span: "lg:col-span-3 lg:row-span-2",
+    span: "col-span-1 sm:col-span-1 lg:col-span-3 lg:row-span-2",
   },
   {
     title: "Blind Anti-Bias Screening",
     description:
       "Design an objective, equitable technical hiring pipeline. TalentRank strips candidate names, demographic markers, graduation dates, and university prestige bias before evaluation begins. Our multi-agent evaluator measures candidates strictly against demonstrated architecture decisions, open-source execution, and verified engineering competencies. With verifiable audit trails, hiring teams ensure equitable standards across every candidate cohort without sacrificing technical rigor.",
-    span: "lg:col-span-4 lg:row-span-1",
+    span: "col-span-1 sm:col-span-2 lg:col-span-4 lg:row-span-1",
   },
   {
     title: "Sub-Second Multimodal Ingestion",
     description:
       "Ingest complex multi-page PDFs, LinkedIn URLs, and GitHub repos into 768-D Gemini vector embeddings in MongoDB Atlas in under 850ms.",
-    span: "lg:col-span-2 lg:row-span-1",
+    span: "col-span-1 sm:col-span-1 lg:col-span-2 lg:row-span-1",
   },
   {
     title: "Tenure & Risk Anomaly Detection",
     description:
       "Automatically detect frequent short-tenure hops, unexplained career timeline gaps, and inflated seniority claims before scheduling initial screens.",
-    span: "lg:col-span-2 lg:row-span-1",
+    span: "col-span-1 sm:col-span-1 lg:col-span-2 lg:row-span-1",
   },
 ];
 
@@ -470,7 +472,7 @@ function CriteriaVisual(): React.JSX.Element {
   };
 
   return (
-    <div className="-m-6 p-6 space-y-4 bg-white text-zinc-900 rounded-xl">
+    <div className="-m-4 sm:-m-6 md:-m-7 p-4 sm:p-6 md:p-7 space-y-4 bg-white text-zinc-900 rounded-xl">
       {/* Header with pill badge and close icon */}
       <div className="flex items-center justify-between">
         <span className="rounded-full bg-zinc-900 px-2.5 py-0.5 font-sans text-[11px] font-medium text-white">
@@ -497,7 +499,7 @@ function CriteriaVisual(): React.JSX.Element {
       </p>
 
       {/* Hairline divider */}
-      <div className="-mx-6 border-b border-zinc-200" />
+      <div className="-mx-4 sm:-mx-6 md:-mx-7 border-b border-zinc-200" />
 
       {/* Form Fields */}
       <div className="space-y-3.5 pt-1">
@@ -666,6 +668,7 @@ export default function MarketingPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const handleStartAnonymous = async () => {
@@ -725,17 +728,17 @@ export default function MarketingPage(): React.JSX.Element {
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SmoothScroll />
       {/* Navigation matching Archon */}
-      <header className="sticky top-0 z-50 h-16 border-b border-border bg-card/90 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-6xl items-center justify-between border-x border-border/80 px-6 sm:px-12">
+      <header className="sticky top-0 z-50 h-14 sm:h-16 border-b border-border bg-card/90 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-6xl items-center justify-between border-x border-border/80 px-4 sm:px-6 md:px-12">
           {/* Logo with TalentRank brand mark */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white shadow-2xs overflow-hidden p-0.5">
               <img src="/logo.png" alt="TalentRank" className="h-5 w-5 object-contain" />
             </span>
-            <span className="font-sans text-base font-semibold tracking-tight text-foreground">TalentRank</span>
+            <span className="font-sans text-sm sm:text-base font-semibold tracking-tight text-foreground">TalentRank</span>
           </div>
 
-          {/* Center nav links */}
+          {/* Center nav links — desktop only */}
           <nav className="hidden items-center gap-7 md:flex">
             {[
               { label: "Process", href: "#process" },
@@ -754,25 +757,68 @@ export default function MarketingPage(): React.JSX.Element {
             ))}
           </nav>
 
-          {/* CTA Group */}
+          {/* CTA + Mobile hamburger */}
           <div className="flex items-center gap-2">
             <Button
               size="sm"
               onClick={handleStartAnonymous}
               disabled={loading}
-              className="rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
+              className="hidden sm:inline-flex rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
             >
               {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
               Get Started
             </Button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="inline-flex md:hidden h-9 w-9 items-center justify-center rounded-md border border-border bg-secondary text-foreground transition-colors hover:bg-secondary/80"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-border bg-card/95 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
+            <nav className="mx-auto max-w-6xl border-x border-border/80 px-4 py-4 flex flex-col gap-1">
+              {[
+                { label: "Process", href: "#process" },
+                { label: "Features", href: "#features" },
+                { label: "FAQs", href: "#faqs" },
+                { label: "About", href: "/about" },
+                { label: "Live Demo", href: "#demo" },
+              ].map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg px-3 py-2.5 font-sans text-sm font-medium text-foreground transition-colors hover:bg-secondary/60"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="mt-2 pt-2 border-t border-border">
+                <Button
+                  size="sm"
+                  onClick={() => { setMobileMenuOpen(false); handleStartAnonymous(); }}
+                  disabled={loading}
+                  className="w-full rounded-none bg-foreground px-5 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity"
+                >
+                  {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                  Get Started
+                </Button>
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-1">
         {/* Hero Section Framed with Archon Hairlines */}
         <section className="relative overflow-hidden bg-background">
-          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 pt-16 pb-14 text-center sm:px-12 sm:pt-20">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-4 pt-10 pb-10 text-center sm:px-6 sm:pt-16 sm:pb-14 md:px-12 md:pt-20">
             {/* Archon-style sliding task tags */}
             <Reveal>
               <div
@@ -808,13 +854,13 @@ export default function MarketingPage(): React.JSX.Element {
             </Reveal>
 
             {/* Main heading: Arial regular 48px */}
-            <h1 className="mx-auto max-w-4xl font-arial text-balance text-[48px] font-normal leading-[1.15] text-foreground">
+            <h1 className="mx-auto max-w-4xl font-arial text-balance text-[28px] font-normal leading-[1.2] text-foreground sm:text-[36px] md:text-[44px] lg:text-[48px] md:leading-[1.15]">
               <Words text="Autonomous AI Recruitment That Discovers Your Best Engineers." step={60} delay={100} />
             </h1>
 
             {/* Sub heading: Arial regular 16px */}
             <Reveal delay={600}>
-              <p className="mx-auto mt-6 max-w-xl font-arial text-[16px] font-normal leading-relaxed text-muted-foreground">
+              <p className="mx-auto mt-4 max-w-xl font-arial text-sm font-normal leading-relaxed text-muted-foreground sm:mt-6 sm:text-[16px]">
                 We design and deploy multi-agent AI systems for technical recruitment. Replacing manual screening
                 and keyword filters with deterministic, evidence-backed evaluation that operates 24/7.
               </p>
@@ -822,12 +868,12 @@ export default function MarketingPage(): React.JSX.Element {
 
             {/* CTAs */}
             <Reveal delay={850}>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row">
                 <Button
                   size="lg"
                   onClick={handleStartAnonymous}
                   disabled={loading}
-                  className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
+                  className="h-11 w-full rounded-none bg-foreground px-8 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity sm:h-12 sm:w-auto sm:text-base"
                 >
                   {loading ? <Loader2 className="animate-spin mr-2" aria-hidden="true" /> : null}
                   Launch Live Demo →
@@ -847,12 +893,12 @@ export default function MarketingPage(): React.JSX.Element {
           </div>
 
           {/* Core Technologies & Integrations strip */}
-          <div className="border-y border-border bg-card/40 py-8">
-            <div className="mx-auto max-w-6xl border-x border-border/80 px-6 sm:px-12">
-              <p className="mb-6 text-center font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <div className="border-y border-border bg-card/40 py-6 sm:py-8">
+            <div className="mx-auto max-w-6xl border-x border-border/80 px-4 sm:px-6 md:px-12">
+              <p className="mb-4 sm:mb-6 text-center font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Core Technologies & Integrations
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16">
+              <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-8 md:gap-12 lg:gap-16">
                 {[
                   {
                     name: "Google Gemini",
@@ -901,7 +947,7 @@ export default function MarketingPage(): React.JSX.Element {
                 ].map((tool) => (
                   <div
                     key={tool.name}
-                    className="flex items-center gap-2.5 font-sans text-sm font-semibold tracking-tight text-muted-foreground transition-colors hover:text-foreground"
+                    className="flex items-center justify-center gap-2 font-sans text-xs sm:text-sm font-semibold tracking-tight text-muted-foreground transition-colors hover:text-foreground sm:justify-start sm:gap-2.5"
                   >
                     {tool.icon}
                     <span>{tool.name}</span>
@@ -914,8 +960,8 @@ export default function MarketingPage(): React.JSX.Element {
 
         {/* Process Section (How It Works with Archon Sticky Split) */}
         <section id="process" aria-labelledby="how-heading" className="border-t border-border bg-background">
-          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-24 sm:px-12 sm:py-32">
-            <div className="grid gap-16 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-20">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-4 py-14 sm:px-6 sm:py-24 md:px-12 md:py-32">
+            <div className="grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-16 lg:gap-20">
               <div className="md:sticky md:top-32 md:self-start">
                 <Kicker>How it works</Kicker>
                 <H2 id="how-heading" text="Multi-agent precision scoping candidates to job profiles." className="mt-4 !text-4xl sm:!text-5xl" />
@@ -949,16 +995,16 @@ export default function MarketingPage(): React.JSX.Element {
                     ref={(el) => {
                       stepRefs.current[i] = el;
                     }}
-                    className={`flex flex-col justify-center py-16 sm:py-20 transition-opacity duration-700 md:min-h-[78vh] ${
+                    className={`flex flex-col justify-center py-10 sm:py-16 md:py-20 transition-opacity duration-700 md:min-h-[78vh] ${
                       i === step ? "opacity-100" : "md:opacity-30"
                     }`}
                   >
                     <span className="font-figure text-sm text-muted-foreground">{s.n}</span>
-                    <h3 className="mt-3.5 font-sans text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
+                    <h3 className="mt-2.5 sm:mt-3.5 font-sans text-balance text-xl font-medium tracking-tight text-foreground sm:text-3xl md:text-4xl">
                       {s.title}
                     </h3>
-                    <p className="mt-4.5 max-w-md font-sans text-pretty text-base leading-relaxed text-muted-foreground">{s.body}</p>
-                    <div className="mt-8 rounded-xl border border-border bg-card p-6 sm:p-7 shadow-xs">{s.visual}</div>
+                    <p className="mt-3 sm:mt-4 max-w-md font-sans text-pretty text-sm sm:text-base leading-relaxed text-muted-foreground">{s.body}</p>
+                    <div className="mt-5 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6 md:p-7 shadow-xs">{s.visual}</div>
                   </li>
                 ))}
               </ol>
@@ -968,11 +1014,11 @@ export default function MarketingPage(): React.JSX.Element {
 
         {/* Metrics Strip: Compact size */}
         <section aria-label="System metrics" className="border-t border-border bg-card/30">
-          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-10 sm:px-12 sm:py-14">
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-4">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-4 py-8 sm:px-6 sm:py-10 md:px-12 md:py-14">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-6 sm:gap-y-6 lg:grid-cols-4">
               {METRICS.map((m, i) => (
                 <Reveal key={m.value} delay={i * 100} className="border-l-2 border-primary pl-4">
-                  <dt className="font-figure text-2xl font-normal tracking-tight text-foreground tabular-nums sm:text-3xl">
+                  <dt className="font-figure text-xl font-normal tracking-tight text-foreground tabular-nums sm:text-2xl md:text-3xl">
                     {m.value}
                   </dt>
                   <dd className="mt-1.5 font-sans text-xs leading-normal text-muted-foreground">{m.label}</dd>
@@ -984,7 +1030,7 @@ export default function MarketingPage(): React.JSX.Element {
 
         {/* Core Capabilities (Bento Grid) - Inverted Dark Section */}
         <section id="features" aria-labelledby="features-heading" className="border-t border-[#222222] bg-[#0A0A0A] text-white">
-          <div className="mx-auto max-w-6xl border-x border-[#222222] px-6 py-20 sm:px-12 sm:py-28">
+          <div className="mx-auto max-w-6xl border-x border-[#222222] px-4 py-14 sm:px-6 sm:py-20 md:px-12 md:py-28">
             <div className="mb-10 sm:mb-14">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1 font-sans text-[11px] font-medium uppercase tracking-widest text-zinc-300">
                 Core capabilities
@@ -992,7 +1038,7 @@ export default function MarketingPage(): React.JSX.Element {
             </div>
 
             {/* Responsive Bento Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-6 auto-rows-auto">
               {cardContents.map((card) => (
                 <PlusCard
                   key={card.title}
@@ -1004,11 +1050,11 @@ export default function MarketingPage(): React.JSX.Element {
             </div>
 
             {/* Section Footer Heading */}
-            <div className="max-w-2xl ml-auto text-right px-4 mt-8 lg:-mt-20">
-              <h2 id="features-heading" className="font-sans text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-white mb-4">
+            <div className="max-w-2xl mx-auto text-center px-0 mt-8 sm:ml-auto sm:mr-0 sm:text-right sm:px-4 lg:-mt-20">
+              <h2 id="features-heading" className="font-sans text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-white mb-3 sm:mb-4">
                 Built for precision. Engineered for technical truth.
               </h2>
-              <p className="font-sans text-base sm:text-lg leading-relaxed text-zinc-400">
+              <p className="font-sans text-sm sm:text-base md:text-lg leading-relaxed text-zinc-400">
                 TalentRank gives engineering leaders and hiring teams an objective, hallucination-free evaluation engine. Every candidate is benchmarked against deterministic rubrics with verifiable proof down to the exact source text.
               </p>
             </div>
@@ -1019,7 +1065,7 @@ export default function MarketingPage(): React.JSX.Element {
 
         {/* FAQ Section */}
         <section id="faqs" className="border-t border-border bg-card/20">
-          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-24 sm:px-12 sm:py-32">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-4 py-14 sm:px-6 sm:py-24 md:px-12 md:py-32">
             <div className="grid gap-12 md:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
               <div>
                 <Kicker>FAQs</Kicker>
@@ -1034,7 +1080,7 @@ export default function MarketingPage(): React.JSX.Element {
                     <button
                       type="button"
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="flex w-full items-center justify-between p-5 text-left font-sans text-base font-medium text-foreground transition-colors hover:bg-secondary/40 cursor-pointer"
+                      className="flex w-full items-center justify-between p-4 sm:p-5 text-left font-sans text-sm sm:text-base font-medium text-foreground transition-colors hover:bg-secondary/40 cursor-pointer"
                     >
                       <span>{faq.q}</span>
                       <span className="ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-xs">
@@ -1055,20 +1101,20 @@ export default function MarketingPage(): React.JSX.Element {
 
         {/* Pre-Footer CTA */}
         <section id="demo" className="border-t border-border bg-background">
-          <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-20 sm:px-12 sm:py-28">
-            <div className="rounded-2xl border border-border bg-card p-10 text-center sm:p-16 shadow-xs">
-              <h2 className="mx-auto max-w-2xl font-sans text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+          <div className="mx-auto max-w-6xl border-x border-border/80 px-4 py-14 sm:px-6 sm:py-20 md:px-12 md:py-28">
+            <div className="rounded-xl sm:rounded-2xl border border-border bg-card p-6 text-center sm:p-10 md:p-16 shadow-xs">
+              <h2 className="mx-auto max-w-2xl font-sans text-2xl font-medium tracking-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl">
                 Ready to identify your highest-yield engineering talent?
               </h2>
-              <p className="mx-auto mt-4 max-w-xl font-sans text-base text-muted-foreground">
+              <p className="mx-auto mt-3 sm:mt-4 max-w-xl font-sans text-sm sm:text-base text-muted-foreground">
                 Launch an anonymous demo session with a single click. Ingest real resumes, inspect 0–100 rubric scores, and chat with evidence-grounded dossiers.
               </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Button
                   size="lg"
                   onClick={handleStartAnonymous}
                   disabled={loading}
-                  className="h-12 rounded-none bg-foreground px-8 font-sans text-base font-medium text-background hover:opacity-85 transition-opacity"
+                  className="h-11 w-full rounded-none bg-foreground px-8 font-sans text-sm font-medium text-background hover:opacity-85 transition-opacity sm:h-12 sm:w-auto sm:text-base"
                 >
                   {loading ? <Loader2 className="animate-spin mr-2" aria-hidden="true" /> : null}
                   Launch Live Demo →
@@ -1081,9 +1127,9 @@ export default function MarketingPage(): React.JSX.Element {
 
       {/* Footer matching Archon's minimal layout */}
       <footer className="border-t border-border bg-card text-sm text-muted-foreground">
-        <div className="mx-auto max-w-6xl border-x border-border/80 px-6 py-16 sm:px-12">
-          <div className="grid gap-12 sm:grid-cols-2 md:grid-cols-5">
-            <div className="md:col-span-2">
+        <div className="mx-auto max-w-6xl border-x border-border/80 px-4 py-10 sm:px-6 sm:py-16 md:px-12">
+          <div className="grid gap-8 grid-cols-2 sm:gap-12 md:grid-cols-5">
+            <div className="col-span-2 md:col-span-2">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white shadow-2xs overflow-hidden p-0.5">
                   <img src="/logo.png" alt="TalentRank" className="h-5 w-5 object-contain" />

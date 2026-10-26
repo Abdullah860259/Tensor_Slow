@@ -288,7 +288,7 @@ export function CandidateLeaderboard({
     <>
       {/* Segmented Filter Pills & Candidate Count Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-card border border-border shadow-xs">
+        <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 p-1 rounded-xl sm:rounded-full bg-card border border-border shadow-xs">
           <button
             type="button"
             onClick={() => setFitFilter("all")}
@@ -353,7 +353,7 @@ export function CandidateLeaderboard({
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead>
               <tr className="border-b border-border bg-secondary/20 text-sm font-sans text-muted-foreground">
@@ -624,6 +624,140 @@ export function CandidateLeaderboard({
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View (visible on < md) */}
+        <div className="md:hidden divide-y divide-border/80">
+          {displayedCandidates.map((candidate, index) => {
+            const isRescoring = rescoringIds.has(candidate.id);
+            const isStarred = starredIds.has(candidate.id);
+            const hasScore = typeof candidate.score === "number";
+            const scoreStyle = getScoreStyle(candidate.score);
+            const tags = candidate.aiTags ?? [];
+            const displaySummary =
+              candidate.summary ||
+              candidate.headline ||
+              (candidate.category && !FIT_LABELS.has(candidate.category)
+                ? candidate.category
+                : "");
+
+            return (
+              <div
+                key={candidate.id}
+                className={`p-4 space-y-3 transition-colors hover:bg-secondary/30 ${
+                  isRescoring ? "bg-amber-500/[0.04]" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <RankBadge rank={index + 1} />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-xs font-sans font-semibold text-foreground">
+                      {getInitials(candidate.title)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link
+                          href={`/items/${candidate.id}`}
+                          className="truncate text-sm font-semibold text-foreground hover:text-primary hover:underline"
+                        >
+                          {candidate.title}
+                        </Link>
+                        {candidate.linkedinUrl && (
+                          <LinkedInLink href={candidate.linkedinUrl} name={candidate.title} />
+                        )}
+                        {hasScore && candidate.score! >= 80 && (
+                          <span title="Strong Fit (80%+)">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" aria-hidden="true" />
+                          </span>
+                        )}
+                        {isRescoring && (
+                          <Loader2 className="h-3 w-3 animate-spin text-amber-500" aria-label="Re-evaluating" />
+                        )}
+                      </div>
+                      {displaySummary && (
+                        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{displaySummary}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleStar(candidate)}
+                    disabled={starPendingIds.has(candidate.id)}
+                    aria-label={`${isStarred ? "Unstar" : "Star"} ${candidate.title}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all cursor-pointer ${
+                      isStarred
+                        ? "border-amber-500/30 bg-amber-500/15 text-amber-700 shadow-xs"
+                        : "border-border bg-card text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    <Star className={`h-4 w-4 ${isStarred ? "fill-current" : ""}`} />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums ${scoreStyle.badge}`}>
+                      {hasScore ? `${candidate.score}%` : "--"}
+                    </span>
+                    {hasScore && <FitBadge score={candidate.score} className="text-[11px] py-0.5 px-2" />}
+                    {candidate.yearsOfExperience !== undefined && (
+                      <span className="text-xs text-muted-foreground font-figure tabular-nums">
+                        {formatYears(candidate.yearsOfExperience)} yrs
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <Link
+                      href={`/items/${candidate.id}`}
+                      className="group inline-flex h-7 items-center gap-1 rounded-full border border-border bg-card px-3 text-xs font-sans font-medium text-foreground shadow-xs transition-all hover:bg-secondary whitespace-nowrap"
+                    >
+                      <span>Inspect</span>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (activeDropdown?.id === candidate.id) {
+                          setActiveDropdown(null);
+                        } else {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const menuWidth = 192;
+                          const left = Math.max(12, rect.right - menuWidth);
+                          const top = rect.bottom + 6;
+                          setActiveDropdown({
+                            id: candidate.id,
+                            top,
+                            left,
+                            candidate,
+                          });
+                        }
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-secondary"
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {tags.slice(0, 3).map((tag) => (
+                      <span key={tag} className="rounded-md border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {tag}
+                      </span>
+                    ))}
+                    {tags.length > 3 && (
+                      <span className="self-center px-1 text-[11px] text-muted-foreground">
+                        +{tags.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

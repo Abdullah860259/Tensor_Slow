@@ -113,7 +113,7 @@ export default function AppLayout({
             </div>
           ) : session?.user ? (
             <>
-              <span className="inline-flex max-w-[200px] items-center gap-2 rounded-none border border-border bg-card px-3 py-1 text-sm text-foreground font-sans">
+              <span className="inline-flex max-w-[130px] sm:max-w-[200px] items-center gap-2 rounded-none border border-border bg-card px-2.5 sm:px-3 py-1 text-xs sm:text-sm text-foreground font-sans">
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${
                     isAnonymous ? "bg-amber-500" : "bg-success"

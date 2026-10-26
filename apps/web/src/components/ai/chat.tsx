@@ -428,7 +428,7 @@ export function Chat({
           ) : (
             <Send className="h-4 w-4 text-background" />
           )}
-          <span className="text-sm font-semibold">Send</span>
+          <span className="hidden sm:inline text-sm font-semibold">Send</span>
         </Button>
       </form>
     </div>

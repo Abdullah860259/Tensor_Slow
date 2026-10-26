@@ -251,7 +251,7 @@ export function JobCriteriaModal({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl sm:max-w-[720px]">
-          <DialogHeader className="p-6 pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border shrink-0 space-y-1.5 text-left">
             <div className="flex flex-wrap items-center gap-2">
               {hasUnsavedDraft ? (
                 <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[13px] font-sans font-medium text-amber-700 dark:text-amber-400">
@@ -267,16 +267,16 @@ export function JobCriteriaModal({
                 </span>
               )}
             </div>
-            <DialogTitle className="font-sans text-2xl font-bold tracking-tight text-foreground">
+            <DialogTitle className="font-sans text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Job criteria
             </DialogTitle>
-            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+            <DialogDescription className="text-sm sm:text-base leading-relaxed text-muted-foreground">
               Describe the role in rough notes. AI expands them into a scoring rubric that every
               candidate is evaluated against.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6">
 
           <form onSubmit={handleGenerate} className="mt-5 space-y-4">
             <div className="space-y-1.5">

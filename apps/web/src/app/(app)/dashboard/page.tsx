@@ -329,8 +329,8 @@ export default async function DashboardPage({
                 <p className="mt-1.5 text-sm text-muted-foreground">Ranked by match score, highest first</p>
               </div>
 
-              <form method="get" className="flex flex-wrap items-center gap-2">
-                <div className="relative">
+              <form method="get" className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <div className="relative w-full sm:w-auto flex-1 sm:flex-initial">
                   <label htmlFor="q" className="sr-only">
                     Search candidates
                   </label>
@@ -343,14 +343,14 @@ export default async function DashboardPage({
                     name="q"
                     defaultValue={q}
                     placeholder="Search name, summary or tag"
-                    className="h-9 w-64 rounded-full border border-border bg-card pl-9 text-sm text-foreground placeholder:text-muted-foreground transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring"
+                    className="h-9 w-full sm:w-64 rounded-full border border-border bg-card pl-9 text-sm text-foreground placeholder:text-muted-foreground transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring"
                   />
                 </div>
-                <div>
+                <div className="flex-1 sm:flex-initial">
                   <label htmlFor="status" className="sr-only">
                     Status
                   </label>
-                  <select id="status" name="status" defaultValue={status} className={SELECT_CLASS}>
+                  <select id="status" name="status" defaultValue={status} className={`${SELECT_CLASS} w-full sm:w-auto`}>
                     <option value="">Any status</option>
                     <option value="processed">Evaluated</option>
                     <option value="pending">Pending</option>

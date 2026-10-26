@@ -142,22 +142,22 @@ export default async function CandidateDossierPage({
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <h1 className="font-sans text-3xl font-bold tracking-tight text-balance text-foreground sm:text-4xl">
+            <h1 className="font-sans text-2xl font-bold tracking-tight text-balance text-foreground sm:text-3xl md:text-4xl">
               {name}
             </h1>
             {headline && (
-              <p className="mt-2.5 max-w-2xl text-lg leading-relaxed text-pretty text-muted-foreground">
+              <p className="mt-2 text-base sm:mt-2.5 sm:text-lg leading-relaxed text-pretty text-muted-foreground">
                 {headline}
               </p>
             )}
             {linkedinUrl && (
-              <div className="mt-4 space-y-3">
+              <div className="mt-3 sm:mt-4 space-y-3">
                 <LinkedInLink href={linkedinUrl} name={name} variant="button" />
                 <LinkedInSections href={linkedinUrl} name={name} />
               </div>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-2.5">
+          <div className="flex flex-wrap shrink-0 items-center gap-2.5">
             <ReevaluateButton itemId={String(item._id)} />
             <DeleteCandidateButton candidateId={String(item._id)} candidateName={name} />
           </div>
@@ -170,7 +170,7 @@ export default async function CandidateDossierPage({
         style={delay(80)}
         className="tr-rise overflow-hidden rounded-xl border border-border bg-card shadow-xs"
       >
-        <div className="grid gap-8 p-6 sm:p-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
+        <div className="grid gap-6 p-4 sm:p-6 md:p-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
           <div className="flex flex-col items-center gap-3 md:items-start">
             <ScoreRing score={score} size={128} stroke={8} />
             <p className={`font-sans text-[13px] font-semibold tracking-wide uppercase ${scoreStyle.text}`}>
